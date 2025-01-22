@@ -16,7 +16,7 @@ struct MainTabView: View {
             Text("Home view")
                 .tabItem {
                     VStack{
-                        Image( selectedTab == 0 ? "home-fill" : "home")
+                        Image(systemName: selectedTab == 0 ? "house.fill" : "house")
                         Text("Home")
                     }
                 }

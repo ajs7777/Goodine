@@ -12,64 +12,65 @@ struct ProfileView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20.0){
-                userDetails
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20.0){
+                    userDetails
+                    
+                    //membership section
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(.orange.opacity(0.2))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 120)
+                        .onTapGesture {
+                            
+                        }
+                }
+                .padding(.horizontal)
+                .padding(.top)
                 
-                //membership section
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(.orange.opacity(0.2))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 120)
-                    .onTapGesture {
-                        
-                    }
-            }
-            .padding(.horizontal)
-            .padding(.top)
-            
-            //settings and other options
-            NavigationLink {
-                Text("Title")
-                   // .navigationBarBackButtonHidden(true)
-            } label: {
-                VStack{
-                    options(title: "My Account", image: "person")
-                    options(title: "My Orders", image: "bag")
-                    options(title: "Payments", image: "creditcard")
-                    options(title: "Address", image: "location")
-                    options(title: "Favourites", image: "heart")
-                    options(title: "Promocodes", image: "tag")
-                    options(title: "Settings", image: "gearshape")
-                    options(title: "Help", image: "questionmark.circle")
-                }
-                .foregroundStyle(.black.opacity(0.8))
-                .padding()
-            }
-
-            
-        }
-        // for dismiss the screen
-        .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    dismiss()
+                //settings and other options
+                NavigationLink {
+                    Text("Title")
+                    // .navigationBarBackButtonHidden(true)
                 } label: {
-                    Image(systemName: "arrow.left")
-                        .bold()
-                        .foregroundStyle(.black.opacity(0.8))
+                    VStack{
+                        options(title: "My Account", image: "person")
+                        options(title: "My Orders", image: "bag")
+                        options(title: "Payments", image: "creditcard")
+                        options(title: "Address", image: "location")
+                        options(title: "Favourites", image: "heart")
+                        options(title: "Promocodes", image: "tag")
+                        options(title: "Settings", image: "gearshape")
+                        options(title: "Help", image: "questionmark.circle")
+                    }
+                    .foregroundStyle(.black.opacity(0.8))
+                    .padding()
                 }
-
+                
+                
             }
+            // for dismiss the screen
+//            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+//            .toolbar {
+//                ToolbarItem(placement: .topBarLeading) {
+//                    Button {
+//                        dismiss()
+//                    } label: {
+//                        Image(systemName: "arrow.left")
+//                            .bold()
+//                            .foregroundStyle(.black.opacity(0.8))
+//                    }
+//                    
+//                }
+//            }
         }
     }
 }
 
 #Preview {
-    NavigationStack {
-        ProfileView()
-    }
+      ProfileView()
+    
 }
 
 extension ProfileView {
