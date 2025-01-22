@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     
-    @State private var selectedTab = 0
+    @State private var selectedTab = 4
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -56,7 +56,7 @@ struct MainTabView: View {
                 .tag(3)
                 //.onAppear { selectedTab = 3 }
             
-            Text("Home view")
+            ProfileView()
                 .tabItem {
                     VStack{
                         Image(systemName: selectedTab == 4 ? "person.circle.fill" : "person.circle")
@@ -68,7 +68,7 @@ struct MainTabView: View {
                 .tag(4)
                // .onAppear { selectedTab = 4 }
         }
-        .tint(.black)
+        .tint(.black.opacity(0.6))
         
     }
 }
