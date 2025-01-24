@@ -10,6 +10,7 @@ import SwiftUI
 struct RestaurantsFeedView: View {
     
     @State private var selectedPage = 0
+    @State private var searchText = ""
     
     var body: some View {
         VStack {
@@ -50,6 +51,42 @@ struct RestaurantsFeedView: View {
 }
 
 extension RestaurantsFeedView {
+    private var searchBar: some View {
+        HStack {
+            TextField("Search for restaurants", text: $searchText)
+                .font(.footnote)
+                .padding(.leading, 40)
+                .padding(.trailing, 80)
+                .frame(maxWidth : .infinity)
+                .frame(height: 40)
+                .background(Color(.systemGray5))
+                .clipShape(Capsule())
+                .overlay {
+                    Image(systemName: "magnifyingglass")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 15)
+                    Spacer()
+                    Button {
+                        
+                    } label: {
+                        Image(systemName: "mic")
+                    }
+                    .tint(.black.opacity(0.8))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 50)
+                    Button {
+                        
+                    } label: {
+                        Image(systemName: "slider.vertical.3")
+                    }
+                    .tint(.black.opacity(0.8))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 18)
+
+                }
+        }
+        .padding()
+    }
     private var categoriesSextion : some View {
         Grid(horizontalSpacing: 35, verticalSpacing: 10) {
                 ForEach(0..<2) { row in
