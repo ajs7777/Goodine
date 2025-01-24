@@ -50,7 +50,6 @@ struct DiscountCardView: View {
             .padding(.leading)
         }
         .padding()
-        .padding(.top)
     }
 }
 

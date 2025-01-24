@@ -65,7 +65,7 @@ extension RestaurantsFeedView {
                 .padding(.leading, 40)
                 .padding(.trailing, 80)
                 .frame(maxWidth : .infinity)
-                .frame(height: 40)
+                .frame(height: 45)
                 .background(Color(.systemGray5))
                 .clipShape(Capsule())
                 .overlay {
@@ -95,16 +95,19 @@ extension RestaurantsFeedView {
         .padding()
     }
     private var categoriesSextion : some View {
-        Grid(horizontalSpacing: 35, verticalSpacing: 10) {
+        Grid(horizontalSpacing: 30, verticalSpacing: 20) {
                 ForEach(0..<2) { row in
                     GridRow {
                         ForEach(0..<4) { column in
-                            VStack{
-                                Circle()
-                                    .fill(Color.gray)
-                                    .frame(width: 60, height: 60)
-                                Text("Category")
+                            VStack(spacing: 5.0){
+                                Image("nonveg")
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 65, height: 65)
+                                    .clipShape(Circle())
+                                Text("Non Veg")
                                     .font(.footnote)
+                                    .fontWeight(.medium)
                             }
                         }
                     }
