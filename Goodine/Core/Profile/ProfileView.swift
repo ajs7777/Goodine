@@ -86,14 +86,7 @@ extension ProfileView {
                 
             }
             Spacer()
-            Image(systemName: "person")
-                .resizable()
-                .scaledToFill()
-                .foregroundStyle(.black.opacity(0.8))
-                .frame(width: 30, height: 30)
-                .padding(20)
-                .background(Color(.systemGray6))
-                .clipShape(Circle())
+            UserCircleImage(size: .large)
         }
     }
     

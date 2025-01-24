@@ -39,7 +39,8 @@ extension RestaurantsFeedView {
                     }
                 }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.bottom, 10)
        
     }
     private var discountSection: some View {
@@ -51,7 +52,7 @@ extension RestaurantsFeedView {
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 160)
+            .frame(height: 170)
             
             HStack(spacing: 6) {
                 ForEach(0..<3) { index in
