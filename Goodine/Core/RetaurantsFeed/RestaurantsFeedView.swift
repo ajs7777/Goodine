@@ -13,6 +13,18 @@ struct RestaurantsFeedView: View {
     
     var body: some View {
         VStack {
+            discountSection
+        }
+    }
+}
+
+#Preview {
+    RestaurantsFeedView()
+}
+
+extension RestaurantsFeedView {
+    private var discountSection: some View {
+        VStack {
             TabView(selection: $selectedPage) {
                 ForEach(0..<3) { index in
                     DiscountCardView()
@@ -31,8 +43,4 @@ struct RestaurantsFeedView: View {
             }
         }
     }
-}
-
-#Preview {
-    RestaurantsFeedView()
 }
