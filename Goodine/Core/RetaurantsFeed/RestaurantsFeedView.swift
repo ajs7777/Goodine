@@ -23,6 +23,25 @@ struct RestaurantsFeedView: View {
 }
 
 extension RestaurantsFeedView {
+    private var categoriesSextion : some View {
+        Grid(horizontalSpacing: 35, verticalSpacing: 10) {
+                ForEach(0..<2) { row in
+                    GridRow {
+                        ForEach(0..<4) { column in
+                            VStack{
+                                Circle()
+                                    .fill(Color.gray)
+                                    .frame(width: 60, height: 60)
+                                Text("Category")
+                                    .font(.footnote)
+                            }
+                        }
+                    }
+                }
+        }
+        .padding()
+       
+    }
     private var discountSection: some View {
         VStack {
             TabView(selection: $selectedPage) {
