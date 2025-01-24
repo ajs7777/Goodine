@@ -38,7 +38,14 @@ struct RestaurantsFeedView: View {
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        UserCircleImage(size: .small)
+                        NavigationLink {
+                            ProfileView()
+                                .navigationBarBackButtonHidden()
+                        } label: {
+                            UserCircleImage(size: .small)
+
+                        }
+ 
                     }
                 }
             }

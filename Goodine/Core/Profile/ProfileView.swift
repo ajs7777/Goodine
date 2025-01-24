@@ -12,7 +12,6 @@ struct ProfileView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        NavigationStack {
             ScrollView {
                 VStack(spacing: 20.0){
                     userDetails
@@ -52,19 +51,18 @@ struct ProfileView: View {
             }
             // for dismiss the screen
 //            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-//            .toolbar {
-//                ToolbarItem(placement: .topBarLeading) {
-//                    Button {
-//                        dismiss()
-//                    } label: {
-//                        Image(systemName: "arrow.left")
-//                            .bold()
-//                            .foregroundStyle(.black.opacity(0.8))
-//                    }
-//                    
-//                }
-//            }
-        }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "arrow.left")
+                            .bold()
+                            .foregroundStyle(.black.opacity(0.8))
+                    }
+                    
+                }
+            }
     }
 }
 
