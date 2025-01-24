@@ -13,7 +13,34 @@ struct RestaurantsFeedView: View {
     
     var body: some View {
         VStack {
-            discountSection
+            NavigationStack {
+                ScrollView {
+                    searchBar
+                    categoriesSextion
+                    discountSection                    
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        VStack(alignment: .leading){
+                            Text("Dine In Now")
+                                .foregroundStyle(.gray)
+                                .font(.caption)
+                            HStack{
+                                Text("Hsr Layout")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    
+                            }
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        UserCircleImage(size: .small)
+                    }
+                }
+            }
         }
     }
 }
