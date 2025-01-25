@@ -9,6 +9,8 @@ import SwiftUI
 
 struct RestaurantsFeedView: View {
     
+    let timer = Timer.publish(every: 2.0, on: .main, in: .common).autoconnect()
+    
     @State private var selectedPage = 0
     @State private var searchText = ""
     
@@ -18,7 +20,8 @@ struct RestaurantsFeedView: View {
                 ScrollView {
                     searchBar
                     categoriesSextion
-                    discountSection                    
+                    discountSection
+                    suggestionSection
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -124,9 +127,11 @@ extension RestaurantsFeedView {
                     DiscountCardView()
                         .tag(index)
                 }
+                
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: 170)
+            
             
             HStack(spacing: 6) {
                 ForEach(0..<3) { index in
@@ -136,5 +141,26 @@ extension RestaurantsFeedView {
                 }
             }
         }
+        .onReceive(timer) { _ in
+                    withAnimation(.easeInOut) {
+                        selectedPage = (selectedPage + 1) % 3
+                    }
+                }
+        
+    }
+    private var suggestionSection :  some View {
+        
+        ScrollView {
+                Text("Must Try Places")
+                    .font(.title3)
+                    .bold()
+                ScrollView(.horizontal, showsIndicators: false) {
+                ForEach(0..<10) { _ in
+                    
+                        MustTryPlaces()
+                    }
+                }
+            }
+        
     }
 }
