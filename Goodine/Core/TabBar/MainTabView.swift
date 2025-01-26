@@ -23,6 +23,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
                 //.onAppear { selectedTab = 0 }
+                
             
             Text("Restaurants")
                 .tabItem {
@@ -70,6 +71,7 @@ struct MainTabView: View {
                // .onAppear { selectedTab = 4 }
         }
         .tint(.black.opacity(0.8))
+        
         
     }
 }

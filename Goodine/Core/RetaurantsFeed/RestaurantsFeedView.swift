@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RestaurantsFeedView: View {
     
-    let timer = Timer.publish(every: 2.0, on: .main, in: .common).autoconnect()
+    let timer = Timer.publish(every: 5.0, on: .main, in: .common).autoconnect()
     
     @State private var selectedPage = 0
     @State private var searchText = ""
@@ -19,9 +19,9 @@ struct RestaurantsFeedView: View {
             NavigationStack {
                 ScrollView {
                     searchBar
-                    categoriesSextion
+                    categoriesSection
                     discountSection
-                    suggestionSection
+                    MustTryPlaces()
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -97,7 +97,8 @@ extension RestaurantsFeedView {
         }
         .padding()
     }
-    private var categoriesSextion : some View {
+    
+    private var categoriesSection : some View {
         Grid(horizontalSpacing: 30, verticalSpacing: 20) {
                 ForEach(0..<2) { row in
                     GridRow {
@@ -120,6 +121,7 @@ extension RestaurantsFeedView {
         .padding(.bottom, 10)
        
     }
+    
     private var discountSection: some View {
         VStack {
             TabView(selection: $selectedPage) {
@@ -148,19 +150,5 @@ extension RestaurantsFeedView {
                 }
         
     }
-    private var suggestionSection :  some View {
-        
-        ScrollView {
-                Text("Must Try Places")
-                    .font(.title3)
-                    .bold()
-                ScrollView(.horizontal, showsIndicators: false) {
-                ForEach(0..<10) { _ in
-                    
-                        MustTryPlaces()
-                    }
-                }
-            }
-        
-    }
+    
 }
