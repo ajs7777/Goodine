@@ -23,6 +23,7 @@ struct RestaurantsFeedView: View {
                     categoriesSection
                     discountSection
                     MustTryPlaces()
+                    restaurantsSection
                 }
               
             }
@@ -66,11 +67,11 @@ extension RestaurantsFeedView {
     private var searchBar: some View {
         HStack {
             TextField("Search for restaurants", text: $searchText)
-                .font(.footnote)
+                .font(.body)
                 .padding(.leading, 40)
                 .padding(.trailing, 80)
                 .frame(maxWidth : .infinity)
-                .frame(height: 45)
+                .frame(height: 50)
                 .background(Color(.systemGray6))
                 .clipShape(Capsule())
                 .overlay {
@@ -103,7 +104,7 @@ extension RestaurantsFeedView {
     }
     
     private var categoriesSection : some View {
-        Grid(horizontalSpacing: 30, verticalSpacing: 20) {
+        Grid(horizontalSpacing: 20, verticalSpacing: 18) {
                 ForEach(0..<2) { row in
                     GridRow {
                         ForEach(0..<4) { column in
@@ -111,7 +112,7 @@ extension RestaurantsFeedView {
                                 Image("nonveg")
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 65, height: 65)
+                                    .frame(width: 75, height: 75)
                                     .clipShape(Circle())
                                 Text("Non Veg")
                                     .font(.footnote)
@@ -153,6 +154,20 @@ extension RestaurantsFeedView {
                     }
                 }
         
+    }
+    
+    private var restaurantsSection: some View {
+        VStack(alignment: .leading) {
+            Text("Restaurants To Explore")
+                .font(.title)
+                .fontWeight(.bold)
+                .padding(.leading)
+        
+        ForEach(0..<20) { restaurant in
+            RestaurantsView()
+        }
+        }
+        .padding(.top, 20)
     }
     
 }

@@ -11,12 +11,12 @@ struct MustTryPlaces: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text("Must Try Places")
-                .font(.title2)
+                .font(.title)
                 .fontWeight(.bold)
                 .padding(.leading)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
+                HStack(spacing: 12.0) {
                     ForEach(0..<10) { _ in
                         imageSection
                     }
@@ -24,6 +24,7 @@ struct MustTryPlaces: View {
                 } .padding(.horizontal)
             }
         }
+        .padding(.top)
         
     }
 }
@@ -37,7 +38,7 @@ extension MustTryPlaces {
         Image("Restaurant-1")
             .resizable()
             .scaledToFill()
-            .frame(width: 130, height: 150)
+            .frame(width: 170, height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay {
                 ZStack(alignment: .bottomLeading) {

@@ -53,7 +53,8 @@ struct RestaurantsView: View {
                 }
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.bottom)
         .overlay(alignment: .topTrailing) {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
                 .font(.title3)
