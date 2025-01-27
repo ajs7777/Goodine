@@ -18,39 +18,13 @@ struct RestaurantsFeedView: View {
         VStack {
             NavigationStack {
                 ScrollView {
+                    userSection
                     searchBar
                     categoriesSection
                     discountSection
                     MustTryPlaces()
                 }
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        VStack(alignment: .leading){
-                            Text("Dine In Now")
-                                .foregroundStyle(.gray)
-                                .font(.caption)
-                            HStack{
-                                Text("Hsr Layout")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                Image(systemName: "chevron.down")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    
-                            }
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            ProfileView()
-                                .navigationBarBackButtonHidden()
-                        } label: {
-                            UserCircleImage(size: .small)
-
-                        }
- 
-                    }
-                }
+              
             }
         }
     }
@@ -61,6 +35,34 @@ struct RestaurantsFeedView: View {
 }
 
 extension RestaurantsFeedView {
+    
+    private var userSection: some View {
+        HStack {
+            VStack(alignment: .leading){
+                Text("Dine In Now")
+                    .foregroundStyle(.gray)
+                    .font(.caption)
+                HStack{
+                    Text("Hsr Layout")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Image(systemName: "chevron.down")
+                        .font(.footnote)
+                        .fontWeight(.semibold)
+                        
+                }
+            }
+            Spacer()
+            NavigationLink {
+                ProfileView()
+                    .navigationBarBackButtonHidden()
+            } label: {
+                UserCircleImage(size: .small)
+
+            }
+        } .padding(.horizontal)
+    }
+    
     private var searchBar: some View {
         HStack {
             TextField("Search for restaurants", text: $searchText)
@@ -69,7 +71,7 @@ extension RestaurantsFeedView {
                 .padding(.trailing, 80)
                 .frame(maxWidth : .infinity)
                 .frame(height: 45)
-                .background(Color(.systemGray5))
+                .background(Color(.systemGray6))
                 .clipShape(Capsule())
                 .overlay {
                     Image(systemName: "magnifyingglass")
@@ -79,7 +81,7 @@ extension RestaurantsFeedView {
                     Button {
                         
                     } label: {
-                        Image(systemName: "mic")
+                        Image(systemName: "mic.fill")
                     }
                     .tint(.black.opacity(0.8))
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -95,7 +97,9 @@ extension RestaurantsFeedView {
 
                 }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.bottom)
+        .padding(.top, 8)
     }
     
     private var categoriesSection : some View {

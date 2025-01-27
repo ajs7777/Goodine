@@ -13,7 +13,7 @@ struct LoginView: View {
     @State var phoneNumber = ""
     
     var isACtive : Bool {
-        phoneNumber.count < 10 && phoneNumber.allSatisfy(\.isNumber)
+        phoneNumber.count == 10 && phoneNumber.allSatisfy(\.isNumber)
     }
     
     var body: some View {
@@ -49,11 +49,12 @@ struct LoginView: View {
                         .overlay(RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.gray, lineWidth: 2))
                         
-                        TextField("00000 00000", text: $phoneNumber)
+                        TextField("0000000000", text: $phoneNumber)
                             .keyboardType(.numberPad)
-                            .onReceive(Just(phoneNumber)) { _ in
-                                self.phoneNumber = formatPhoneNumber(phoneNumber)
+                            .onReceive(phoneNumber.publisher.collect()) {
+                                self.phoneNumber = String($0.prefix(10))
                             }
+
                             .padding(13)
                             .padding(.leading, 38)
                             .overlay(
@@ -74,16 +75,17 @@ struct LoginView: View {
                 VStack(spacing: 15.0) {
                     NavigationLink {
                         VerifyDetailsView()
+                            .navigationBarBackButtonHidden()
                     } label: {
                         Text("Continue")
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
-                            .background(isACtive ? Color.gray : Color.black)
+                            .background(!isACtive ? Color.gray : Color.black)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             
                     }
-                    .disabled(isACtive)
+                    .disabled(!isACtive)
                     
                     
                     HStack(spacing: 0.0){
@@ -105,16 +107,7 @@ struct LoginView: View {
         
         
     }
-    
-    // function for formatter phone number
-    private func formatPhoneNumber(_ number: String) -> String {
-        let digits = number.filter { $0.isNumber }
-        let prefix = String(digits.prefix(10))
-        let formatted = prefix.enumerated().map { index, character in
-            return (index > 0 && index % 5 == 0) ? " \(character)" : String(character)
-        }.joined()
-        return formatted
-    }
+
     
 }
 
