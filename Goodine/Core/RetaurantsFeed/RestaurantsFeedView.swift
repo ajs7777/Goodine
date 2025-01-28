@@ -24,8 +24,10 @@ struct RestaurantsFeedView: View {
                     discountSection
                     MustTryPlaces()
                     restaurantsSection
+                        
                 }
-              
+                
+                
             }
         }
     }
@@ -84,7 +86,7 @@ extension RestaurantsFeedView {
                     } label: {
                         Image(systemName: "mic.fill")
                     }
-                    .tint(.black.opacity(0.8))
+                    .tint(.primary.opacity(0.8))
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 50)
                     Button {
@@ -92,7 +94,7 @@ extension RestaurantsFeedView {
                     } label: {
                         Image(systemName: "slider.vertical.3")
                     }
-                    .tint(.black.opacity(0.8))
+                    .tint(.primary.opacity(0.8))
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 18)
 
@@ -143,7 +145,7 @@ extension RestaurantsFeedView {
             HStack(spacing: 6) {
                 ForEach(0..<3) { index in
                     Capsule()
-                        .fill(selectedPage == index ? Color.black.opacity(0.8) : Color.gray.opacity(0.3))
+                        .fill(selectedPage == index ? Color.primary.opacity(0.8) : Color.gray.opacity(0.3))
                         .frame(width: selectedPage == index ? 25 : 10, height: 5)
                 }
             }
@@ -163,11 +165,18 @@ extension RestaurantsFeedView {
                 .fontWeight(.bold)
                 .padding(.leading)
         
-        ForEach(0..<20) { restaurant in
-            RestaurantsView()
+            ForEach(0 ... 20, id: \.self) { restaurant in
+                NavigationLink(value: restaurant) {
+                    RestaurantsView()
+                }
+                                                             
         }
+        }
+        .navigationDestination(for: Int.self) { restaurant in
+            Text("title")
         }
         .padding(.top, 20)
+        
     }
     
 }

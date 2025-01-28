@@ -23,6 +23,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
                 //.onAppear { selectedTab = 0 }
+                .toolbarBackground(.white, for: .tabBar)
                 
             
             Text("Restaurants")
@@ -36,6 +37,7 @@ struct MainTabView: View {
                 }
                 .tag(1)
                // .onAppear { selectedTab = 1 }
+                .toolbarBackground(.white, for: .tabBar)
             
             Text("Book a Table")
                 .tabItem {
@@ -45,6 +47,7 @@ struct MainTabView: View {
                 }
                 .tag(2)
                // .onAppear { selectedTab = 2 }
+                .toolbarBackground(.white, for: .tabBar)
             
             Text("Favourites")
                 .tabItem {
@@ -57,6 +60,7 @@ struct MainTabView: View {
                 }
                 .tag(3)
                 //.onAppear { selectedTab = 3 }
+                .toolbarBackground(.white, for: .tabBar)
             
             ProfileView()
                 .tabItem {
@@ -67,9 +71,12 @@ struct MainTabView: View {
                         Text("Profile")
                     }
                 }
+            
                 .tag(4)
                // .onAppear { selectedTab = 4 }
+                .toolbarBackground(.white, for: .tabBar)
         }
+        
         .tint(.black.opacity(0.8))
         
         
