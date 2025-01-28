@@ -25,8 +25,7 @@ struct RestaurantsFeedView: View {
                     MustTryPlaces()
                     restaurantsSection
                         
-                }
-                
+                }               
                 
             }
         }
@@ -166,14 +165,16 @@ extension RestaurantsFeedView {
                 .padding(.leading)
         
             ForEach(0 ... 20, id: \.self) { restaurant in
-                NavigationLink(value: restaurant) {
+                NavigationLink(
+                    destination: RestaurantDetailView()
+                        .navigationBarBackButtonHidden()
+
+                ) {
                     RestaurantsView()
+                        .tint(.primary)
                 }
-                                                             
+                                                           
         }
-        }
-        .navigationDestination(for: Int.self) { restaurant in
-            Text("title")
         }
         .padding(.top, 20)
         

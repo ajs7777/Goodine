@@ -12,7 +12,7 @@ struct VerifyDetailsView: View {
     @Environment(\.dismiss) var dismiss
     @State private var otp = ["", "", "", "", "", ""]
     @State private var timerRemaining = 30
-    @State private var isTimerActive = true
+    @State private var isTimerActive = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -82,13 +82,12 @@ struct VerifyDetailsView: View {
                 }
                 .disabled(isTimerActive)
                 
+                
                 Spacer()
                 
                 Text("00:\(String(format: "%02d", timerRemaining))")
                     .foregroundColor(.gray)
-                    .onAppear {
-                        startTimer()
-                    }
+                    
                 Spacer()
 
                 Spacer()
@@ -104,6 +103,7 @@ struct VerifyDetailsView: View {
                     .navigationBarBackButtonHidden()
             } label: {
                 Text("Verify & continue")
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)

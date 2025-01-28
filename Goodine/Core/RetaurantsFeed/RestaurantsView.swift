@@ -23,14 +23,16 @@ struct RestaurantsView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text("Limelight - Royal Orchid Hotel")
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                         .font(.headline)
                         .bold()
                     Text("North Indian | Continental")
+                        .foregroundStyle(.primary)
                         .font(.footnote)
                     Text("BTM Layout")
                         .font(.footnote)
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -41,6 +43,7 @@ struct RestaurantsView: View {
                             .font(.caption)
                             .foregroundStyle(.yellow)
                         Text("4.5")
+                            .foregroundStyle(.primary)
                             .font(.callout)
                             .bold()
                     }
@@ -57,6 +60,7 @@ struct RestaurantsView: View {
         .padding(.bottom)
         .overlay(alignment: .topTrailing) {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
+                .foregroundStyle(.primary)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(10)
