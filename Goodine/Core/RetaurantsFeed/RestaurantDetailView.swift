@@ -11,6 +11,7 @@ struct RestaurantDetailView: View {
     
     @Environment(\.dismiss) var dismiss
     @State var isFavorite: Bool = false
+    @State var showBookingSheet: Bool = false
     
     var body: some View {
         ScrollView {
@@ -27,21 +28,23 @@ struct RestaurantDetailView: View {
         //.ignoresSafeArea()
         
         // book a table button works as sheet
-        
+        .sheet(isPresented: $showBookingSheet, content: {
+            BookATableView()
+        })
         .overlay(alignment: .bottom) {
             ZStack {
-                Color.white.ignoresSafeArea()
+                Color.mainInvert.ignoresSafeArea()
                     .frame(height: 100)
                 Button {
-                    
+                    showBookingSheet.toggle()
                 } label: {
                     Text("Book a table")
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.mainInvert)
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
-                        .background(Color.primary)
+                        .background(.mainbw)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding()
@@ -77,6 +80,7 @@ extension RestaurantDetailView {
             Spacer()
             
             Image(systemName: isFavorite ? "heart.fill" : "heart")
+                .foregroundStyle(.black)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(10)
@@ -89,6 +93,7 @@ extension RestaurantDetailView {
                 }
                 .shadow(radius: 10)
             Image(systemName: "magnifyingglass")
+                .foregroundStyle(.black)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(10)
@@ -131,12 +136,14 @@ extension RestaurantDetailView {
             
             //Hotel name
             Text("Limelight - Royal Orchid Hotel")
+                .foregroundStyle(.mainbw)
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
             HStack{
                 VStack(alignment: .leading){
                     Text("Continental | Indian | Chinese")
+                        .foregroundStyle(.mainbw)
                     Text("Indiranagar | 2 Km")
                         .foregroundStyle(.secondary)
                  }
@@ -149,10 +156,12 @@ extension RestaurantDetailView {
                             .foregroundStyle(.yellow)
                             .font(.footnote)
                         Text("4.5(3k Ratings)")
+                            .foregroundStyle(.mainbw)
                     }
                     .font(.callout)
                     
                     Text("₹ 2000 for two")
+                        .foregroundStyle(.mainbw)
                         .font(.callout)
                  }
             }
@@ -167,24 +176,30 @@ extension RestaurantDetailView {
     private var locationTime: some View {
         VStack(alignment: .leading, spacing: 20.0){
             Text("Location")
+                .foregroundStyle(.mainbw)
                 .font(.title)
                 .fontWeight(.bold)
             
             //Hotel Address
-            HStack(alignment: .top){
+            HStack(alignment: .top, spacing: 20.0){
                 Image(systemName: "location.circle")
+                    .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
                 Text("No.1, golf Avenue, HAL Old Airport Rd, Indiranagar, Bengaluru, Karnataka")
+                    .foregroundStyle(.mainbw)
+                    .font(.subheadline)
                 Spacer()
             }
             
             //timings
-            HStack(alignment: .top){
+            HStack(alignment: .top, spacing: 20.0){
                 Image(systemName: "clock")
+                    .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
                 Text("12:00 PM - 11:00 PM")
+                    .foregroundStyle(.mainbw)
                 Spacer()
             }
             
@@ -196,17 +211,20 @@ extension RestaurantDetailView {
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: 20.0){
             Text("Features")
+                .foregroundStyle(.mainbw)
                 .font(.title)
                 .fontWeight(.bold)
             
             //Features
             HStack{
                 Text("Reservation Available")
+                    .foregroundStyle(.mainbw)
                     .fontWeight(.medium)
                     .padding(10)
                     .background(Color(.systemGray5))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 Text("Parking Available")
+                    .foregroundStyle(.mainbw)
                     .fontWeight(.medium)
                     .padding(10)
                     .background(Color(.systemGray5))

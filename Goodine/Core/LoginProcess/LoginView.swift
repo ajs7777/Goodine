@@ -78,10 +78,11 @@ struct LoginView: View {
                             .navigationBarBackButtonHidden()
                     } label: {
                         Text("Continue")
-                            .foregroundStyle(.white)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.mainInvert)
                             .frame(maxWidth: .infinity)
                             .frame(height: 60)
-                            .background(!isACtive ? Color.gray : Color.black)
+                            .background(!isACtive ? Color.gray : Color.mainbw)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             
                     }
@@ -92,11 +93,11 @@ struct LoginView: View {
                         Text("By clicking, I accept the")
                         Text(" Terms & Conditions ")
                             .fontWeight(.semibold)
-                            .foregroundStyle(.black)
-                        Text("&")
+                            .foregroundStyle(.mainbw)
+                        Text(" & ")
                         Text(" Privacy Policy")
                             .fontWeight(.semibold)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.mainbw)
                     }
                     .foregroundStyle(.gray)
                     .font(.caption)

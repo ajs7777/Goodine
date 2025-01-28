@@ -23,7 +23,7 @@ struct VerifyDetailsView: View {
                 }) {
                     Image(systemName: "arrow.left")
                         .font(.title2)
-                        .foregroundColor(.black)
+                        .foregroundColor(.mainbw)
                 }
                 Spacer()
             }
@@ -37,7 +37,7 @@ struct VerifyDetailsView: View {
                 HStack(spacing: 0.0) {
                     Text("Enter OTP sent to ")
                     Text("+91 9860310313")
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.mainbw)
                         .fontWeight(.medium)
                     Text(" via SMS")
                         
@@ -104,10 +104,10 @@ struct VerifyDetailsView: View {
             } label: {
                 Text("Verify & continue")
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(.mainInvert)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
-                    .background(Color.black)
+                    .background(Color.mainbw)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.bottom)

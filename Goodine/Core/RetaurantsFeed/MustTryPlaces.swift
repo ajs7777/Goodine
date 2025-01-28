@@ -11,6 +11,7 @@ struct MustTryPlaces: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text("Must Try Places")
+                .foregroundStyle(.mainbw)
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.leading)

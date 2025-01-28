@@ -33,11 +33,12 @@ struct UserCircleImage: View {
             .resizable()
             .scaledToFill()
             .fontWeight(.semibold)
-            .foregroundStyle(.black.opacity(0.7))
+            .foregroundStyle(.mainbw)
             .frame(width: size.dimension, height: size.dimension)
             .padding(10)
             .background(Color(.systemGray5))
             .clipShape(Circle())
+            .padding()
     }
 }
 

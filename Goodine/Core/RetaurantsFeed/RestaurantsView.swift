@@ -60,7 +60,7 @@ struct RestaurantsView: View {
         .padding(.bottom)
         .overlay(alignment: .topTrailing) {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
-                .foregroundStyle(.primary)
+                .foregroundStyle(.red)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(10)
@@ -68,7 +68,8 @@ struct RestaurantsView: View {
                     Circle()
                         .fill(.white)
                 )
-                .padding(30)
+                .padding(.trailing, 26)
+                .padding(.top, 10)
                 .onTapGesture {
                     isFavorite.toggle()
                 }

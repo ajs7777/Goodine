@@ -43,7 +43,7 @@ struct ProfileView: View {
                         options(title: "Settings", image: "gearshape")
                         options(title: "Help", image: "questionmark.circle")
                     }
-                    .foregroundStyle(.black.opacity(0.8))
+                    .foregroundStyle(.mainbw)
                     .padding()
                 }
                 
@@ -58,7 +58,7 @@ struct ProfileView: View {
                     } label: {
                         Image(systemName: "arrow.left")
                             .bold()
-                            .foregroundStyle(.black.opacity(0.8))
+                            .foregroundStyle(.mainbw)
                     }
                     
                 }
@@ -78,7 +78,7 @@ extension ProfileView {
                 Text("Abhijit Saha")
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundStyle(.black.opacity(0.8))
+                    .foregroundStyle(.mainbw)
                 Text("+91 9876543210")
                     .foregroundStyle(.gray)
                 

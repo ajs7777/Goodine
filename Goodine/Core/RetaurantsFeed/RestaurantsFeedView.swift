@@ -73,7 +73,7 @@ extension RestaurantsFeedView {
                 .padding(.trailing, 80)
                 .frame(maxWidth : .infinity)
                 .frame(height: 50)
-                .background(Color(.systemGray6))
+                .background(.mainbw.opacity(0.1))
                 .clipShape(Capsule())
                 .overlay {
                     Image(systemName: "magnifyingglass")
@@ -85,7 +85,7 @@ extension RestaurantsFeedView {
                     } label: {
                         Image(systemName: "mic.fill")
                     }
-                    .tint(.primary.opacity(0.8))
+                    .tint(.mainbw)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 50)
                     Button {
@@ -93,7 +93,7 @@ extension RestaurantsFeedView {
                     } label: {
                         Image(systemName: "slider.vertical.3")
                     }
-                    .tint(.primary.opacity(0.8))
+                    .tint(.mainbw)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 18)
 
@@ -144,7 +144,7 @@ extension RestaurantsFeedView {
             HStack(spacing: 6) {
                 ForEach(0..<3) { index in
                     Capsule()
-                        .fill(selectedPage == index ? Color.primary.opacity(0.8) : Color.gray.opacity(0.3))
+                        .fill(selectedPage == index ? Color.mainbw : Color.gray.opacity(0.3))
                         .frame(width: selectedPage == index ? 25 : 10, height: 5)
                 }
             }
