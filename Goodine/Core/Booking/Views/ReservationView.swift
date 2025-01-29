@@ -28,6 +28,8 @@ struct ReservationView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
+            
+            //reservation text and dismiss button
             HStack {
                 Text("Your Reservation")
                     .foregroundStyle(.mainbw)
@@ -53,6 +55,7 @@ struct ReservationView: View {
                     .frame(height: 150)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 
+                //hotel details
                 VStack(alignment: .leading, spacing: 5.0){
                     Text("Limelight - Royal Orchid Hotel")
                         .font(.title2)
@@ -66,6 +69,7 @@ struct ReservationView: View {
                 
                 Divider()
                 
+                //guest, date and time
                 VStack(alignment: .leading, spacing: 15.0){
                     HStack(spacing: 10.0){
                         Image(systemName: "person.2")
@@ -78,7 +82,7 @@ struct ReservationView: View {
                     HStack(spacing: 16.0){
                         Image(systemName: "calendar")
                             .fontWeight(.semibold)
-                        Text("Tuesday, 31th Jan | 07:00 PM")
+                        Text("Tuesday | 31th Jan | 07:00 PM")
                             .font(.callout)
                     }
                     .fontWeight(.bold)
@@ -89,8 +93,10 @@ struct ReservationView: View {
                 
                 Divider()
                 
+                // name textfield
                 VStack(alignment: .leading, spacing: 8.0){
                     Text("Name")
+                        .fontWeight(.medium)
                     TextField( "", text: $name)
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
@@ -104,8 +110,10 @@ struct ReservationView: View {
                 }
                 .padding(.top, 12)
                 
+                // email text field
                 VStack(alignment: .leading, spacing: 8.0){
                     Text("Email")
+                        .fontWeight(.medium)
                     TextField( "", text: $email)
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
@@ -119,8 +127,10 @@ struct ReservationView: View {
                 }
                 .padding(.top, 12)
                 
+                // phone number textfield
                 VStack(alignment: .leading, spacing: 8.0){
                     Text("Phone Number")
+                        .fontWeight(.medium)
                     TextField( "", text: $phoneNumber)
                         .padding(.leading, 85)
                         .frame(maxWidth: .infinity)
@@ -166,6 +176,9 @@ struct ReservationView: View {
             } .scrollIndicators(.hidden)
         }
         .padding(.horizontal)
+        
+        //confirm booking button
+        
         .overlay(alignment: .bottom) {
             ZStack {
                 Color.mainInvert.ignoresSafeArea()
@@ -186,7 +199,7 @@ struct ReservationView: View {
             }
         }
         .sheet(isPresented: $showConfirSheet, content: {
-            Text("Booking Confirmed")
+            BookingConfirmedView()
         })
 
     }
