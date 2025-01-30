@@ -23,7 +23,7 @@ struct LoginView: View {
                 Image("login-icon")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 400, height: 300)
+                    .frame(width: 400, height: 250)
                 
                 
                 VStack(alignment: .leading){
