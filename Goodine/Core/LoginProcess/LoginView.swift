@@ -72,6 +72,30 @@ struct LoginView: View {
                 
                 Spacer()
                 
+                HStack{
+                    Button {
+                        
+                    } label: {
+                        Text("Login Another Way")
+                            .font(.footnote)
+                            .tint(.mainbw)
+                            .bold()
+                    }
+                    
+                    Text(" | ")
+                    
+                    Button {
+                        
+                    } label: {
+                        Text("Login With Business")
+                            .font(.footnote)
+                            .tint(.mainbw)
+                            .bold()
+                    }
+
+
+                }
+                
                 VStack(spacing: 15.0) {
                     NavigationLink {
                         VerifyDetailsView()
