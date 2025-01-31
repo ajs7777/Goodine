@@ -77,8 +77,9 @@ struct LoginView: View {
                 
                 //another way login buttons
                 HStack{
-                    Button {
-                        
+                    NavigationLink {
+                        LoginWithEmail()
+                            .navigationBarBackButtonHidden()
                     } label: {
                         HStack {
                             Image(systemName: "envelope.fill")
@@ -144,7 +145,7 @@ struct LoginView: View {
                 hideKeyboard()
             }
         }
-        
+      
         
     }
     

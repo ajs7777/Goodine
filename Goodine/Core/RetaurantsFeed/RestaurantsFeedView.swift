@@ -101,7 +101,6 @@ extension RestaurantsFeedView {
         }
         .padding(.horizontal)
         .padding(.bottom)
-        .padding(.top, 8)
     }
     
     private var categoriesSection : some View {
