@@ -103,12 +103,8 @@ struct VerifyDetailsView: View {
                     .navigationBarBackButtonHidden()
             } label: {
                 Text("Verify & continue")
-                    .fontWeight(.medium)
-                    .foregroundColor(.mainInvert)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 60)
-                    .background(Color.mainbw)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .goodineButtonStyle(.mainbw)
+                    
             }
             .padding(.bottom)
         }

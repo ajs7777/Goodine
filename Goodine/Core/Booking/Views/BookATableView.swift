@@ -145,13 +145,8 @@ struct BookATableView: View {
                         .toolbarVisibility(.hidden)
                 } label: {
                     Text("Next")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.mainInvert)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color.mainbw)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .font(.title3)
+                        .goodineButtonStyle(.mainbw)
                         .padding()
                 }
             }

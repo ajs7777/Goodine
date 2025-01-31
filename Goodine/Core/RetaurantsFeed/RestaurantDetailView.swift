@@ -40,12 +40,7 @@ struct RestaurantDetailView: View {
                 } label: {
                     Text("Book a table")
                         .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.mainInvert)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(.mainbw)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .goodineButtonStyle(.mainbw)
                 }
                 .padding()
             }

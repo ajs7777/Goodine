@@ -107,12 +107,8 @@ struct BookingConfirmedView: View {
                 }) {
                     Text("Modify Booking")
                         .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.mainInvert)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(Color.mainbw)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .font(.title3)
+                        .goodineButtonStyle(.mainbw)
                 }
                 
                 Button(action: {

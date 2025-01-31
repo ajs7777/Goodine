@@ -116,12 +116,8 @@ struct LoginView: View {
                             .navigationBarBackButtonHidden()
                     } label: {
                         Text("Continue")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.mainInvert)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 60)
-                            .background(!isACtive ? Color.gray : Color.mainbw)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .goodineButtonStyle(!isACtive ? .gray : .mainbw)
+                                                        
                             
                     }
                     .disabled(!isACtive)
