@@ -35,6 +35,8 @@ struct LoginView: View {
                         .foregroundStyle(.gray)
                 } .frame(maxWidth: .infinity, alignment: .leading)
                 
+                
+                // phone number textfield
                 VStack(alignment: .leading){
                     Text("Enter phone number")
                         .fontWeight(.medium)
@@ -72,14 +74,21 @@ struct LoginView: View {
                 
                 Spacer()
                 
+                
+                //another way login buttons
                 HStack{
                     Button {
                         
                     } label: {
-                        Text("Login Another Way")
-                            .font(.footnote)
-                            .tint(.mainbw)
-                            .bold()
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .font(.subheadline)
+                                .tint(.mainbw)
+                            Text("Login Another Way")
+                                .font(.footnote)
+                                .tint(.mainbw)
+                                .bold()
+                        }
                     }
                     
                     Text(" | ")
@@ -87,10 +96,15 @@ struct LoginView: View {
                     Button {
                         
                     } label: {
-                        Text("Login With Business")
-                            .font(.footnote)
-                            .tint(.mainbw)
-                            .bold()
+                        HStack {
+                            Image("store")
+                                .renderingMode(.template)
+                                .tint(.mainbw)
+                            Text("Login With Business")
+                                .font(.footnote)
+                                .tint(.mainbw)
+                                .bold()
+                        }
                     }
 
 
