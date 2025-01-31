@@ -163,11 +163,11 @@ struct ReservationView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading)
                         .frame(height: 50)
-                        .background(Color(.systemGray6))
+                        .background(Color(.systemGray4))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.vertical, 30)
-                .padding(.bottom, 100)
+                .padding(.bottom, 80)
 
                 
                 Spacer()
@@ -181,15 +181,16 @@ struct ReservationView: View {
         
         .overlay(alignment: .bottom) {
             ZStack {
-                Color.mainInvert.ignoresSafeArea()
+                Color.sheetInvert.ignoresSafeArea()
+                    .padding(.top)
                     .frame(height: 100)
-                Button {
+            Button {
                     showConfirSheet.toggle()
                 } label: {
                     Text("Confirm Booking")
                         .font(.headline)
                         .goodineButtonStyle(.mainbw)
-                        .padding()
+                        .padding(.horizontal)
                 }
             }
         }

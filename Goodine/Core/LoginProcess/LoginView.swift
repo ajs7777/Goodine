@@ -91,15 +91,19 @@ struct LoginView: View {
                         }
                     }
                     
-                    Text(" | ")
+//                    Text("|")
+//                        .font(.caption)
                     
                     Button {
                         
                     } label: {
                         HStack {
                             Image("store")
+                                .resizable()
                                 .renderingMode(.template)
-                                .tint(.mainbw.opacity(0.8))
+                                .foregroundStyle(.mainbw.opacity(0.8))
+                                .frame(width: 17, height: 15)
+                                
                             Text("Login With Business")
                                 .font(.caption)
                                 .tint(.mainbw.opacity(0.8))
@@ -107,8 +111,8 @@ struct LoginView: View {
                         }
                     }
                     
-                    
                 }
+                .padding(.bottom, 5)
                 
                 VStack(spacing: 15.0) {
                     NavigationLink {
@@ -117,8 +121,6 @@ struct LoginView: View {
                     } label: {
                         Text("Continue")
                             .goodineButtonStyle(!isACtive ? .gray : .mainbw)
-                        
-                        
                     }
                     .disabled(!isACtive)
                     
