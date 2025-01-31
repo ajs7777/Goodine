@@ -110,6 +110,9 @@ struct VerifyDetailsView: View {
         }
         .padding(.top)
         .padding(.horizontal)
+        .onTapGesture {
+            hideKeyboard()
+        }
     }
     
     func startTimer() {
@@ -128,6 +131,10 @@ struct VerifyDetailsView: View {
         isTimerActive = true
         startTimer()
         // Add resend logic
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

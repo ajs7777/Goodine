@@ -56,7 +56,7 @@ struct LoginView: View {
                             .onReceive(phoneNumber.publisher.collect()) {
                                 self.phoneNumber = String($0.prefix(10))
                             }
-
+                        
                             .padding(13)
                             .padding(.leading, 38)
                             .overlay(
@@ -83,10 +83,10 @@ struct LoginView: View {
                         HStack {
                             Image(systemName: "envelope.fill")
                                 .font(.subheadline)
-                                .tint(.mainbw)
+                                .tint(.mainbw.opacity(0.8))
                             Text("Login Another Way")
-                                .font(.footnote)
-                                .tint(.mainbw)
+                                .font(.caption)
+                                .tint(.mainbw.opacity(0.8))
                                 .bold()
                         }
                     }
@@ -99,15 +99,15 @@ struct LoginView: View {
                         HStack {
                             Image("store")
                                 .renderingMode(.template)
-                                .tint(.mainbw)
+                                .tint(.mainbw.opacity(0.8))
                             Text("Login With Business")
-                                .font(.footnote)
-                                .tint(.mainbw)
+                                .font(.caption)
+                                .tint(.mainbw.opacity(0.8))
                                 .bold()
                         }
                     }
-
-
+                    
+                    
                 }
                 
                 VStack(spacing: 15.0) {
@@ -117,8 +117,8 @@ struct LoginView: View {
                     } label: {
                         Text("Continue")
                             .goodineButtonStyle(!isACtive ? .gray : .mainbw)
-                                                        
-                            
+                        
+                        
                     }
                     .disabled(!isACtive)
                     
@@ -134,15 +134,22 @@ struct LoginView: View {
                             .foregroundStyle(.mainbw)
                     }
                     .foregroundStyle(.gray)
-                    .font(.caption)
+                    .font(.caption2)
                 }
             }
             .padding()
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
         
         
     }
-
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+    
     
 }
 
