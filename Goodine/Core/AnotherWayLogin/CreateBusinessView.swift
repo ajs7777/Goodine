@@ -82,7 +82,7 @@ struct CreateBusinessView: View {
                         .frame(width: 100, height: 50)
                         .opacity(0.4)
                     HStack(spacing: 0.0){
-                        Text("I accept the")
+                        Text("By clicking, I accept the")
                         Text(" Terms & Conditions ")
                             .fontWeight(.semibold)
                             .foregroundStyle(.mainbw)
