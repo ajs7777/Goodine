@@ -30,7 +30,7 @@ struct BusinessLoginView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    TextField("Enter your password", text: $businessPassword)
+                    SecureField("Enter your password", text: $businessPassword)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)

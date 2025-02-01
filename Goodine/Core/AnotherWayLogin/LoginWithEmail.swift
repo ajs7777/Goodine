@@ -18,11 +18,10 @@ struct LoginWithEmail: View {
     var body: some View {
         NavigationStack {
             VStack{
-                            
                 Image(.loginIllustration)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 300, height: 280)
+                    .frame(width: 300, height: 260)
                 
                 VStack(spacing: 12.0){
                     TextField("Enter your email", text: $email)
@@ -32,7 +31,7 @@ struct LoginWithEmail: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    TextField("Enter your password", text: $password)
+                    SecureField("Enter your password", text: $password)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
