@@ -38,8 +38,8 @@ struct BusinessLoginView: View {
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
                     NavigationLink {
-//                        MainTabView()
-//                            .navigationBarBackButtonHidden()
+                        RestaurantsDetailsForm()
+                            .navigationBarBackButtonHidden()
                     } label: {
                         Text("Log In")
                             .goodineButtonStyle(.mainbw)
