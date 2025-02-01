@@ -18,19 +18,7 @@ struct LoginWithEmail: View {
     var body: some View {
         NavigationStack {
             VStack{
-                HStack{
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "arrow.left")
-                            .tint(.mainbw)
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    Spacer()
-                }
-                
+                            
                 Image(.loginIllustration)
                     .resizable()
                     .scaledToFit()
@@ -107,6 +95,19 @@ struct LoginWithEmail: View {
                     .font(.caption2)
                 }
             }
+            .toolbar(content: {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "arrow.left")
+                            .tint(.mainbw)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            
+                    }
+                }
+            })
             .padding()
             .onTapGesture {
                 hideKeyboard()

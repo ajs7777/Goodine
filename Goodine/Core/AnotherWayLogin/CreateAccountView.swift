@@ -17,20 +17,6 @@ struct CreateAccountView: View {
     var body: some View {
         NavigationStack {
             VStack{
-                //dimiss button
-                HStack{
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .tint(.mainbw)
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    Spacer()
-                }
-                
                 HStack{
                     Image(.goodinetext)
                         .resizable()
@@ -40,14 +26,14 @@ struct CreateAccountView: View {
                     
                     Spacer()
                 }
-                .padding(.top, 40)
+                .padding(.top, 60)
                 
                 VStack(alignment: .leading){
                     Text("Get started on Goodine")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text("Create an accaount to get the best dine in experice, Like never before")
+                    Text("Create an accaount to get the best dine in experice, Like never before.")
                         .font(.footnote)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -69,7 +55,7 @@ struct CreateAccountView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    TextField("Enter your password", text: $password)
+                    SecureField("Enter your password", text: $password)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -86,7 +72,7 @@ struct CreateAccountView: View {
                     .padding(.vertical)
                     
                 }
-                .padding(.top, 30)
+                .padding(.top, 20)
                 
                 Spacer()
                 VStack {
@@ -109,8 +95,28 @@ struct CreateAccountView: View {
                     .font(.caption2)
                 }
             }
+            .toolbar(content: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .tint(.mainbw)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .padding(.trailing, 6)
+                    }
+                }
+            })
             .padding()
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
+    }
+    
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

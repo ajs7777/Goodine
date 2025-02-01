@@ -95,8 +95,9 @@ struct LoginView: View {
 //                    Text("|")
 //                        .font(.caption)
                     
-                    Button {
-                        
+                    NavigationLink {
+                        BusinessLoginView()
+                            .navigationBarBackButtonHidden()
                     } label: {
                         HStack {
                             Image("store")
