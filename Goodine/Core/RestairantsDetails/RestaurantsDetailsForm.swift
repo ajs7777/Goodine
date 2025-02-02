@@ -156,7 +156,8 @@ struct RestaurantsDetailsForm: View {
             Spacer()
             
             NavigationLink {
-                
+                TableSellectionView()
+                    .navigationBarBackButtonHidden()
             } label: {
                 Text("Continue")
                     .goodineButtonStyle(.mainbw)
