@@ -1,5 +1,5 @@
 //
-//  LoginView.swift
+//  LoginWithNumberView.swift
 //  Goodine
 //
 //  Created by Abhijit Saha on 27/01/25.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-struct LoginView: View {
+struct LoginWithNumberView: View {
     
     @State var phoneNumber = ""
     
@@ -158,5 +158,5 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    LoginWithNumberView()
 }
