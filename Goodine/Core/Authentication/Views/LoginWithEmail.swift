@@ -13,7 +13,7 @@ struct LoginWithEmail: View {
     @State var password = ""
     @Environment(\.dismiss) var dismiss
     @State var showAnotherLogin = false
-
+    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
         NavigationStack {
@@ -25,6 +25,7 @@ struct LoginWithEmail: View {
                 
                 VStack(spacing: 12.0){
                     TextField("Enter your email", text: $email)
+                        .autocapitalization(.none)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -38,9 +39,10 @@ struct LoginWithEmail: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    NavigationLink {
-                        MainTabView()
-                            .navigationBarBackButtonHidden()
+                    Button {
+                        Task{
+                            try await viewModel.signIn(email: email, password: password)
+                        }
                     } label: {
                         Text("Log In")
                             .goodineButtonStyle(.mainbw)

@@ -10,6 +10,7 @@ import SwiftUI
 struct ProfileView: View {
     
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
             ScrollView {
@@ -47,7 +48,19 @@ struct ProfileView: View {
                     .padding()
                 }
                 
-                
+                Button{
+                    Task {
+                        try await viewModel.signOut()
+                        
+                    }
+                }label: {
+                    HStack {
+                        Image(systemName: "power")
+                            .foregroundStyle(.red)
+                        Text("Log out")
+                            .foregroundStyle(.red)
+                    } .bold()
+                }
             }
             // for dismiss the screen
 //            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
@@ -75,13 +88,15 @@ extension ProfileView {
     private var userDetails: some View {
         HStack {
             VStack(alignment: .leading){
-                Text("Abhijit Saha")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.mainbw)
-                Text("+91 9876543210")
-                    .foregroundStyle(.gray)
                 
+                if let user = viewModel.currentUser {
+                    Text(user.fullName)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.mainbw)
+                    Text("+91 9876543210")
+                        .foregroundStyle(.gray)
+                }
             }
             Spacer()
             UserCircleImage(size: .large)

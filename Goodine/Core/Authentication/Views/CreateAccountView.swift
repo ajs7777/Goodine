@@ -10,9 +10,10 @@ import SwiftUI
 struct CreateAccountView: View {
     
     @Environment(\.dismiss) var dismiss
-    @State var name = ""
+    @State var fullName = ""
     @State var email = ""
     @State var password = ""
+    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
         NavigationStack {
@@ -41,7 +42,7 @@ struct CreateAccountView: View {
                 //name, email, password
                 VStack(spacing: 12.0){
                     
-                    TextField("Name", text: $name)
+                    TextField("Name", text: $fullName)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -49,6 +50,7 @@ struct CreateAccountView: View {
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
                     TextField("Enter your email", text: $email)
+                        .autocapitalization(.none)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -62,9 +64,10 @@ struct CreateAccountView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    NavigationLink {
-                        LoginWithEmail()
-                            .navigationBarBackButtonHidden()
+                    Button {
+                        Task{
+                            try await viewModel.createUser(email: email, password: password, fullName: fullName)
+                        }
                     } label: {
                         Text("Sign Up")
                             .goodineButtonStyle(.mainbw)
