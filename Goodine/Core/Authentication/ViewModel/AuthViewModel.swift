@@ -31,7 +31,7 @@ class AuthViewModel: ObservableObject {
             let user = User(id: authResult.user.uid, fullName: fullName, email: email)
             let encodedUser = try Firestore.Encoder().encode(user)
             try await Firestore.firestore().collection("users").document(authResult.user.uid).setData(encodedUser)
-
+            //await fetchUserData()
             try await signOut()  // Immediately sign out after account creation
         } catch {
             throw error
