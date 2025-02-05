@@ -13,11 +13,16 @@ import SwiftUI
 class AuthViewModel: ObservableObject {
     @Published var userSession: FirebaseAuth.User?  // Stores the logged-in Firebase user
     @Published var currentUser: User?               // Stores additional user data
+    @Published var currentBusinessUser: BusinessUser?
+    @Published var restaurants: [Restaurant] = []
 
     init() {
         self.userSession = Auth.auth().currentUser  // Check if a user is already logged in
         Task {
             await fetchUserData()
+        }
+        Task {
+            await fetchBusinessUserData()
         }
     }
 
@@ -32,8 +37,27 @@ class AuthViewModel: ObservableObject {
             let encodedUser = try Firestore.Encoder().encode(user)
             try await Firestore.firestore().collection("users").document(authResult.user.uid).setData(encodedUser)
             //await fetchUserData()
+            self.userSession = nil
+            //try await signOut()  // Immediately sign out after account creation
+        } catch {
+            throw error
+        }
+    }
+    
+    func createBusinessUser(email: String, password: String, businessName: String) async throws {
+        do {
+            let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+            self.userSession = authResult.user  // Store user session
+            
+            // Save user info in Firestore
+            let businessUser = BusinessUser(id: authResult.user.uid, email: email, businessName: businessName)
+            let encodedBusinessUser = try Firestore.Encoder().encode(businessUser)
+            try await Firestore.firestore().collection("business_users").document(authResult.user.uid).setData(encodedBusinessUser)
+            await fetchBusinessUserData()
+            print("DEBUG: User created successfully!")
             try await signOut()  // Immediately sign out after account creation
         } catch {
+            print("DUBUG: Error creating user: \(error)")
             throw error
         }
     }
@@ -45,6 +69,18 @@ class AuthViewModel: ObservableObject {
             self.userSession = authResult.user  // Store user session
             await fetchUserData()
         } catch {
+            print("DEBUG: Error signing in user: \(error)")
+            throw error            
+        }
+    }
+    
+    func businessSignIn(email: String, password: String) async throws {
+        do {
+            let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
+            self.userSession = authResult.user  // Store user session
+            await fetchBusinessUserData()
+        } catch {
+            print("DEBUG: Error signing in user: \(error)")
             throw error
         }
     }
@@ -58,6 +94,16 @@ class AuthViewModel: ObservableObject {
         print("Error fetching user data: \(String(describing: self.currentUser))")
         
     }
+    
+    func fetchBusinessUserData() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let snapshot = try? await Firestore.firestore().collection("business_users").document(uid).getDocument() else { return }
+        self.currentBusinessUser = try? snapshot.data(as: BusinessUser.self)
+        
+        print("Error fetching user data: \(String(describing: self.currentBusinessUser))")
+        
+    }
+    
 
     // MARK: - Sign Out
     func signOut() async throws {
@@ -65,8 +111,57 @@ class AuthViewModel: ObservableObject {
             try Auth.auth().signOut()
             self.userSession = nil
             self.currentUser = nil
+            self.currentBusinessUser = nil
         } catch {
             throw error
+        }
+    }
+    
+    func saveRestaurantDetails(restaurant: Restaurant) async throws {
+        guard let userId = userSession?.uid else { return }
+
+        let restaurantData: [String: Any] = [
+            "restaurantName": restaurant.restaurantName,
+            "restaurantType": restaurant.restaurantType,
+            "restaurantAddress": restaurant.restaurantAddress,
+            "restaurantState": restaurant.restaurantState,
+            "restaurantCity": restaurant.restaurantCity,
+            "restaurantZipCode": restaurant.restaurantZipCode,
+            "restaurantAverageCost": restaurant.restaurantAverageCost,
+            "startTime": restaurant.startTime,
+            "endTime": restaurant.endTime,
+            "userId": userId // Linking restaurant data to the logged-in user
+        ]
+
+        try await Firestore.firestore().collection("restaurants").document(userId).setData(restaurantData)
+    }
+    
+
+    // Fetch all restaurants
+    func fetchRestaurants() async {
+        do {
+            let snapshot = try await Firestore.firestore().collection("restaurants").getDocuments()
+            self.restaurants = snapshot.documents.compactMap { document in
+                try? document.data(as: Restaurant.self)
+            }
+        } catch {
+            print("Error fetching restaurants: \(error.localizedDescription)")
+        }
+    }
+
+    // Fetch restaurants added by a specific user
+    func fetchUserRestaurants(userId: String) async {
+        do {
+            let snapshot = try await Firestore.firestore()
+                .collection("restaurants")
+                .whereField("userId", isEqualTo: userId)
+                .getDocuments()
+            
+            self.restaurants = snapshot.documents.compactMap { document in
+                try? document.data(as: Restaurant.self)
+            }
+        } catch {
+            print("Error fetching user-specific restaurants: \(error.localizedDescription)")
         }
     }
 }
