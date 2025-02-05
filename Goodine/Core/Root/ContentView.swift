@@ -13,11 +13,13 @@ struct ContentView: View {
     
     var body: some View {
         Group{
-            if viewModel.userSession != nil {
+            if viewModel.currentUser != nil {
                 MainTabView()
-                    } else {
-                        LoginWithNumberView()
-                    }
+            } else if viewModel.currentBusinessUser != nil {
+                RestaurantTabView()
+            } else {
+                LoginWithNumberView()
+            }
         }
     }
 }
@@ -25,3 +27,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
+
+
