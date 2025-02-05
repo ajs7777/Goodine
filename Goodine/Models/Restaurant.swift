@@ -1,7 +1,16 @@
+//
+//  Restaurant.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 04/02/25.
+//
+
+
 import Foundation
+import FirebaseFirestore
 
 struct Restaurant: Identifiable, Codable {
-    var id: String = UUID().uuidString
+    @DocumentID var id: String?
     var restaurantName: String
     var restaurantType: String
     var restaurantAddress: String
