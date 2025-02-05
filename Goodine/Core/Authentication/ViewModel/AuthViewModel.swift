@@ -8,6 +8,7 @@
 import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
+import FirebaseStorage
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -15,6 +16,7 @@ class AuthViewModel: ObservableObject {
     @Published var currentUser: User?               // Stores additional user data
     @Published var currentBusinessUser: BusinessUser?
     @Published var restaurants: [Restaurant] = []
+    @Published var isLoading = false
 
     init() {
         self.userSession = Auth.auth().currentUser  // Check if a user is already logged in
@@ -117,8 +119,14 @@ class AuthViewModel: ObservableObject {
         }
     }
     
-    func saveRestaurantDetails(restaurant: Restaurant) async throws {
+    func saveRestaurantDetails(restaurant: Restaurant, images: [UIImage]) async throws {
         guard let userId = userSession?.uid else { return }
+
+        
+        isLoading = true  // Show loading indicator
+        
+        do {
+                let imageURLs = try await uploadImages(images: images)  // Upload all images
 
         let restaurantData: [String: Any] = [
             "restaurantName": restaurant.restaurantName,
@@ -130,10 +138,19 @@ class AuthViewModel: ObservableObject {
             "restaurantAverageCost": restaurant.restaurantAverageCost,
             "startTime": restaurant.startTime,
             "endTime": restaurant.endTime,
-            "userId": userId // Linking restaurant data to the logged-in user
+            "userId": userId, // Linking restaurant data to the logged-in user
+            "imageURLs": imageURLs  // Store multiple image URLs in Firestore
         ]
 
         try await Firestore.firestore().collection("restaurants").document(userId).setData(restaurantData)
+            
+            isLoading = false  // Hide loading indicator
+                    
+                } catch {
+                    isLoading = false
+                    print("Error saving restaurant: \(error.localizedDescription)")
+                    throw error
+                }
     }
     
 
@@ -164,5 +181,26 @@ class AuthViewModel: ObservableObject {
             print("Error fetching user-specific restaurants: \(error.localizedDescription)")
         }
     }
+    
+    func uploadImages(images: [UIImage]) async throws -> [String] {
+        var imageURLs: [String] = []
+        
+        let storageRef = Storage.storage().reference()
+        
+        for image in images {
+            guard let imageData = image.jpegData(compressionQuality: 0.7) else { continue }
+            
+            let imagePath = "restaurant_images/\(UUID().uuidString).jpg"
+            let imageRef = storageRef.child(imagePath)
+            
+            let _ = try await imageRef.putDataAsync(imageData)  // Upload image
+            let imageURL = try await imageRef.downloadURL()  // Get download URL
+            
+            imageURLs.append(imageURL.absoluteString)
+        }
+        
+        return imageURLs
+    }
+
 }
 
