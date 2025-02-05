@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
@@ -57,8 +58,14 @@ extension RestaurantProfile {
         
     private var restaurantsImages : some View {
         TabView {
-            ForEach(0..<5) { image in
-                Image("restaurant-2")
+            ForEach(viewModel.restaurants) { restaurant in
+                if let imageUrls = restaurant.imageURLs, !imageUrls.isEmpty {
+                    ForEach(imageUrls, id: \.self) { imageUrl in
+                        KFImage(URL(string: imageUrl))
+                    }
+                        
+                }
+                
             }
             
         }
