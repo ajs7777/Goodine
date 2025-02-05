@@ -18,6 +18,9 @@ struct RestaurantsDetailsForm: View {
     @State var restaurantAverageCost = ""
     @State var startTime = Date()
     @State var endTime = Date()
+    @State private var selectedImages: [UIImage] = []
+    @State private var showImagePicker = false
+    
     
     var body: some View {
         NavigationStack {
@@ -147,10 +150,32 @@ struct RestaurantsDetailsForm: View {
                     Divider()
                         .padding(.top)
                     
+                    ScrollView(.horizontal) {
+                        HStack {
+                            ForEach(selectedImages, id: \.self) { image in
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            
+                            Button(action: { showImagePicker.toggle() }) {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
+                                    .foregroundColor(.gray)
+                                    .padding(80)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                        }
+                    }
                     
                     
                     
                 }
+                .scrollIndicators(.hidden)
                 .padding(.horizontal)
                 .navigationTitle(Text("Hotel Details"))
                 
@@ -171,6 +196,9 @@ struct RestaurantsDetailsForm: View {
                 self.hideKeyboard()
             }
         }
+        .sheet(isPresented: $showImagePicker) {
+            RestaurantImagePicker(selectedImages: $selectedImages)
+        }
     }
     
     private func saveRestaurant() async {
@@ -187,7 +215,7 @@ struct RestaurantsDetailsForm: View {
         )
         
         do {
-            try await viewModel.saveRestaurantDetails(restaurant: restaurant)
+            try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
             restaurantName = ""
             restaurantType = ""
             restaurantAddress = ""
