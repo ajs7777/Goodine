@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct TableView: View {
+    
+    @EnvironmentObject var viewModel : AuthViewModel
     @State private var rows: Int = 4
     @State private var columns: Int = 2
     
@@ -136,7 +138,7 @@ struct TableView: View {
             .padding(.vertical, 50)
             
             Button{
-                
+               
             }label: {
                 Text("Done")
                     .goodineButtonStyle(.mainbw)

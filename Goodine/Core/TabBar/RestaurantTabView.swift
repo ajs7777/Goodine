@@ -9,7 +9,27 @@ import SwiftUI
 
 struct RestaurantTabView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        TabView{
+            RestaurantProfile()
+                .tabItem {
+                    Image(systemName: "fork.knife")
+                    Text("Profile")
+                }
+            
+            TableView()
+                .tabItem {
+                    Image(systemName: "table.furniture.fill")
+                        .imageScale(.large)
+                    Text("Table")
+                }
+            
+            Text("Order History")
+                .tabItem {
+                    Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                    Text("History")
+                }
+        }
+        .tint(.mainbw)
     }
 }
 
