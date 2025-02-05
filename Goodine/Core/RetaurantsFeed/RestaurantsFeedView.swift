@@ -13,6 +13,7 @@ struct RestaurantsFeedView: View {
     
     @State private var selectedPage = 0
     @State private var searchText = ""
+    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
         VStack {
@@ -24,10 +25,13 @@ struct RestaurantsFeedView: View {
                     discountSection
                     MustTryPlaces()
                     restaurantsSection
-                        
-                }               
+                    
+                }
                 
             }
+        }
+        .task {
+            await viewModel.fetchRestaurants()
         }
     }
 }
@@ -51,7 +55,7 @@ extension RestaurantsFeedView {
                     Image(systemName: "chevron.down")
                         .font(.footnote)
                         .fontWeight(.semibold)
-                        
+                    
                 }
             }
             Spacer()
@@ -60,7 +64,7 @@ extension RestaurantsFeedView {
                     .navigationBarBackButtonHidden()
             } label: {
                 UserCircleImage(size: .small)
-
+                
             }
         } .padding(.horizontal)
     }
@@ -96,7 +100,7 @@ extension RestaurantsFeedView {
                     .tint(.mainbw)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.trailing, 18)
-
+                    
                 }
         }
         .padding(.horizontal)
@@ -105,26 +109,26 @@ extension RestaurantsFeedView {
     
     private var categoriesSection : some View {
         Grid(horizontalSpacing: 20, verticalSpacing: 18) {
-                ForEach(0..<2) { row in
-                    GridRow {
-                        ForEach(0..<4) { column in
-                            VStack(spacing: 5.0){
-                                Image("nonveg")
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 75, height: 75)
-                                    .clipShape(Circle())
-                                Text("Non Veg")
-                                    .font(.footnote)
-                                    .fontWeight(.medium)
-                            }
+            ForEach(0..<2) { row in
+                GridRow {
+                    ForEach(0..<4) { column in
+                        VStack(spacing: 5.0){
+                            Image("nonveg")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 75, height: 75)
+                                .clipShape(Circle())
+                            Text("Non Veg")
+                                .font(.footnote)
+                                .fontWeight(.medium)
                         }
                     }
                 }
+            }
         }
         .padding(.horizontal)
         .padding(.bottom, 10)
-       
+        
     }
     
     private var discountSection: some View {
@@ -149,10 +153,10 @@ extension RestaurantsFeedView {
             }
         }
         .onReceive(timer) { _ in
-                    withAnimation(.easeInOut) {
-                        selectedPage = (selectedPage + 1) % 3
-                    }
-                }
+            withAnimation(.easeInOut) {
+                selectedPage = (selectedPage + 1) % 3
+            }
+        }
         
     }
     
@@ -162,18 +166,18 @@ extension RestaurantsFeedView {
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.leading)
-        
-            ForEach(0 ... 20, id: \.self) { restaurant in
+            
+            ForEach(viewModel.restaurants) { restaurant in
                 NavigationLink(
                     destination: RestaurantDetailView()
                         .navigationBarBackButtonHidden()
-
+                    
                 ) {
-                    RestaurantsView()
+                    RestaurantsView( restaurant: [restaurant])
                         .tint(.primary)
                 }
-                                                           
-        }
+                
+            }
         }
         .padding(.top, 20)
         

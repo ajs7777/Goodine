@@ -10,6 +10,7 @@ import SwiftUI
 struct RestaurantsView: View {
     
     @State var isFavorite: Bool = false
+    let restaurant: [Restaurant]
     
     var body: some View {
         VStack(spacing: 15.0){
@@ -22,15 +23,15 @@ struct RestaurantsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 15))
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Limelight - Royal Orchid Hotel")
+                    Text(restaurant.first?.restaurantName ?? "")
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .font(.headline)
                         .bold()
-                    Text("North Indian | Continental")
+                    Text(restaurant.first?.restaurantType ?? "")
                         .foregroundStyle(.primary)
                         .font(.footnote)
-                    Text("BTM Layout")
+                    Text(restaurant.first?.restaurantCity ?? "")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -75,9 +76,10 @@ struct RestaurantsView: View {
                 }
             
         }
+        
     }
 }
 
 #Preview {
-    RestaurantsView()
+    RestaurantsView( restaurant: [Restaurant(restaurantName: "Orchid Hotel", restaurantType: "Indian", restaurantAddress: "Airport Road", restaurantState: "Tripura", restaurantCity: "Agartala", restaurantZipCode: "799009", restaurantAverageCost: "2000", startTime: Date(), endTime: Date())])
 }

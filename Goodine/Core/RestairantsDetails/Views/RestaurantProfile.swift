@@ -11,6 +11,7 @@ struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
     @State var isFavorite: Bool = false
     @State var showEditProfile : Bool = false
+    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
         ScrollView {
@@ -19,6 +20,16 @@ struct RestaurantProfile: View {
                 restaurantInfo
                 locationTime
                 featuresSection
+                
+                Button{
+                    Task{
+                        try await viewModel.signOut()
+                    }
+                }label: {
+                    Text("Log Out")
+                        .foregroundStyle(.red)
+                }
+                .padding(.bottom, 120)
             }
             
         }
@@ -27,6 +38,12 @@ struct RestaurantProfile: View {
         .sheet(isPresented: $showEditProfile, content: {
             RestaurantsDetailsForm()
         })
+        .task {
+            if let userId = viewModel.userSession?.uid {
+                await viewModel.fetchUserRestaurants(userId: userId)
+            }
+        }
+
         
     }
 }
@@ -74,16 +91,16 @@ extension RestaurantProfile {
             }
             
             //Hotel name
-            Text("Limelight - Royal Orchid Hotel")
+            Text(viewModel.restaurants.first?.restaurantName ?? "")
                 .foregroundStyle(.mainbw)
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
             HStack{
                 VStack(alignment: .leading){
-                    Text("Continental | Indian | Chinese")
+                    Text(viewModel.restaurants.first?.restaurantType ?? "")
                         .foregroundStyle(.mainbw)
-                    Text("Indiranagar | 2 Km")
+                    Text("\(viewModel.restaurants.first?.restaurantCity ?? "") | 2 Km")
                         .foregroundStyle(.secondary)
                  }
                 
@@ -99,7 +116,7 @@ extension RestaurantProfile {
                     }
                     .font(.callout)
                     
-                    Text("₹ 2000 for two")
+                    Text("₹ \(viewModel.restaurants.first?.restaurantAverageCost ?? "") for two")
                         .foregroundStyle(.mainbw)
                         .font(.callout)
                  }
@@ -125,7 +142,7 @@ extension RestaurantProfile {
                     .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
-                Text("No.1, golf Avenue, HAL Old Airport Rd, Indiranagar, Bengaluru, Karnataka")
+                Text(viewModel.restaurants.first?.restaurantAddress ?? "")
                     .foregroundStyle(.mainbw)
                     .font(.subheadline)
                 Spacer()
@@ -137,7 +154,7 @@ extension RestaurantProfile {
                     .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
-                Text("12:00 PM - 11:00 PM")
+                Text("\(viewModel.restaurants.first?.startTime.formattedTime() ?? Date().formattedTime()) - \(viewModel.restaurants.first?.endTime.formattedTime() ?? Date().formattedTime())")
                     .foregroundStyle(.mainbw)
                 Spacer()
             }
@@ -173,6 +190,17 @@ extension RestaurantProfile {
             }
         }
         .padding(.horizontal)
-        .padding(.bottom, 150)
+        .padding(.bottom, 30)
     }
 }
+
+extension Date {
+    func formattedTime() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "hh:mm a" // 12-hour format with AM/PM
+        formatter.amSymbol = "AM"
+        formatter.pmSymbol = "PM"
+        return formatter.string(from: self)
+    }
+}
+
