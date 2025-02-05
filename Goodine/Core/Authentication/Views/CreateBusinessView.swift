@@ -13,6 +13,8 @@ struct CreateBusinessView: View {
     @State var businessName = ""
     @State var businessEmail = ""
     @State var businessPassword = ""
+    @EnvironmentObject var viewModel : AuthViewModel
+
     
     var body: some View {
         NavigationStack {
@@ -49,6 +51,7 @@ struct CreateBusinessView: View {
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
                     TextField("Enter your email", text: $businessEmail)
+                        .autocapitalization(.none)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -62,9 +65,11 @@ struct CreateBusinessView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    NavigationLink {
-                        BusinessLoginView()
-                            .navigationBarBackButtonHidden()
+                    Button {
+                        Task{
+                            try await viewModel.createBusinessUser(email: businessEmail, password: businessPassword, businessName: businessName)
+                        }
+                        dismiss()
                     } label: {
                         Text("Sign Up")
                             .goodineButtonStyle(.mainbw)

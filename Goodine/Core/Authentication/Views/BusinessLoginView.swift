@@ -13,6 +13,7 @@ struct BusinessLoginView: View {
     @State var businessPassword = ""
     @Environment(\.dismiss) var dismiss
     @State var showBusinessLogin = false
+    @EnvironmentObject var viewModel : AuthViewModel
 
     var body: some View {
         NavigationStack {
@@ -24,6 +25,7 @@ struct BusinessLoginView: View {
                 
                 VStack(spacing: 12.0){
                     TextField("Enter your email", text: $businessEmail)
+                        .autocapitalization(.none)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -37,9 +39,10 @@ struct BusinessLoginView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    NavigationLink {
-                        RestaurantsDetailsForm()
-                            .navigationBarBackButtonHidden()
+                    Button {
+                        Task{
+                            try await viewModel.businessSignIn(email: businessEmail, password: businessPassword)
+                        }
                     } label: {
                         Text("Log In")
                             .goodineButtonStyle(.mainbw)
