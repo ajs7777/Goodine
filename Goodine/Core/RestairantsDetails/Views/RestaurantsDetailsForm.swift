@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct RestaurantsDetailsForm: View {
     
@@ -154,6 +155,15 @@ struct RestaurantsDetailsForm: View {
                     
                     ScrollView(.horizontal) {
                         HStack {
+                            Button(action: { showImagePicker.toggle() }) {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
+                                    .foregroundColor(.gray)
+                                    .padding(30)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
                             ForEach(selectedImages, id: \.self) { image in
                                 Image(uiImage: image)
                                     .resizable()
@@ -162,15 +172,7 @@ struct RestaurantsDetailsForm: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
                             
-                            Button(action: { showImagePicker.toggle() }) {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .frame(width: 40, height: 40)
-                                    .foregroundColor(.gray)
-                                    .padding(80)
-                                    .background(Color(.systemGray5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
+                            
                         }
                     }
                     
