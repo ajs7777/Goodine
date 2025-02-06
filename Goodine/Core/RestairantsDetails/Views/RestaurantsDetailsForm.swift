@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct RestaurantsDetailsForm: View {
+    
     @EnvironmentObject var viewModel : AuthViewModel
+    @Environment(\.dismiss) var dismiss
     @State var restaurantName = ""
     @State var restaurantType = ""
     @State var restaurantAddress = ""
@@ -185,6 +187,7 @@ struct RestaurantsDetailsForm: View {
                     Task {
                         await saveRestaurant()
                     }
+                    dismiss()
                 } label: {
                     Text("Continue")
                         .goodineButtonStyle(.mainbw)
@@ -216,15 +219,7 @@ struct RestaurantsDetailsForm: View {
         
         do {
             try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
-            restaurantName = ""
-            restaurantType = ""
-            restaurantAddress = ""
-            restaurantState = ""
-            restaurantCity = ""
-            restaurantZipCode = ""
-            restaurantAverageCost = ""
-            startTime = Date()
-            endTime = Date()
+
             print("Restaurant details saved successfully!")
         } catch {
             print("Error saving restaurant details: \(error.localizedDescription)")

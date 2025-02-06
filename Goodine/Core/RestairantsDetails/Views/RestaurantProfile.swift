@@ -17,7 +17,18 @@ struct RestaurantProfile: View {
     var body: some View {
         ScrollView {
             VStack{
-                restaurantsImages
+                ForEach(viewModel.restaurants) { restaurant in
+                    if let imageURLs = restaurant.imageURLs, !imageURLs.isEmpty {
+                                    restaurantsImages(imageURLs)  // Pass image URLs here
+                                } else {
+                                    Image(systemName: "photo")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 250)
+                                        .foregroundColor(.gray)
+                                }
+                }
+                
                 restaurantInfo
                 locationTime
                 featuresSection
@@ -56,22 +67,18 @@ struct RestaurantProfile: View {
 
 extension RestaurantProfile {
         
-    private var restaurantsImages : some View {
-        TabView {
-            ForEach(viewModel.restaurants) { restaurant in
-                if let imageUrls = restaurant.imageURLs, !imageUrls.isEmpty {
-                    ForEach(imageUrls, id: \.self) { imageUrl in
-                        KFImage(URL(string: imageUrl))
-                    }
-                        
+    private func restaurantsImages(_ imageURLs: [String]) -> some View {
+            TabView {
+                ForEach(imageURLs, id: \.self) { imageUrl in
+                    KFImage(URL(string: imageUrl))
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 250)
                 }
-                
             }
-            
+            .frame(height: 250)
+            .tabViewStyle(PageTabViewStyle())
         }
-        .frame(height: 250)
-        .tabViewStyle(PageTabViewStyle())
-    }
     
     private var restaurantInfo : some View {
         VStack(alignment: .leading, spacing: 8){
