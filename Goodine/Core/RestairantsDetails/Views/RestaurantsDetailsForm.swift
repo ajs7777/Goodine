@@ -195,9 +195,8 @@ struct RestaurantsDetailsForm: View {
                 .padding(.horizontal)
                 .padding(.bottom, 5)
             }
-            .onTapGesture {
-                self.hideKeyboard()
-            }
+            .onTapGesture { self.hideKeyboard()}
+            .onAppear { loadSavedRestaurant() }
         }
         .sheet(isPresented: $showImagePicker) {
             RestaurantImagePicker(selectedImages: $selectedImages)
@@ -216,13 +215,32 @@ struct RestaurantsDetailsForm: View {
             startTime: startTime,
             endTime: endTime
         )
-        
+        CoreDataManager.shared.saveRestaurant(restaurant: restaurant, images: selectedImages)
         do {
             try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
 
             print("Restaurant details saved successfully!")
         } catch {
             print("Error saving restaurant details: \(error.localizedDescription)")
+        }
+    }
+    
+    private func loadSavedRestaurant() {
+        if let savedRestaurant = CoreDataManager.shared.fetchRestaurant() {
+            restaurantName = savedRestaurant.restaurantName ?? ""
+            restaurantType = savedRestaurant.restaurantType ?? ""
+            restaurantAddress = savedRestaurant.restaurantAddress ?? ""
+            restaurantState = savedRestaurant.restaurantState ?? ""
+            restaurantCity = savedRestaurant.restaurantCity ?? ""
+            restaurantZipCode = savedRestaurant.restaurantZipCode ?? ""
+            restaurantAverageCost = savedRestaurant.restaurantAverageCost ?? ""
+            startTime = savedRestaurant.startTime ?? Date()
+            endTime = savedRestaurant.endTime ?? Date()
+
+            if let imageData = savedRestaurant.images,
+               let imagesArray = try? JSONDecoder().decode([Data].self, from: imageData) {
+                selectedImages = imagesArray.compactMap { UIImage(data: $0) }
+            }
         }
     }
     

@@ -1,3 +1,11 @@
+//
+//  CoreDataManager.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 06/02/25.
+//
+
+
 import CoreData
 import UIKit
 
