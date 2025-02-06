@@ -217,7 +217,7 @@ struct RestaurantsDetailsForm: View {
             startTime: startTime,
             endTime: endTime
         )
-        CoreDataManager.shared.saveRestaurant(restaurant: restaurant, images: selectedImages)
+        
         do {
             try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
 
@@ -225,6 +225,7 @@ struct RestaurantsDetailsForm: View {
         } catch {
             print("Error saving restaurant details: \(error.localizedDescription)")
         }
+        CoreDataManager.shared.saveRestaurant(restaurant: restaurant, images: selectedImages)
     }
     
     private func loadSavedRestaurant() {
