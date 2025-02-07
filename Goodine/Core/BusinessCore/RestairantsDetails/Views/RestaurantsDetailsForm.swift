@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import CoreData
 
 struct RestaurantsDetailsForm: View {
     
@@ -23,7 +22,6 @@ struct RestaurantsDetailsForm: View {
     @State var endTime = Date()
     @State private var selectedImages: [UIImage] = []
     @State private var showImagePicker = false
-    
     
     var body: some View {
         NavigationStack {
@@ -95,7 +93,7 @@ struct RestaurantsDetailsForm: View {
                             )
                         
                         Button{
-                            
+
                         } label: {
                             HStack{
                                 Image(systemName: "dot.scope")
@@ -116,6 +114,7 @@ struct RestaurantsDetailsForm: View {
                         Text("Average Cost for two")
                             .font(.headline)
                         TextField("₹", text: $restaurantAverageCost)
+                            .keyboardType(.numberPad)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 45)
@@ -171,13 +170,8 @@ struct RestaurantsDetailsForm: View {
                                     .frame(width: 100, height: 100)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
-                            
-                            
                         }
                     }
-                    
-                    
-                    
                 }
                 .scrollIndicators(.hidden)
                 .padding(.horizontal)
@@ -197,13 +191,14 @@ struct RestaurantsDetailsForm: View {
                 .padding(.horizontal)
                 .padding(.bottom, 5)
             }
+            
             .onTapGesture { self.hideKeyboard()}
-            .onAppear { loadSavedRestaurant() }
         }
         .sheet(isPresented: $showImagePicker) {
             RestaurantImagePicker(selectedImages: $selectedImages)
         }
     }
+    
     
     private func saveRestaurant() async {
         let restaurant = Restaurant(
@@ -220,32 +215,13 @@ struct RestaurantsDetailsForm: View {
         
         do {
             try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
-
+                       
             print("Restaurant details saved successfully!")
         } catch {
             print("Error saving restaurant details: \(error.localizedDescription)")
         }
-        CoreDataManager.shared.saveRestaurant(restaurant: restaurant, images: selectedImages)
     }
     
-    private func loadSavedRestaurant() {
-        if let savedRestaurant = CoreDataManager.shared.fetchRestaurant() {
-            restaurantName = savedRestaurant.restaurantName ?? ""
-            restaurantType = savedRestaurant.restaurantType ?? ""
-            restaurantAddress = savedRestaurant.restaurantAddress ?? ""
-            restaurantState = savedRestaurant.restaurantState ?? ""
-            restaurantCity = savedRestaurant.restaurantCity ?? ""
-            restaurantZipCode = savedRestaurant.restaurantZipCode ?? ""
-            restaurantAverageCost = savedRestaurant.restaurantAverageCost ?? ""
-            startTime = savedRestaurant.startTime ?? Date()
-            endTime = savedRestaurant.endTime ?? Date()
-
-            if let imageData = savedRestaurant.images,
-               let imagesArray = try? JSONDecoder().decode([Data].self, from: imageData) {
-                selectedImages = imagesArray.compactMap { UIImage(data: $0) }
-            }
-        }
-    }
     
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

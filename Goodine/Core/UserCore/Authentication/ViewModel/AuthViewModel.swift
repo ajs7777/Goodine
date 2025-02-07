@@ -70,6 +70,7 @@ class AuthViewModel: ObservableObject {
             let authResult = try await Auth.auth().signIn(withEmail: email, password: password)
             self.userSession = authResult.user  // Store user session
             await fetchUserData()
+            await fetchUserRestaurants(userId: authResult.user.uid)
         } catch {
             print("DEBUG: Error signing in user: \(error)")
             throw error            

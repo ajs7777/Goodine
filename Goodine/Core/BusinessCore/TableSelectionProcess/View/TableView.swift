@@ -34,6 +34,7 @@ struct TableView: View {
     
     
     var body: some View {
+        NavigationStack{
         VStack {
             // Controls for selecting rows and columns
             
@@ -144,6 +145,9 @@ struct TableView: View {
                     .goodineButtonStyle(.mainbw)
             }.padding()
         }
+        }
+        .navigationTitle(Text("Table Selection"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
