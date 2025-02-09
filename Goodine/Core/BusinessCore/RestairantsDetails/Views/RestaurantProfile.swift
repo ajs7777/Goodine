@@ -10,53 +10,169 @@ import Kingfisher
 
 struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
-    @State var isFavorite: Bool = false
+    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
+//    @EnvironmentObject var restaurantVM : RestaurantsDetailsViewModel
     @State var showEditProfile : Bool = false
-    @EnvironmentObject var viewModel : AuthViewModel
     
     var body: some View {
         ScrollView {
-            VStack{
-                ForEach(viewModel.restaurants) { restaurant in
-                    if let imageURLs = restaurant.imageURLs, !imageURLs.isEmpty {
-                                    restaurantsImages(imageURLs)  // Pass image URLs here
-                                } else {
-                                    Image(systemName: "photo")
+                if let restaurant = businessAuthMV.restaurant {
+                    VStack(alignment: .leading) {
+                        TabView {
+                            if restaurant.imageUrl.isEmpty {
+                                Image(systemName: "photo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 50)
+                                    .foregroundStyle(.gray.opacity(0.6))
+                            } else {
+                                KFImage(URL(string: restaurant.imageUrl))
                                         .resizable()
-                                        .scaledToFit()
+                                        .scaledToFill()
                                         .frame(height: 250)
-                                        .foregroundColor(.gray)
+                                        .clipped()
+                                
+                            }
+                        }
+                        .frame(height: 250)
+                        .tabViewStyle(PageTabViewStyle())
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Open Now")
+                                    .foregroundStyle(.black.opacity(0.8))
+                                    .font(.callout)
+                                    .fontWeight(.semibold)
+                                    .padding(7)
+                                    .background(.openGreen)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                
+                                Spacer()
+                                Button {
+                                    showEditProfile.toggle()
+                                } label: {
+                                    Text("Edit Profile")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.mainbw)
                                 }
-                }
-                
-                restaurantInfo
-                locationTime
-                featuresSection
-                
-                Button{
-                    Task{
-                        try await viewModel.signOut()
+                                .buttonStyle(BorderedButtonStyle())
+                            }
+                            
+                            Text(restaurant.name)
+                                .foregroundStyle(.mainbw)
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                            
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(restaurant.type)
+                                        .foregroundStyle(.mainbw)
+                                    Text("\(restaurant.city) | 2 Km")
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing, spacing: 8.0) {
+                                    HStack(alignment: .center, spacing: 3.0) {
+                                        Image(systemName: "star.fill")
+                                            .foregroundStyle(.yellow)
+                                            .font(.footnote)
+                                        Text("4.5(3k Ratings)")
+                                            .foregroundStyle(.mainbw)
+                                    }
+                                    .font(.callout)
+                                    
+                                    Text("₹\(restaurant.averageCost) for two")
+                                        .foregroundStyle(.mainbw)
+                                        .font(.callout)
+                                }
+                            }
+                            .padding(.bottom)
+                            
+                            Divider()
+                        }
+                        .padding(.top, 8)
+                        .padding(.horizontal)
+                        
+                        VStack(alignment: .leading, spacing: 20.0) {
+                            Text("Location")
+                                .foregroundStyle(.mainbw)
+                                .font(.title)
+                                .fontWeight(.bold)
+                            
+                            HStack(alignment: .top, spacing: 20.0) {
+                                Image(systemName: "location.circle")
+                                    .foregroundStyle(.mainbw)
+                                    .font(.title2)
+                                    .fontWeight(.medium)
+                                Text(restaurant.address)
+                                    .foregroundStyle(.mainbw)
+                                    .font(.subheadline)
+                                Spacer()
+                            }
+                            
+                            HStack(alignment: .top, spacing: 20.0) {
+                                Image(systemName: "clock")
+                                    .foregroundStyle(.mainbw)
+                                    .font(.title2)
+                                    .fontWeight(.medium)
+                                
+                                Text("\(restaurant.openingTime.formattedTime()) - \(restaurant.closingTime.formattedTime())")
+                                    .foregroundStyle(.mainbw)
+                                
+                                Spacer()
+                            }
+                            
+                            Divider()
+                        }
+                        .padding()
+                        
+                        VStack(alignment: .leading, spacing: 20.0) {
+                            Text("Features")
+                                .foregroundStyle(.mainbw)
+                                .font(.title)
+                                .fontWeight(.bold)
+                            
+                            HStack {
+                                Text("Reservation Available")
+                                    .foregroundStyle(.mainbw)
+                                    .fontWeight(.medium)
+                                    .padding(10)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                Text("Parking Available")
+                                    .foregroundStyle(.mainbw)
+                                    .fontWeight(.medium)
+                                    .padding(10)
+                                    .background(Color(.systemGray5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 30)
                     }
-                }label: {
-                    Text("Log Out")
-                        .foregroundStyle(.red)
+                } else {
+                    ProgressView()
+                        .onAppear {
+                        Task { await businessAuthMV.fetchUserDetails() }
+                    }
                 }
-                .padding(.bottom, 120)
+            Button{
+                Task{
+                    try businessAuthMV.signOut()
+                }
+            }label: {
+                Text("Log Out")
+                    .foregroundStyle(.red)
             }
-            
+            .padding(.bottom, 120)
         }
         .ignoresSafeArea()
-        // book a table button works as sheet
-        .sheet(isPresented: $showEditProfile, content: {
+        .sheet(isPresented: $showEditProfile) {
             RestaurantsDetailsForm()
-        })
-        .task {
-            if let userId = viewModel.userSession?.uid {
-                await viewModel.fetchUserRestaurants(userId: userId)
-            }
         }
-
-        
     }
 }
 
@@ -64,157 +180,40 @@ struct RestaurantProfile: View {
     RestaurantProfile()
 }
 
+//extension RestaurantProfile {
+    
+//    private func restaurantImages(_ imageURLs: [String]) -> some View {
+//        TabView {
+//            if imageURLs.isEmpty {
+//                Image(systemName: "photo")
+//                    .resizable()
+//                    .scaledToFit()
+//                    .frame(height: 50)
+//                    .foregroundStyle(.gray.opacity(0.6))
+//            } else {
+//                ForEach(imageURLs, id: \.self) { imageUrl in
+//                    KFImage(URL(string: imageUrl))
+//                        .resizable()
+//                        .scaledToFill()
+//                        .frame(height: 250)
+//                        .clipped()
+//                }
+//            }
+//        }
+//        .frame(height: 250)
+//        .tabViewStyle(PageTabViewStyle())
+//    }
 
-extension RestaurantProfile {
-        
-    private func restaurantsImages(_ imageURLs: [String]) -> some View {
-            TabView {
-                ForEach(imageURLs, id: \.self) { imageUrl in
-                    KFImage(URL(string: imageUrl))
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 250)
-                }
-            }
-            .frame(height: 250)
-            .tabViewStyle(PageTabViewStyle())
-        }
-    
-    private var restaurantInfo : some View {
-        VStack(alignment: .leading, spacing: 8){
-            //open /c lose
-            HStack{
-                Text("Open Now")
-                    .foregroundStyle(.black.opacity(0.8))
-                    .font(.callout)
-                    .fontWeight(.semibold)
-                    .padding(7)
-                    .background(.openGreen)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                
-                Spacer()
-                Button {
-                    showEditProfile.toggle()
-                } label: {
-                    Text("Edit Profile")
-                        .font(.subheadline)
-                        
-                }
-                .buttonStyle(BorderedButtonStyle())
-
-            }
-            
-            //Hotel name
-            Text(viewModel.restaurants.first?.restaurantName ?? "")
-                .foregroundStyle(.mainbw)
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            HStack{
-                VStack(alignment: .leading){
-                    Text(viewModel.restaurants.first?.restaurantType ?? "")
-                        .foregroundStyle(.mainbw)
-                    Text("\(viewModel.restaurants.first?.restaurantCity ?? "") | 2 Km")
-                        .foregroundStyle(.secondary)
-                 }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 8.0){
-                    HStack(alignment: .center, spacing: 3.0) {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(.yellow)
-                            .font(.footnote)
-                        Text("4.5(3k Ratings)")
-                            .foregroundStyle(.mainbw)
-                    }
-                    .font(.callout)
-                    
-                    Text("₹ \(viewModel.restaurants.first?.restaurantAverageCost ?? "") for two")
-                        .foregroundStyle(.mainbw)
-                        .font(.callout)
-                 }
-            }
-            .padding(.bottom)
-            
-            Divider()
-        }
-        .padding(.top, 8)
-        .padding(.horizontal)
-    }
-    
-    private var locationTime: some View {
-        VStack(alignment: .leading, spacing: 20.0){
-            Text("Location")
-                .foregroundStyle(.mainbw)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            //Hotel Address
-            HStack(alignment: .top, spacing: 20.0){
-                Image(systemName: "location.circle")
-                    .foregroundStyle(.mainbw)
-                    .font(.title2)
-                    .fontWeight(.medium)
-                Text(viewModel.restaurants.first?.restaurantAddress ?? "")
-                    .foregroundStyle(.mainbw)
-                    .font(.subheadline)
-                Spacer()
-            }
-            
-            //timings
-            HStack(alignment: .top, spacing: 20.0){
-                Image(systemName: "clock")
-                    .foregroundStyle(.mainbw)
-                    .font(.title2)
-                    .fontWeight(.medium)
-                Text("\(viewModel.restaurants.first?.startTime.formattedTime() ?? Date().formattedTime()) - \(viewModel.restaurants.first?.endTime.formattedTime() ?? Date().formattedTime())")
-                    .foregroundStyle(.mainbw)
-                Spacer()
-            }
-            
-            Divider()
-        }
-        .padding()
-    }
-    
-    private var featuresSection: some View {
-        VStack(alignment: .leading, spacing: 20.0){
-            Text("Features")
-                .foregroundStyle(.mainbw)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            //Features
-            HStack{
-                Text("Reservation Available")
-                    .foregroundStyle(.mainbw)
-                    .fontWeight(.medium)
-                    .padding(10)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                Text("Parking Available")
-                    .foregroundStyle(.mainbw)
-                    .fontWeight(.medium)
-                    .padding(10)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                
-                Spacer()
-            }
-        }
-        .padding(.horizontal)
-        .padding(.bottom, 30)
-    }
-}
+//}
 
 extension Date {
     func formattedTime() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "hh:mm a" // 12-hour format with AM/PM
+        formatter.dateFormat = "hh:mm a"
         formatter.amSymbol = "AM"
         formatter.pmSymbol = "PM"
         return formatter.string(from: self)
     }
 }
+
 
