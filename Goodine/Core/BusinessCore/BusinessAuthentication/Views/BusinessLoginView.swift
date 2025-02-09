@@ -9,22 +9,22 @@ import SwiftUI
 
 struct BusinessLoginView: View {
     
-    @State var businessEmail = ""
-    @State var businessPassword = ""
     @Environment(\.dismiss) var dismiss
     @State var showBusinessLogin = false
-    @EnvironmentObject var viewModel : AuthViewModel
-
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    @State private var email = ""
+    @State private var password = ""
+    
     var body: some View {
         NavigationStack {
             VStack{
-               Image(.businessicon)
+                Image(.businessicon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 300, height: 280)
                 
                 VStack(spacing: 12.0){
-                    TextField("Enter your email", text: $businessEmail)
+                    TextField("Enter your email", text: $email)
                         .autocapitalization(.none)
                         .padding(18)
                         .overlay(
@@ -32,7 +32,7 @@ struct BusinessLoginView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    SecureField("Enter your password", text: $businessPassword)
+                    SecureField("Enter your password", text: $password)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -41,7 +41,7 @@ struct BusinessLoginView: View {
                     
                     Button {
                         Task{
-                            try await viewModel.businessSignIn(email: businessEmail, password: businessPassword)
+                           try await businessAuthVM.signIn(email: email, password: password)
                         }
                     } label: {
                         Text("Log In")
@@ -105,7 +105,7 @@ struct BusinessLoginView: View {
                             .tint(.mainbw)
                             .font(.title3)
                             .fontWeight(.semibold)
-                            
+                        
                     }
                 }
             })
