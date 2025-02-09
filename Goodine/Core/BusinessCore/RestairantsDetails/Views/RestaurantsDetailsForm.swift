@@ -6,28 +6,21 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct RestaurantsDetailsForm: View {
     
-    @EnvironmentObject var viewModel : AuthViewModel
+//    @EnvironmentObject var restaurantVM : RestaurantsDetailsViewModel
+    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
     @Environment(\.dismiss) var dismiss
-    @State var restaurantName = ""
-    @State var restaurantType = ""
-    @State var restaurantAddress = ""
-    @State var restaurantState = ""
-    @State var restaurantCity = ""
-    @State var restaurantZipCode = ""
-    @State var restaurantAverageCost = ""
-    @State var startTime = Date()
-    @State var endTime = Date()
-    @State private var selectedImages: [UIImage] = []
-    @State private var showImagePicker = false
+    @State private var restaurant = Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrl: "")
+    @State private var image: UIImage?
     
     var body: some View {
         NavigationStack {
             VStack {
                 ScrollView{
-                    TextField("Business Name", text: $restaurantName)
+                    TextField("Business Name", text: $restaurant.name)
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -37,7 +30,7 @@ struct RestaurantsDetailsForm: View {
                                 .stroke(.mainbw, lineWidth: 1)
                         )
                     
-                    TextField("Indian, Chienese", text: $restaurantType)
+                    TextField("Indian, Chienese", text: $restaurant.type)
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -47,7 +40,7 @@ struct RestaurantsDetailsForm: View {
                                 .stroke(.mainbw, lineWidth: 1)
                         )
                     
-                    TextField("Address", text: $restaurantAddress)
+                    TextField("Address", text: $restaurant.address)
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -58,7 +51,7 @@ struct RestaurantsDetailsForm: View {
                         )
                     
                     HStack{
-                        TextField("State", text: $restaurantState)
+                        TextField("State", text: $restaurant.state)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -68,7 +61,7 @@ struct RestaurantsDetailsForm: View {
                                     .stroke(.mainbw, lineWidth: 1)
                             )
                         
-                        TextField("City", text: $restaurantCity)
+                        TextField("City", text: $restaurant.city)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -82,7 +75,7 @@ struct RestaurantsDetailsForm: View {
                     }
                     
                     HStack{
-                        TextField("Zipcode", text: $restaurantZipCode)
+                        TextField("Zipcode", text: $restaurant.zipcode)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -93,7 +86,7 @@ struct RestaurantsDetailsForm: View {
                             )
                         
                         Button{
-
+                            
                         } label: {
                             HStack{
                                 Image(systemName: "dot.scope")
@@ -113,7 +106,7 @@ struct RestaurantsDetailsForm: View {
                     HStack{
                         Text("Average Cost for two")
                             .font(.headline)
-                        TextField("₹", text: $restaurantAverageCost)
+                        TextField("₹", text: $restaurant.averageCost)
                             .keyboardType(.numberPad)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
@@ -135,13 +128,13 @@ struct RestaurantsDetailsForm: View {
                     .padding(.vertical, 1)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack{
-                        DatePicker("From", selection: $startTime, displayedComponents: .hourAndMinute)
+                        DatePicker("From", selection: $restaurant.openingTime, displayedComponents: .hourAndMinute)
                             .font(.title3)
                             .bold()
                             .foregroundStyle(.orange)
                             .tint(.orange)
                         
-                        DatePicker("To", selection: $endTime, displayedComponents: .hourAndMinute)
+                        DatePicker("To", selection: $restaurant.closingTime, displayedComponents: .hourAndMinute)
                             .font(.title3)
                             .bold()
                             .foregroundStyle(.orange)
@@ -152,76 +145,39 @@ struct RestaurantsDetailsForm: View {
                     Divider()
                         .padding(.top)
                     
-                    ScrollView(.horizontal) {
-                        HStack {
-                            Button(action: { showImagePicker.toggle() }) {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .frame(width: 40, height: 40)
-                                    .foregroundColor(.gray)
-                                    .padding(30)
-                                    .background(Color(.systemGray5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
-                            ForEach(selectedImages, id: \.self) { image in
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
-                        }
-                    }
+                    
                 }
-                .scrollIndicators(.hidden)
                 .padding(.horizontal)
                 .navigationTitle(Text("Hotel Details"))
                 
                 Spacer()
                 
-                Button {
+                Button{
                     Task {
-                        await saveRestaurant()
+                        do {
+                            try await businessAuthMV.saveRestaurantDetails(restaurant, image: image)
+                        } catch {
+                            print("Saving failed: \(error.localizedDescription)")
+                        }
                     }
-                    dismiss()
-                } label: {
-                    Text("Continue")
+                }label: {
+                    Text("Save Restaurant")
                         .goodineButtonStyle(.mainbw)
                 }
+                
                 .padding(.horizontal)
                 .padding(.bottom, 5)
             }
             
             .onTapGesture { self.hideKeyboard()}
         }
-        .sheet(isPresented: $showImagePicker) {
-            RestaurantImagePicker(selectedImages: $selectedImages)
-        }
-    }
-    
-    
-    private func saveRestaurant() async {
-        let restaurant = Restaurant(
-            restaurantName: restaurantName,
-            restaurantType: restaurantType,
-            restaurantAddress: restaurantAddress,
-            restaurantState: restaurantState,
-            restaurantCity: restaurantCity,
-            restaurantZipCode: restaurantZipCode,
-            restaurantAverageCost: restaurantAverageCost,
-            startTime: startTime,
-            endTime: endTime
-        )
+//        .onAppear {
+//            Task{
+//                await restaurantVM.fetchRestaurant()
+//            }
+//        }
         
-        do {
-            try await viewModel.saveRestaurantDetails(restaurant: restaurant, images: selectedImages)
-                       
-            print("Restaurant details saved successfully!")
-        } catch {
-            print("Error saving restaurant details: \(error.localizedDescription)")
-        }
     }
-    
     
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
