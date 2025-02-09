@@ -10,11 +10,10 @@ import SwiftUI
 struct CreateBusinessView: View {
     
     @Environment(\.dismiss) var dismiss
-    @State var businessName = ""
-    @State var businessEmail = ""
-    @State var businessPassword = ""
-    @EnvironmentObject var viewModel : AuthViewModel
-
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    @State private var email = ""
+    @State private var password = ""
+    @State private var ownerName = ""
     
     var body: some View {
         NavigationStack {
@@ -24,7 +23,7 @@ struct CreateBusinessView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 80, height: 100)
-                       // .padding(.leading, -4)
+                    // .padding(.leading, -4)
                     
                     Spacer()
                 }
@@ -43,14 +42,14 @@ struct CreateBusinessView: View {
                 //name, email, password
                 VStack(spacing: 12.0){
                     
-                    TextField("Your Business Name", text: $businessName)
+                    TextField("Business Owner Name", text: $ownerName)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    TextField("Enter your email", text: $businessEmail)
+                    TextField("Enter your email", text: $email)
                         .autocapitalization(.none)
                         .padding(18)
                         .overlay(
@@ -58,7 +57,7 @@ struct CreateBusinessView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    SecureField("Enter your password", text: $businessPassword)
+                    SecureField("Enter your password", text: $password)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
@@ -67,7 +66,7 @@ struct CreateBusinessView: View {
                     
                     Button {
                         Task{
-                            try await viewModel.createBusinessUser(email: businessEmail, password: businessPassword, businessName: businessName)
+                           try await businessAuthVM.signUp(email: email, password: password, ownerName: ownerName)
                         }
                         dismiss()
                     } label: {
