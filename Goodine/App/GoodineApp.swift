@@ -22,12 +22,14 @@ struct GoodineApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
-    @StateObject var viewModel = AuthViewModel()
+    @StateObject var businessAuthVM = BusinessAuthViewModel()
+//    @StateObject var restaurantVM = RestaurantsDetailsViewModel()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(viewModel)
+                .environmentObject(BusinessAuthViewModel())
+//                .environmentObject(RestaurantsDetailsViewModel())
         }
     }
 }
