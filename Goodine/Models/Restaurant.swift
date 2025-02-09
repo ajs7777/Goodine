@@ -7,18 +7,19 @@
 
 
 import Foundation
-import FirebaseFirestore
+
 
 struct Restaurant: Identifiable, Codable {
-    @DocumentID var id: String?
-    var restaurantName: String
-    var restaurantType: String
-    var restaurantAddress: String
-    var restaurantState: String
-    var restaurantCity: String
-    var restaurantZipCode: String
-    var restaurantAverageCost: String
-    var startTime: Date
-    var endTime: Date
-    var imageURLs : [String]?
+    var id: String
+    var ownerName: String
+    var name: String
+    var type: String
+    var city: String
+    var state: String
+    var address: String
+    var zipcode: String
+    var averageCost: String
+    var openingTime: Date
+    var closingTime: Date
+    var imageUrl: String
 }
