@@ -127,5 +127,25 @@ class BusinessAuthViewModel: ObservableObject {
             "imageUrls": updatedRestaurant.imageUrls
         ])
     }
+    
+    func deleteImage(_ imageUrl: String) async {
+         //guard let userId = Auth.auth().currentUser?.uid else { return }
+         let storageRef = Storage.storage().reference(forURL: imageUrl)
+
+         do {
+             // Delete image from Firebase Storage
+             try await storageRef.delete()
+
+             // Remove image URL from Firestore
+             if let index = restaurant?.imageUrls.firstIndex(of: imageUrl) {
+                 restaurant?.imageUrls.remove(at: index)
+                 if let updatedRestaurant = restaurant {
+                     try await saveRestaurantDetails(updatedRestaurant, images: nil)
+                 }
+             }
+         } catch {
+             print("Failed to delete image: \(error.localizedDescription)")
+         }
+     }
 
 }
