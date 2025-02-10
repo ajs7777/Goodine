@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import Kingfisher
 
 struct RestaurantsDetailsForm: View {
     
@@ -183,37 +184,53 @@ struct RestaurantsDetailsForm: View {
                             
                             if let imageUrls = businessAuthMV.restaurant?.imageUrls {
                                 ForEach(imageUrls, id: \.self) { imageUrl in
-                                    AsyncImage(url: URL(string: imageUrl)) { phase in
-                                        if let image = phase.image {
-                                            image.resizable()
-                                                .scaledToFill()
-                                                .frame(width: 100, height: 100)
-                                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                        } else {
-                                            ProgressView()
-                                                .frame(width: 100, height: 100)
+                                    KFImage(URL(string: imageUrl)) // Using Kingfisher
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .overlay(alignment: .topTrailing) {
+                                            Button(action: {
+                                                Task {
+                                                    await businessAuthMV.deleteImage(imageUrl)
+                                                }
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.red)
+                                                    .background(Color.white.opacity(0.7))
+                                                    .clipShape(Circle())
+                                                    .padding(2)
+                                            }
                                         }
-                                    }
+                                    
+                                }
+                            } else {
+                                ProgressView()
+                            }
+                            ForEach(selectedImages, id: \.self) { image in
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
                                     .overlay(alignment: .topTrailing) {
                                         Button(action: {
-                                            Task {
-                                                await businessAuthMV.deleteImage(imageUrl)
-                                            }
+                                            deleteImage(image: image)
                                         }) {
                                             Image(systemName: "xmark.circle.fill")
                                                 .foregroundColor(.red)
                                                 .background(Color.white.opacity(0.7))
                                                 .clipShape(Circle())
+                                                .padding(2)
                                         }
                                     }
-                                    
-                                }
                             }
                         }
                     }
                     .padding(.bottom, 50)
                     
                 }
+                .scrollIndicators(.hidden)
                 .padding(.horizontal)
                 .navigationTitle(Text("Hotel Details"))
                 
@@ -224,6 +241,7 @@ struct RestaurantsDetailsForm: View {
                         do {
                             if let restaurant = businessAuthMV.restaurant {
                                 try await businessAuthMV.saveRestaurantDetails(restaurant, images: selectedImages)
+                                selectedImages.removeAll()
                                 dismiss()
                                 
                             }
@@ -248,6 +266,11 @@ struct RestaurantsDetailsForm: View {
         
     }
     
+    func deleteImage(image: UIImage) {
+        if let index = selectedImages.firstIndex(of: image) {
+            selectedImages.remove(at: index)
+        }
+    }
     
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
