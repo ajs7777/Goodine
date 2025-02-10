@@ -21,5 +21,5 @@ struct Restaurant: Identifiable, Codable {
     var averageCost: String
     var openingTime: Date
     var closingTime: Date
-    var imageUrl: String
+    var imageUrls: [String]
 }
