@@ -18,16 +18,11 @@ struct RestaurantProfile: View {
             if let imageUrls = businessAuthMV.restaurant?.imageUrls, !imageUrls.isEmpty {
                 TabView {
                     ForEach(imageUrls, id: \.self) { imageUrl in
-                        AsyncImage(url: URL(string: imageUrl)) { phase in
-                            if let image = phase.image {
-                                image.resizable()
-                                    .scaledToFill()
-                                    .frame(height: 250)
-                            } else {
-                                ProgressView()
-                                    .frame(height: 250)
-                            }
-                        }
+                        KFImage(URL(string: imageUrl)) // Using Kingfisher
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 270)
+                            
                     }
                 }
                 .frame(height: 250)
@@ -170,10 +165,8 @@ struct RestaurantProfile: View {
             }
             .padding(.bottom, 120)
         }
-//        .onAppear {
-//            Task { await businessAuthMV.fetchUserDetails() }
-//        }
         .ignoresSafeArea()
+        .scrollIndicators(.hidden)
         .sheet(isPresented: $showEditProfile) {
             RestaurantsDetailsForm(businessAuthMV: businessAuthMV)
         }
