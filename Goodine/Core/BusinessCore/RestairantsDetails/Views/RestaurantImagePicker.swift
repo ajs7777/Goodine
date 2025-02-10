@@ -8,13 +8,17 @@
 import PhotosUI
 import SwiftUI
 
+
 struct RestaurantImagePicker: UIViewControllerRepresentable {
-    @Binding var selectedImages: [UIImage]
+    
+    @Binding var images: [UIImage]
+    @Environment(\.presentationMode) private var presentationMode
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
-        config.selectionLimit = 10  // Allow up to 10 images
+        config.selectionLimit = 5 // Change this to set max selection limit
         config.filter = .images
+        
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
         return picker
@@ -37,10 +41,10 @@ struct RestaurantImagePicker: UIViewControllerRepresentable {
             picker.dismiss(animated: true)
             
             for result in results {
-                result.itemProvider.loadObject(ofClass: UIImage.self) { (image, error) in
-                    if let image = image as? UIImage {
+                result.itemProvider.loadObject(ofClass: UIImage.self) { (object, error) in
+                    if let image = object as? UIImage {
                         DispatchQueue.main.async {
-                            self.parent.selectedImages.append(image)
+                            self.parent.images.append(image)
                         }
                     }
                 }
@@ -48,4 +52,5 @@ struct RestaurantImagePicker: UIViewControllerRepresentable {
         }
     }
 }
+
 
