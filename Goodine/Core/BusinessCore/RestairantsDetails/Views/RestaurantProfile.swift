@@ -23,8 +23,6 @@ struct RestaurantProfile: View {
                                 image.resizable()
                                     .scaledToFill()
                                     .frame(height: 250)
-                                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                                    .padding(.horizontal)
                             } else {
                                 ProgressView()
                                     .frame(height: 250)
@@ -35,7 +33,6 @@ struct RestaurantProfile: View {
                 .frame(height: 250)
                 .tabViewStyle(PageTabViewStyle()) // Adds swipe dots at the bottom
                 .indexViewStyle(PageIndexViewStyle())
-                .padding()
             } else {
                 Image(systemName: "photo")
                     .frame(height: 250)
