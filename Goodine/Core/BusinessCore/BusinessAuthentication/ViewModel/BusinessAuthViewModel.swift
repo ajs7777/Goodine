@@ -44,7 +44,7 @@ class BusinessAuthViewModel: ObservableObject {
             averageCost: "",
             openingTime: Date(),
             closingTime: Date(),
-            imageUrl: ""
+            imageUrls: []
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -62,30 +62,70 @@ class BusinessAuthViewModel: ObservableObject {
         self.restaurant = nil
     }
     
-    func fetchUserDetails() async {
+    private func fetchUserDetails() async {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
+
         do {
             let document = try await db.collection("business_users").document(userId).getDocument()
-            self.restaurant = try document.data(as: Restaurant.self)
+            if let data = document.data() {
+                self.restaurant = Restaurant(
+                    id: data["id"] as? String ?? "",
+                    ownerName: data["ownerName"] as? String ?? "",
+                    name: data["name"] as? String ?? "",
+                    type: data["type"] as? String ?? "",
+                    city: data["city"] as? String ?? "",
+                    state: data["state"] as? String ?? "",
+                    address: data["address"] as? String ?? "",
+                    zipcode: data["zipcode"] as? String ?? "",
+                    averageCost: data["averageCost"] as? String ?? "",
+                    openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),  // Convert Timestamp to Date
+                    closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),  // Convert Timestamp to Date
+                    imageUrls: data["imageUrls"] as? [String] ?? []
+                )
+            }
         } catch {
             print("Failed to fetch user details: \(error.localizedDescription)")
         }
     }
+
     
-    func saveRestaurantDetails(_ restaurant: Restaurant, image: UIImage?) async throws {
+    func saveRestaurantDetails(_ restaurant: Restaurant, images: [UIImage]?) async throws {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-        
+
         var updatedRestaurant = restaurant
         updatedRestaurant.id = userId
-        
-        if let image = image, let imageData = image.jpegData(compressionQuality: 0.8) {
-            let storageRef = storage.reference().child("business_users/\(userId).jpg")
-            let _ = try await storageRef.putDataAsync(imageData, metadata: nil)
-            let url = try await storageRef.downloadURL()
-            updatedRestaurant.imageUrl = url.absoluteString
+
+        // Upload multiple images to Firebase Storage
+        var imageUrls: [String] = []
+        if let images = images {
+            for image in images {
+                if let imageData = image.jpegData(compressionQuality: 0.8) {
+                    let storageRef = storage.reference().child("business_users/\(UUID().uuidString).jpg")
+                    let _ = try await storageRef.putDataAsync(imageData, metadata: nil)
+                    let url = try await storageRef.downloadURL()
+                    imageUrls.append(url.absoluteString)
+                }
+            }
         }
-        
-        try db.collection("business_users").document(userId).setData(from: updatedRestaurant)
+
+        if !imageUrls.isEmpty {
+            updatedRestaurant.imageUrls = imageUrls
+        }
+
+        try await db.collection("business_users").document(userId).setData([
+            "id": updatedRestaurant.id,
+            "ownerName": updatedRestaurant.ownerName,
+            "name": updatedRestaurant.name,
+            "type": updatedRestaurant.type,
+            "city": updatedRestaurant.city,
+            "state": updatedRestaurant.state,
+            "address": updatedRestaurant.address,
+            "zipcode": updatedRestaurant.zipcode,
+            "averageCost": updatedRestaurant.averageCost,
+            "openingTime": Timestamp(date: updatedRestaurant.openingTime),  // Convert Date to Timestamp
+            "closingTime": Timestamp(date: updatedRestaurant.closingTime),  // Convert Date to Timestamp
+            "imageUrls": updatedRestaurant.imageUrls
+        ])
     }
+
 }
