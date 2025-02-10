@@ -16,7 +16,7 @@ struct RestaurantImagePicker: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
-        config.selectionLimit = 5 // Change this to set max selection limit
+        config.selectionLimit = 10 // Change this to set max selection limit
         config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)
