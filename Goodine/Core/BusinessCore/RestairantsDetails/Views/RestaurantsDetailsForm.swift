@@ -23,67 +23,67 @@ struct RestaurantsDetailsForm: View {
                         get: { businessAuthMV.restaurant?.name ?? "" },
                         set: { businessAuthMV.restaurant?.name = $0 }
                     ))
-                        .padding(.leading)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .inset(by: 3)
-                                .stroke(.mainbw, lineWidth: 1)
-                        )
+                    .padding(.leading)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 55)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .inset(by: 3)
+                            .stroke(.mainbw, lineWidth: 1)
+                    )
                     
                     TextField("Indian, Chienese", text: Binding(
                         get: { businessAuthMV.restaurant?.type ?? "" },
                         set: { businessAuthMV.restaurant?.type = $0 }
                     ))
-                        .padding(.leading)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .inset(by: 3)
-                                .stroke(.mainbw, lineWidth: 1)
-                        )
+                    .padding(.leading)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 55)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .inset(by: 3)
+                            .stroke(.mainbw, lineWidth: 1)
+                    )
                     
                     TextField("Address", text: Binding(
                         get: { businessAuthMV.restaurant?.address ?? "" },
                         set: { businessAuthMV.restaurant?.address = $0 }
                     ))
-                        .padding(.leading)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .inset(by: 3)
-                                .stroke(.mainbw, lineWidth: 1)
-                        )
+                    .padding(.leading)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 55)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .inset(by: 3)
+                            .stroke(.mainbw, lineWidth: 1)
+                    )
                     
                     HStack{
                         TextField("State", text: Binding(
                             get: { businessAuthMV.restaurant?.state ?? "" },
                             set: { businessAuthMV.restaurant?.state = $0 }
                         ))
-                            .padding(.leading)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 55)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .inset(by: 3)
-                                    .stroke(.mainbw, lineWidth: 1)
-                            )
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .inset(by: 3)
+                                .stroke(.mainbw, lineWidth: 1)
+                        )
                         
                         TextField("City", text: Binding(
                             get: { businessAuthMV.restaurant?.city ?? "" },
                             set: { businessAuthMV.restaurant?.city = $0 }
                         ))
-                            .padding(.leading)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 55)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .inset(by: 3)
-                                    .stroke(.mainbw, lineWidth: 1)
-                            )
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .inset(by: 3)
+                                .stroke(.mainbw, lineWidth: 1)
+                        )
                         
                         
                     }
@@ -93,14 +93,14 @@ struct RestaurantsDetailsForm: View {
                             get: { businessAuthMV.restaurant?.zipcode ?? "" },
                             set: { businessAuthMV.restaurant?.zipcode = $0 }
                         ))
-                            .padding(.leading)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 55)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .inset(by: 3)
-                                    .stroke(.mainbw, lineWidth: 1)
-                            )
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .inset(by: 3)
+                                .stroke(.mainbw, lineWidth: 1)
+                        )
                         
                         Button{
                             
@@ -127,15 +127,15 @@ struct RestaurantsDetailsForm: View {
                             get: { businessAuthMV.restaurant?.averageCost ?? "" },
                             set: { businessAuthMV.restaurant?.averageCost = $0 }
                         ))
-                            .keyboardType(.numberPad)
-                            .padding(.leading)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 45)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .inset(by: 3)
-                                    .stroke(.mainbw, lineWidth: 1)
-                            )
+                        .keyboardType(.numberPad)
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 45)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .inset(by: 3)
+                                .stroke(.mainbw, lineWidth: 1)
+                        )
                         
                     }
                     .padding(.vertical, 10)
@@ -152,19 +152,19 @@ struct RestaurantsDetailsForm: View {
                             get: { businessAuthMV.restaurant?.openingTime ?? Date() },
                             set: { businessAuthMV.restaurant?.openingTime = $0 }
                         ), displayedComponents: .hourAndMinute)
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(.orange)
-                            .tint(.orange)
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.orange)
+                        .tint(.orange)
                         
                         DatePicker("To", selection:  Binding(
                             get: { businessAuthMV.restaurant?.closingTime ?? Date() },
                             set: { businessAuthMV.restaurant?.closingTime = $0 }
                         ), displayedComponents: .hourAndMinute)
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(.orange)
-                            .tint(.orange)
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.orange)
+                        .tint(.orange)
                         
                     }
                     
@@ -194,10 +194,24 @@ struct RestaurantsDetailsForm: View {
                                                 .frame(width: 100, height: 100)
                                         }
                                     }
+                                    .overlay(alignment: .topTrailing) {
+                                        Button(action: {
+                                            Task {
+                                                await businessAuthMV.deleteImage(imageUrl)
+                                            }
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.red)
+                                                .background(Color.white.opacity(0.7))
+                                                .clipShape(Circle())
+                                        }
+                                    }
+                                    
                                 }
                             }
                         }
                     }
+                    .padding(.bottom, 50)
                     
                 }
                 .padding(.horizontal)
@@ -233,6 +247,7 @@ struct RestaurantsDetailsForm: View {
         
         
     }
+    
     
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
