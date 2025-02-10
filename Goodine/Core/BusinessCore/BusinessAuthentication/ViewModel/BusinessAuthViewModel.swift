@@ -22,7 +22,7 @@ class BusinessAuthViewModel: ObservableObject {
     init(){
         self.businessUser = Auth.auth().currentUser
         Task{
-            await fetchUserDetails()
+            fetchUserDetails()
         }
     }
     
@@ -53,7 +53,7 @@ class BusinessAuthViewModel: ObservableObject {
     func signIn(email: String, password: String) async throws {
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
         self.businessUser = result.user
-        await fetchUserDetails()
+        fetchUserDetails()
     }
     
     func signOut() throws {
@@ -62,41 +62,48 @@ class BusinessAuthViewModel: ObservableObject {
         self.restaurant = nil
     }
     
-    private func fetchUserDetails() async {
+    func fetchUserDetails() {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-
-        do {
-            let document = try await db.collection("business_users").document(userId).getDocument()
-            if let data = document.data() {
-                self.restaurant = Restaurant(
-                    id: data["id"] as? String ?? "",
-                    ownerName: data["ownerName"] as? String ?? "",
-                    name: data["name"] as? String ?? "",
-                    type: data["type"] as? String ?? "",
-                    city: data["city"] as? String ?? "",
-                    state: data["state"] as? String ?? "",
-                    address: data["address"] as? String ?? "",
-                    zipcode: data["zipcode"] as? String ?? "",
-                    averageCost: data["averageCost"] as? String ?? "",
-                    openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),  // Convert Timestamp to Date
-                    closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),  // Convert Timestamp to Date
-                    imageUrls: data["imageUrls"] as? [String] ?? []
-                )
+        
+        db.collection("business_users").document(userId).addSnapshotListener { documentSnapshot, error in
+            if let error = error {
+                print("Failed to fetch user details: \(error.localizedDescription)")
+                return
             }
-        } catch {
-            print("Failed to fetch user details: \(error.localizedDescription)")
+            
+            guard let document = documentSnapshot, document.exists else { return }
+            
+                let data = document.data()
+                DispatchQueue.main.async {
+                    self.restaurant = Restaurant(
+                        id: data?["id"] as? String ?? "",
+                        ownerName: data?["ownerName"] as? String ?? "",
+                        name: data?["name"] as? String ?? "",
+                        type: data?["type"] as? String ?? "",
+                        city: data?["city"] as? String ?? "",
+                        state: data?["state"] as? String ?? "",
+                        address: data?["address"] as? String ?? "",
+                        zipcode: data?["zipcode"] as? String ?? "",
+                        averageCost: data?["averageCost"] as? String ?? "",
+                        openingTime: (data?["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                        closingTime: (data?["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                        imageUrls: data?["imageUrls"] as? [String] ?? []
+                    )
+                }
+
         }
     }
+
 
     
     func saveRestaurantDetails(_ restaurant: Restaurant, images: [UIImage]?) async throws {
         guard let userId = Auth.auth().currentUser?.uid else { return }
-
         var updatedRestaurant = restaurant
         updatedRestaurant.id = userId
 
-        // Upload multiple images to Firebase Storage
-        var imageUrls: [String] = []
+        var imageUrls: [String] = updatedRestaurant.imageUrls
+
+        // Upload new images and update Firestore
         if let images = images {
             for image in images {
                 if let imageData = image.jpegData(compressionQuality: 0.8) {
@@ -108,9 +115,7 @@ class BusinessAuthViewModel: ObservableObject {
             }
         }
 
-        if !imageUrls.isEmpty {
-            updatedRestaurant.imageUrls = imageUrls
-        }
+        updatedRestaurant.imageUrls = imageUrls
 
         try await db.collection("business_users").document(userId).setData([
             "id": updatedRestaurant.id,
@@ -122,11 +127,17 @@ class BusinessAuthViewModel: ObservableObject {
             "address": updatedRestaurant.address,
             "zipcode": updatedRestaurant.zipcode,
             "averageCost": updatedRestaurant.averageCost,
-            "openingTime": Timestamp(date: updatedRestaurant.openingTime),  // Convert Date to Timestamp
-            "closingTime": Timestamp(date: updatedRestaurant.closingTime),  // Convert Date to Timestamp
+            "openingTime": Timestamp(date: updatedRestaurant.openingTime),
+            "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls
         ])
+
+        // **Update @Published restaurant to trigger UI refresh**
+        DispatchQueue.main.async {
+            self.restaurant = updatedRestaurant
+        }
     }
+
     
     func deleteImage(_ imageUrl: String) async {
          //guard let userId = Auth.auth().currentUser?.uid else { return }
