@@ -10,17 +10,19 @@ import PhotosUI
 
 struct RestaurantsDetailsForm: View {
     
-//    @EnvironmentObject var restaurantVM : RestaurantsDetailsViewModel
-    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
+    @ObservedObject var businessAuthMV : BusinessAuthViewModel
     @Environment(\.dismiss) var dismiss
-    @State private var restaurant = Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrl: "")
-    @State private var image: UIImage?
+    @State private var selectedImages: [UIImage] = []
+    @State private var isImagePickerPresented = false
     
     var body: some View {
         NavigationStack {
             VStack {
                 ScrollView{
-                    TextField("Business Name", text: $restaurant.name)
+                    TextField("Business Name", text: Binding(
+                        get: { businessAuthMV.restaurant?.name ?? "" },
+                        set: { businessAuthMV.restaurant?.name = $0 }
+                    ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -30,7 +32,10 @@ struct RestaurantsDetailsForm: View {
                                 .stroke(.mainbw, lineWidth: 1)
                         )
                     
-                    TextField("Indian, Chienese", text: $restaurant.type)
+                    TextField("Indian, Chienese", text: Binding(
+                        get: { businessAuthMV.restaurant?.type ?? "" },
+                        set: { businessAuthMV.restaurant?.type = $0 }
+                    ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -40,7 +45,10 @@ struct RestaurantsDetailsForm: View {
                                 .stroke(.mainbw, lineWidth: 1)
                         )
                     
-                    TextField("Address", text: $restaurant.address)
+                    TextField("Address", text: Binding(
+                        get: { businessAuthMV.restaurant?.address ?? "" },
+                        set: { businessAuthMV.restaurant?.address = $0 }
+                    ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
                         .frame(height: 55)
@@ -51,7 +59,10 @@ struct RestaurantsDetailsForm: View {
                         )
                     
                     HStack{
-                        TextField("State", text: $restaurant.state)
+                        TextField("State", text: Binding(
+                            get: { businessAuthMV.restaurant?.state ?? "" },
+                            set: { businessAuthMV.restaurant?.state = $0 }
+                        ))
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -61,7 +72,10 @@ struct RestaurantsDetailsForm: View {
                                     .stroke(.mainbw, lineWidth: 1)
                             )
                         
-                        TextField("City", text: $restaurant.city)
+                        TextField("City", text: Binding(
+                            get: { businessAuthMV.restaurant?.city ?? "" },
+                            set: { businessAuthMV.restaurant?.city = $0 }
+                        ))
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -75,7 +89,10 @@ struct RestaurantsDetailsForm: View {
                     }
                     
                     HStack{
-                        TextField("Zipcode", text: $restaurant.zipcode)
+                        TextField("Zipcode", text: Binding(
+                            get: { businessAuthMV.restaurant?.zipcode ?? "" },
+                            set: { businessAuthMV.restaurant?.zipcode = $0 }
+                        ))
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
                             .frame(height: 55)
@@ -106,7 +123,10 @@ struct RestaurantsDetailsForm: View {
                     HStack{
                         Text("Average Cost for two")
                             .font(.headline)
-                        TextField("₹", text: $restaurant.averageCost)
+                        TextField("₹", text: Binding(
+                            get: { businessAuthMV.restaurant?.averageCost ?? "" },
+                            set: { businessAuthMV.restaurant?.averageCost = $0 }
+                        ))
                             .keyboardType(.numberPad)
                             .padding(.leading)
                             .frame(maxWidth: .infinity)
@@ -128,13 +148,19 @@ struct RestaurantsDetailsForm: View {
                     .padding(.vertical, 1)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack{
-                        DatePicker("From", selection: $restaurant.openingTime, displayedComponents: .hourAndMinute)
+                        DatePicker("From", selection: Binding(
+                            get: { businessAuthMV.restaurant?.openingTime ?? Date() },
+                            set: { businessAuthMV.restaurant?.openingTime = $0 }
+                        ), displayedComponents: .hourAndMinute)
                             .font(.title3)
                             .bold()
                             .foregroundStyle(.orange)
                             .tint(.orange)
                         
-                        DatePicker("To", selection: $restaurant.closingTime, displayedComponents: .hourAndMinute)
+                        DatePicker("To", selection:  Binding(
+                            get: { businessAuthMV.restaurant?.closingTime ?? Date() },
+                            set: { businessAuthMV.restaurant?.closingTime = $0 }
+                        ), displayedComponents: .hourAndMinute)
                             .font(.title3)
                             .bold()
                             .foregroundStyle(.orange)
@@ -145,6 +171,33 @@ struct RestaurantsDetailsForm: View {
                     Divider()
                         .padding(.top)
                     
+                    ScrollView(.horizontal) {
+                        HStack {
+                            Button{
+                                isImagePickerPresented.toggle()
+                            }label: {
+                                Image(systemName: "plus")
+                                    .font(.title2)
+                                    .padding(20)
+                            }
+                            
+                            if let imageUrls = businessAuthMV.restaurant?.imageUrls {
+                                ForEach(imageUrls, id: \.self) { imageUrl in
+                                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                                        if let image = phase.image {
+                                            image.resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        } else {
+                                            ProgressView()
+                                                .frame(width: 100, height: 100)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     
                 }
                 .padding(.horizontal)
@@ -155,27 +208,29 @@ struct RestaurantsDetailsForm: View {
                 Button{
                     Task {
                         do {
-                            try await businessAuthMV.saveRestaurantDetails(restaurant, image: image)
+                            if let restaurant = businessAuthMV.restaurant {
+                                try await businessAuthMV.saveRestaurantDetails(restaurant, images: selectedImages)
+                                dismiss()
+                                
+                            }
                         } catch {
-                            print("Saving failed: \(error.localizedDescription)")
+                            print("Error saving details: \(error.localizedDescription)")
                         }
                     }
                 }label: {
-                    Text("Save Restaurant")
+                    Text("Save & Continue")
                         .goodineButtonStyle(.mainbw)
                 }
                 
                 .padding(.horizontal)
                 .padding(.bottom, 5)
             }
-            
+            .sheet(isPresented: $isImagePickerPresented) {
+                RestaurantImagePicker(images: $selectedImages)
+            }
             .onTapGesture { self.hideKeyboard()}
         }
-//        .onAppear {
-//            Task{
-//                await restaurantVM.fetchRestaurant()
-//            }
-//        }
+        
         
     }
     
@@ -186,6 +241,8 @@ struct RestaurantsDetailsForm: View {
 }
 
 #Preview {
-    RestaurantsDetailsForm()
+    RestaurantsDetailsForm(businessAuthMV: BusinessAuthViewModel())
     
 }
+
+
