@@ -10,7 +10,7 @@ import Kingfisher
 
 struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var businessAuthMV = BusinessAuthViewModel()
+    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
     @State var showEditProfile : Bool = false
     
     var body: some View {
