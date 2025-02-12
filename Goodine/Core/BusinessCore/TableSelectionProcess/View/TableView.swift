@@ -9,7 +9,6 @@ import SwiftUI
 
 struct TableView: View {
     
-    @EnvironmentObject var viewModel : AuthViewModel
     @State private var rows: Int = 4
     @State private var columns: Int = 2
     

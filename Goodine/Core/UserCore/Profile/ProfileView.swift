@@ -10,7 +10,7 @@ import SwiftUI
 struct ProfileView: View {
     
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel : AuthViewModel
+    @EnvironmentObject var userAuthVM : AuthViewModel
     
     var body: some View {
             ScrollView {
@@ -50,7 +50,7 @@ struct ProfileView: View {
                 
                 Button{
                     Task {
-                        try await viewModel.signOut()
+                        userAuthVM.signOut()
                         
                     }
                 }label: {
@@ -89,14 +89,14 @@ extension ProfileView {
         HStack {
             VStack(alignment: .leading){
                 
-                if let user = viewModel.currentUser {
+                if let user = userAuthVM.userdata {
                     Text(user.fullName)
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundStyle(.mainbw)
                     Text("+91 9876543210")
                         .foregroundStyle(.gray)
-                }
+               }
             }
             Spacer()
             UserCircleImage(size: .large)

@@ -157,7 +157,7 @@ struct RestaurantProfile: View {
             }
             Button{
                 Task{
-                    try businessAuthMV.signOut()
+                    businessAuthMV.signOut()
                 }
             }label: {
                 Text("Log Out")

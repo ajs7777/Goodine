@@ -68,6 +68,7 @@ struct CreateAccountView: View {
                         Task{
                             try await viewModel.createUser(email: email, password: password, fullName: fullName)
                         }
+                        dismiss()
                     } label: {
                         Text("Sign Up")
                             .goodineButtonStyle(.mainbw)
