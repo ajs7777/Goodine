@@ -9,12 +9,18 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    @EnvironmentObject var userAuthVM : AuthViewModel
     
     var body: some View {
-        if businessAuthMV.businessUser != nil {
+        if userAuthVM.isLoading {
+            ProgressView()
+        } else if userAuthVM.userdata != nil {
+            MainTabView()
+        } else if businessAuthVM.restaurant != nil {
             RestaurantTabView()
-        } else {
+        }
+         else {
             LoginWithNumberView()
         }
     }
@@ -24,6 +30,3 @@ struct ContentView: View {
     ContentView()
         
 }
-
-
-
