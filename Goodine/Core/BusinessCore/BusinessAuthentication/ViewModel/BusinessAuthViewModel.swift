@@ -14,22 +14,21 @@ import FirebaseStorage
 class BusinessAuthViewModel: ObservableObject {
     
     @Published var businessUser: User?
-    @Published var isNewUser = false
     @Published var restaurant: Restaurant?
+    @Published var isLoading = true
+    
     private var db = Firestore.firestore()
     private let storage = Storage.storage()
     
     init(){
-        self.businessUser = Auth.auth().currentUser
         Task{
-            fetchUserDetails()
+            fetchBusinessDetails()
         }
     }
     
     func signUp(email: String, password: String, ownerName: String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
         self.businessUser = result.user
-        self.isNewUser = true
         
         let userId = result.user.uid
         let newRestaurant = Restaurant(
@@ -53,43 +52,53 @@ class BusinessAuthViewModel: ObservableObject {
     func signIn(email: String, password: String) async throws {
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
         self.businessUser = result.user
-        fetchUserDetails()
+        fetchBusinessDetails()
     }
     
-    func signOut() throws {
-        try Auth.auth().signOut()
+    func signOut() {
+        try? Auth.auth().signOut()
         self.businessUser = nil
         self.restaurant = nil
     }
     
-    func fetchUserDetails() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+    func fetchBusinessDetails() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            isLoading = false
+            return
+        }
         
         db.collection("business_users").document(userId).addSnapshotListener { documentSnapshot, error in
             if let error = error {
-                print("Failed to fetch user details: \(error.localizedDescription)")
+                print("Failed to fetch business details: \(error.localizedDescription)")
                 return
             }
             
             guard let document = documentSnapshot, document.exists else { return }
             
-                let data = document.data()
+            if let data = document.data() {
                 DispatchQueue.main.async {
                     self.restaurant = Restaurant(
-                        id: data?["id"] as? String ?? "",
-                        ownerName: data?["ownerName"] as? String ?? "",
-                        name: data?["name"] as? String ?? "",
-                        type: data?["type"] as? String ?? "",
-                        city: data?["city"] as? String ?? "",
-                        state: data?["state"] as? String ?? "",
-                        address: data?["address"] as? String ?? "",
-                        zipcode: data?["zipcode"] as? String ?? "",
-                        averageCost: data?["averageCost"] as? String ?? "",
-                        openingTime: (data?["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
-                        closingTime: (data?["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
-                        imageUrls: data?["imageUrls"] as? [String] ?? []
+                        id: data["id"] as? String ?? "",
+                        ownerName: data["ownerName"] as? String ?? "",
+                        name: data["name"] as? String ?? "",
+                        type: data["type"] as? String ?? "",
+                        city: data["city"] as? String ?? "",
+                        state: data["state"] as? String ?? "",
+                        address: data["address"] as? String ?? "",
+                        zipcode: data["zipcode"] as? String ?? "",
+                        averageCost: data["averageCost"] as? String ?? "",
+                        openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                        closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                        imageUrls: data["imageUrls"] as? [String] ?? []
                     )
+                    self.isLoading = false
                 }
+            } else {
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+            }
+                
 
         }
     }
