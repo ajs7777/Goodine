@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct RestaurantsView: View {
     
@@ -15,23 +16,27 @@ struct RestaurantsView: View {
     var body: some View {
         VStack(spacing: 15.0){
             
-            Image("restaurant-2")
+            KFImage(URL(string: restaurant.first?.imageUrls.first ?? ""))
                 .resizable()
+                .placeholder {
+                    ProgressView() // Show loading indicator
+                }
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
                 .frame(height: 200)
                 .clipShape(RoundedRectangle(cornerRadius: 15))
+            
             HStack {
                 VStack(alignment: .leading) {
-                    Text(restaurant.first?.restaurantName ?? "")
+                    Text(restaurant.first?.name ?? "")
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .font(.headline)
                         .bold()
-                    Text(restaurant.first?.restaurantType ?? "")
+                    Text(restaurant.first?.type ?? "")
                         .foregroundStyle(.primary)
                         .font(.footnote)
-                    Text(restaurant.first?.restaurantCity ?? "")
+                    Text(restaurant.first?.city ?? "")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -51,7 +56,7 @@ struct RestaurantsView: View {
                     Text("0.9 Km")
                         .foregroundStyle(.gray)
                         .font(.footnote)
-                    Text("₹2000 for two")
+                    Text("₹\(restaurant.first?.averageCost ?? "") for two")
                         .font(.footnote)
                         .foregroundStyle(.gray)
                 }
@@ -81,5 +86,7 @@ struct RestaurantsView: View {
 }
 
 #Preview {
-    RestaurantsView( restaurant: [Restaurant(restaurantName: "Orchid Hotel", restaurantType: "Indian", restaurantAddress: "Airport Road", restaurantState: "Tripura", restaurantCity: "Agartala", restaurantZipCode: "799009", restaurantAverageCost: "2000", startTime: Date(), endTime: Date())])
+    RestaurantsView( restaurant:
+                        [ Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [])]
+    )
 }
