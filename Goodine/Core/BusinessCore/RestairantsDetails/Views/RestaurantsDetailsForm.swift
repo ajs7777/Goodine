@@ -11,7 +11,7 @@ import Kingfisher
 
 struct RestaurantsDetailsForm: View {
     
-    @ObservedObject var businessAuthMV : BusinessAuthViewModel
+    @ObservedObject var businessAuthVM : BusinessAuthViewModel
     @Environment(\.dismiss) var dismiss
     @State private var selectedImages: [UIImage] = []
     @State private var isImagePickerPresented = false
@@ -21,8 +21,8 @@ struct RestaurantsDetailsForm: View {
             VStack {
                 ScrollView{
                     TextField("Business Name", text: Binding(
-                        get: { businessAuthMV.restaurant?.name ?? "" },
-                        set: { businessAuthMV.restaurant?.name = $0 }
+                        get: { businessAuthVM.restaurant?.name ?? "" },
+                        set: { businessAuthVM.restaurant?.name = $0 }
                     ))
                     .padding(.leading)
                     .frame(maxWidth: .infinity)
@@ -34,8 +34,8 @@ struct RestaurantsDetailsForm: View {
                     )
                     
                     TextField("Indian, Chienese", text: Binding(
-                        get: { businessAuthMV.restaurant?.type ?? "" },
-                        set: { businessAuthMV.restaurant?.type = $0 }
+                        get: { businessAuthVM.restaurant?.type ?? "" },
+                        set: { businessAuthVM.restaurant?.type = $0 }
                     ))
                     .padding(.leading)
                     .frame(maxWidth: .infinity)
@@ -47,8 +47,8 @@ struct RestaurantsDetailsForm: View {
                     )
                     
                     TextField("Address", text: Binding(
-                        get: { businessAuthMV.restaurant?.address ?? "" },
-                        set: { businessAuthMV.restaurant?.address = $0 }
+                        get: { businessAuthVM.restaurant?.address ?? "" },
+                        set: { businessAuthVM.restaurant?.address = $0 }
                     ))
                     .padding(.leading)
                     .frame(maxWidth: .infinity)
@@ -61,8 +61,8 @@ struct RestaurantsDetailsForm: View {
                     
                     HStack{
                         TextField("State", text: Binding(
-                            get: { businessAuthMV.restaurant?.state ?? "" },
-                            set: { businessAuthMV.restaurant?.state = $0 }
+                            get: { businessAuthVM.restaurant?.state ?? "" },
+                            set: { businessAuthVM.restaurant?.state = $0 }
                         ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
@@ -74,8 +74,8 @@ struct RestaurantsDetailsForm: View {
                         )
                         
                         TextField("City", text: Binding(
-                            get: { businessAuthMV.restaurant?.city ?? "" },
-                            set: { businessAuthMV.restaurant?.city = $0 }
+                            get: { businessAuthVM.restaurant?.city ?? "" },
+                            set: { businessAuthVM.restaurant?.city = $0 }
                         ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
@@ -91,8 +91,8 @@ struct RestaurantsDetailsForm: View {
                     
                     HStack{
                         TextField("Zipcode", text: Binding(
-                            get: { businessAuthMV.restaurant?.zipcode ?? "" },
-                            set: { businessAuthMV.restaurant?.zipcode = $0 }
+                            get: { businessAuthVM.restaurant?.zipcode ?? "" },
+                            set: { businessAuthVM.restaurant?.zipcode = $0 }
                         ))
                         .padding(.leading)
                         .frame(maxWidth: .infinity)
@@ -125,8 +125,8 @@ struct RestaurantsDetailsForm: View {
                         Text("Average Cost for two")
                             .font(.headline)
                         TextField("₹", text: Binding(
-                            get: { businessAuthMV.restaurant?.averageCost ?? "" },
-                            set: { businessAuthMV.restaurant?.averageCost = $0 }
+                            get: { businessAuthVM.restaurant?.averageCost ?? "" },
+                            set: { businessAuthVM.restaurant?.averageCost = $0 }
                         ))
                         .keyboardType(.numberPad)
                         .padding(.leading)
@@ -150,8 +150,8 @@ struct RestaurantsDetailsForm: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack{
                         DatePicker("From", selection: Binding(
-                            get: { businessAuthMV.restaurant?.openingTime ?? Date() },
-                            set: { businessAuthMV.restaurant?.openingTime = $0 }
+                            get: { businessAuthVM.restaurant?.openingTime ?? Date() },
+                            set: { businessAuthVM.restaurant?.openingTime = $0 }
                         ), displayedComponents: .hourAndMinute)
                         .font(.title3)
                         .bold()
@@ -159,8 +159,8 @@ struct RestaurantsDetailsForm: View {
                         .tint(.orange)
                         
                         DatePicker("To", selection:  Binding(
-                            get: { businessAuthMV.restaurant?.closingTime ?? Date() },
-                            set: { businessAuthMV.restaurant?.closingTime = $0 }
+                            get: { businessAuthVM.restaurant?.closingTime ?? Date() },
+                            set: { businessAuthVM.restaurant?.closingTime = $0 }
                         ), displayedComponents: .hourAndMinute)
                         .font(.title3)
                         .bold()
@@ -182,7 +182,7 @@ struct RestaurantsDetailsForm: View {
                                     .padding(20)
                             }
                             
-                            if let imageUrls = businessAuthMV.restaurant?.imageUrls {
+                            if let imageUrls = businessAuthVM.restaurant?.imageUrls {
                                 ForEach(imageUrls, id: \.self) { imageUrl in
                                     KFImage(URL(string: imageUrl)) // Using Kingfisher
                                         .resizable()
@@ -192,7 +192,7 @@ struct RestaurantsDetailsForm: View {
                                         .overlay(alignment: .topTrailing) {
                                             Button(action: {
                                                 Task {
-                                                    await businessAuthMV.deleteImage(imageUrl)
+                                                    await businessAuthVM.deleteImage(imageUrl)
                                                 }
                                             }) {
                                                 Image(systemName: "xmark.circle.fill")
@@ -239,8 +239,8 @@ struct RestaurantsDetailsForm: View {
                 Button{
                     Task {
                         do {
-                            if let restaurant = businessAuthMV.restaurant {
-                                try await businessAuthMV.saveRestaurantDetails(restaurant, images: selectedImages)
+                            if let restaurant = businessAuthVM.restaurant {
+                                try await businessAuthVM.saveRestaurantDetails(restaurant, images: selectedImages)
                                 selectedImages.removeAll()
                                 dismiss()
                                 
@@ -279,8 +279,7 @@ struct RestaurantsDetailsForm: View {
 }
 
 #Preview {
-    RestaurantsDetailsForm(businessAuthMV: BusinessAuthViewModel())
-    
+    RestaurantsDetailsForm(businessAuthVM: BusinessAuthViewModel())    
 }
 
 
