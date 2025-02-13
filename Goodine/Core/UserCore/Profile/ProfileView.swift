@@ -61,6 +61,7 @@ struct ProfileView: View {
                             .foregroundStyle(.red)
                     } .bold()
                 }
+                .padding(.bottom, 30)
             }
             // for dismiss the screen
 //            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
