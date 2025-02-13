@@ -10,12 +10,12 @@ import Kingfisher
 
 struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var businessAuthMV : BusinessAuthViewModel
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @State var showEditProfile : Bool = false
     
     var body: some View {
         ScrollView {
-            if let imageUrls = businessAuthMV.restaurant?.imageUrls, !imageUrls.isEmpty {
+            if let imageUrls = businessAuthVM.restaurant?.imageUrls, !imageUrls.isEmpty {
                 TabView {
                     ForEach(imageUrls, id: \.self) { imageUrl in
                         KFImage(URL(string: imageUrl)) // Using Kingfisher
@@ -32,7 +32,7 @@ struct RestaurantProfile: View {
                 Image(systemName: "photo")
                     .frame(height: 250)
             }
-            if let restaurant = businessAuthMV.restaurant {
+            if let restaurant = businessAuthVM.restaurant {
                 VStack(alignment: .leading) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -157,7 +157,7 @@ struct RestaurantProfile: View {
             }
             Button{
                 Task{
-                    businessAuthMV.signOut()
+                    businessAuthVM.signOut()
                 }
             }label: {
                 Text("Log Out")
@@ -168,7 +168,7 @@ struct RestaurantProfile: View {
         .ignoresSafeArea()
         .scrollIndicators(.hidden)
         .sheet(isPresented: $showEditProfile) {
-            RestaurantsDetailsForm(businessAuthMV: businessAuthMV)
+            RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
         }
     }
 }
