@@ -13,7 +13,7 @@ struct RestaurantsFeedView: View {
     
     @State private var selectedPage = 0
     @State private var searchText = ""
-    @EnvironmentObject var viewModel : AuthViewModel
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     var body: some View {
         VStack {
@@ -23,16 +23,18 @@ struct RestaurantsFeedView: View {
                     searchBar
                     categoriesSection
                     discountSection
-                    MustTryPlaces()
+                    imageSection
                     restaurantsSection
-                    
                 }
                 
             }
         }
-        .task {
-            await viewModel.fetchRestaurants()
+        .onAppear {
+            Task{
+                await businessAuthVM.fetchAllRestaurants()
+            }
         }
+        
     }
 }
 
@@ -160,6 +162,25 @@ extension RestaurantsFeedView {
         
     }
     
+    private var imageSection: some View {
+        VStack(alignment: .leading) {
+            Text("Must Try Places")
+                .foregroundStyle(.mainbw)
+                .font(.title)
+                .fontWeight(.bold)
+                .padding(.leading)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12.0) {
+                    ForEach(businessAuthVM.allRestaurants) { restaurant in
+                        MustTryPlaces( restaurant: restaurant)
+                    }
+                    
+                } .padding(.horizontal)
+            }
+        }
+    }
+    
     private var restaurantsSection: some View {
         VStack(alignment: .leading) {
             Text("Restaurants To Explore")
@@ -167,13 +188,13 @@ extension RestaurantsFeedView {
                 .fontWeight(.bold)
                 .padding(.leading)
             
-            ForEach(viewModel.restaurants) { restaurant in
+            ForEach(businessAuthVM.allRestaurants) { restaurant in
                 NavigationLink(
-                    destination: RestaurantDetailView()
+                    destination: RestaurantDetailView(restaurant: restaurant)
                         .navigationBarBackButtonHidden()
                     
                 ) {
-                    RestaurantsView( restaurant: [restaurant])
+                    RestaurantsView(restaurant: [restaurant])
                         .tint(.primary)
                 }
                 
