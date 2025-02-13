@@ -6,63 +6,69 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct MustTryPlaces: View {
+    
+    @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
+    let restaurant: Restaurant
+    
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Must Try Places")
-                .foregroundStyle(.mainbw)
-                .font(.title)
-                .fontWeight(.bold)
-                .padding(.leading)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12.0) {
-                    ForEach(0..<10) { _ in
-                        imageSection
+        if let imageUrl = restaurant.imageUrls.first, let url = URL(string: imageUrl) {
+            KFImage(url)
+                .resizable()
+                .placeholder {
+                    ProgressView() // Show a loading indicator
+                }
+                .scaledToFill()
+                .frame(width: 170, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay {
+                    ZStack(alignment: .bottomLeading) {
+                        Color.black.opacity(0.2)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        LinearGradient(colors: [.black.opacity(0), .black.opacity(0.5)], startPoint: .top, endPoint: .bottom)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        
+                        // Text overlay
+                        VStack(alignment: .leading, spacing: 2.0) {
+                            Text("10 New")
+                                .font(.footnote)
+                                .foregroundColor(.white)
+                                .fontWeight(.bold)
+                            Text("Popular Cafes")
+                                .font(.footnote)
+                                .foregroundColor(.white)
+                                .fontWeight(.bold)
+                        }
+                        .shadow(radius: 10)
+                        .padding(.bottom, 12)
+                        .padding(.leading, 10)
                     }
-                    
-                } .padding(.horizontal)
-            }
+                }
+        } else {
+            Color.gray.opacity(0.3) // Placeholder if no image URL
+                .frame(width: 170, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .padding(.top)
-        
     }
 }
 
 #Preview {
-    MustTryPlaces()
+    MustTryPlaces(restaurant: Restaurant(
+        id: "",
+        ownerName: "",
+        name: "Popular Café",
+        type: "Cafe",
+        city: "New York",
+        state: "NY",
+        address: "123 Main St",
+        zipcode: "10001",
+        averageCost: "₹500",
+        openingTime: Date(),
+        closingTime: Date(),
+        imageUrls: ["https://example.com/image.jpg"] // Replace with actual image URL
+    ))
 }
 
-extension MustTryPlaces {
-    var imageSection: some View {
-        Image("Restaurant-1")
-            .resizable()
-            .scaledToFill()
-            .frame(width: 170, height: 200)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay {
-                ZStack(alignment: .bottomLeading) {
-                    Color.black.opacity(0.2)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    LinearGradient(colors: [.black.opacity(0), .black.opacity(0.5)], startPoint: .top, endPoint: .bottom)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                    
-                    //text
-                    VStack(alignment: .leading, spacing: 2.0) {
-                        Text("10 New")
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .fontWeight(.bold)
-                        Text("Popular Cafes")
-                            .font(.footnote)
-                            .foregroundColor(.white)
-                            .fontWeight(.bold)
-                    }
-                    .shadow(radius: 10)
-                    .padding(.bottom, 12)
-                    .padding(.leading, 10)
-                }
-            }
-    }
-}
+
