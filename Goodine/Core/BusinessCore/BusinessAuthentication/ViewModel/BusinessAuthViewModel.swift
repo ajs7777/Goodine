@@ -15,6 +15,7 @@ class BusinessAuthViewModel: ObservableObject {
     
     @Published var businessUser: User?
     @Published var restaurant: Restaurant?
+    @Published var allRestaurants: [Restaurant] = []
     @Published var isLoading = true
     
     private var db = Firestore.firestore()
@@ -23,6 +24,9 @@ class BusinessAuthViewModel: ObservableObject {
     init(){
         Task{
             fetchBusinessDetails()
+        }
+        Task{
+            await fetchAllRestaurants()
         }
     }
     
@@ -98,20 +102,19 @@ class BusinessAuthViewModel: ObservableObject {
                     self.isLoading = false
                 }
             }
-                
-
+            
         }
     }
-
-
+    
+    
     
     func saveRestaurantDetails(_ restaurant: Restaurant, images: [UIImage]?) async throws {
         guard let userId = Auth.auth().currentUser?.uid else { return }
         var updatedRestaurant = restaurant
         updatedRestaurant.id = userId
-
+        
         var imageUrls: [String] = updatedRestaurant.imageUrls
-
+        
         // Upload new images and update Firestore
         if let images = images {
             for image in images {
@@ -123,9 +126,9 @@ class BusinessAuthViewModel: ObservableObject {
                 }
             }
         }
-
+        
         updatedRestaurant.imageUrls = imageUrls
-
+        
         try await db.collection("business_users").document(userId).setData([
             "id": updatedRestaurant.id,
             "ownerName": updatedRestaurant.ownerName,
@@ -140,32 +143,66 @@ class BusinessAuthViewModel: ObservableObject {
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls
         ])
-
+        
         // **Update @Published restaurant to trigger UI refresh**
         DispatchQueue.main.async {
             self.restaurant = updatedRestaurant
         }
     }
-
+    
     
     func deleteImage(_ imageUrl: String) async {
-         //guard let userId = Auth.auth().currentUser?.uid else { return }
-         let storageRef = Storage.storage().reference(forURL: imageUrl)
-
-         do {
-             // Delete image from Firebase Storage
-             try await storageRef.delete()
-
-             // Remove image URL from Firestore
-             if let index = restaurant?.imageUrls.firstIndex(of: imageUrl) {
-                 restaurant?.imageUrls.remove(at: index)
-                 if let updatedRestaurant = restaurant {
-                     try await saveRestaurantDetails(updatedRestaurant, images: nil)
-                 }
-             }
-         } catch {
-             print("Failed to delete image: \(error.localizedDescription)")
-         }
-     }
-
+        //guard let userId = Auth.auth().currentUser?.uid else { return }
+        let storageRef = Storage.storage().reference(forURL: imageUrl)
+        
+        do {
+            // Delete image from Firebase Storage
+            try await storageRef.delete()
+            
+            // Remove image URL from Firestore
+            if let index = restaurant?.imageUrls.firstIndex(of: imageUrl) {
+                restaurant?.imageUrls.remove(at: index)
+                if let updatedRestaurant = restaurant {
+                    try await saveRestaurantDetails(updatedRestaurant, images: nil)
+                }
+            }
+        } catch {
+            print("Failed to delete image: \(error.localizedDescription)")
+        }
+    }
+    
+    func fetchAllRestaurants() async {
+        isLoading = true
+        do {
+            let snapshot = try await db.collection("business_users").getDocuments()
+            let restaurants = snapshot.documents.compactMap { document -> Restaurant? in
+                let data = document.data()
+                return Restaurant(
+                    id: data["id"] as? String ?? "",
+                    ownerName: data["ownerName"] as? String ?? "",
+                    name: data["name"] as? String ?? "",
+                    type: data["type"] as? String ?? "",
+                    city: data["city"] as? String ?? "",
+                    state: data["state"] as? String ?? "",
+                    address: data["address"] as? String ?? "",
+                    zipcode: data["zipcode"] as? String ?? "",
+                    averageCost: data["averageCost"] as? String ?? "",
+                    openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                    closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
+                    imageUrls: data["imageUrls"] as? [String] ?? []
+                )
+            }
+            
+            DispatchQueue.main.async {
+                self.allRestaurants = restaurants
+                self.isLoading = false
+            }
+        } catch {
+            print("Error fetching restaurants: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+        }
+    }
+    
 }
