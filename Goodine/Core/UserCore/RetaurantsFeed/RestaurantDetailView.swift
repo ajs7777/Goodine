@@ -6,12 +6,17 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct RestaurantDetailView: View {
     
     @Environment(\.dismiss) var dismiss
     @State var isFavorite: Bool = false
     @State var showBookingSheet: Bool = false
+    
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    
+    let restaurant: Restaurant
     
     var body: some View {
         ScrollView {
@@ -25,8 +30,11 @@ struct RestaurantDetailView: View {
                 topBarIcons
             }
         }
-        //.ignoresSafeArea()
-        
+        .onAppear {
+            Task{
+                await businessAuthVM.fetchAllRestaurants()
+            }
+        }
         // book a table button works as sheet
         .sheet(isPresented: $showBookingSheet, content: {
             BookATableView()
@@ -34,7 +42,7 @@ struct RestaurantDetailView: View {
         .overlay(alignment: .bottom) {
             ZStack {
                 Color.mainInvert.ignoresSafeArea()
-                    .frame(height: 100)
+                    .frame(height: 80)
                 Button {
                     showBookingSheet.toggle()
                 } label: {
@@ -42,7 +50,7 @@ struct RestaurantDetailView: View {
                         .font(.title3)
                         .goodineButtonStyle(.mainbw)
                 }
-                .padding()
+                .padding(.horizontal)
             }
 
         }
@@ -50,7 +58,8 @@ struct RestaurantDetailView: View {
 }
 
 #Preview {
-    RestaurantDetailView()
+    RestaurantDetailView( restaurant: Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: []))
+        .environmentObject(BusinessAuthViewModel())
 }
 
 extension RestaurantDetailView {
@@ -102,20 +111,26 @@ extension RestaurantDetailView {
         .padding(.top)
     }
     
-    private var restaurantsImages : some View {
+    private var restaurantsImages: some View {
         TabView {
-            ForEach(0..<5) { image in
-                Image("restaurant-2")
+            ForEach(restaurant.imageUrls, id: \.self) { imageUrl in
+                KFImage(URL(string: imageUrl))
+                    .resizable()
+                    .placeholder {
+                        ProgressView() // Show loading indicator
+                    }
+                    .scaledToFill()
+                    .frame(width: UIScreen.main.bounds.width, height: 250)
+                    .clipped()
             }
-            
         }
-        .frame(height: 220)
+        .frame(height: 250)
         .tabViewStyle(PageTabViewStyle())
     }
     
     private var restaurantInfo : some View {
         VStack(alignment: .leading, spacing: 8){
-            //open /c lose
+            //open /close
             HStack{
                 Text("Open Now")
                     .foregroundStyle(.black.opacity(0.8))
@@ -130,16 +145,16 @@ extension RestaurantDetailView {
             }
             
             //Hotel name
-            Text("Limelight - Royal Orchid Hotel")
+            Text(restaurant.name)
                 .foregroundStyle(.mainbw)
                 .font(.largeTitle)
                 .fontWeight(.bold)
             
             HStack{
                 VStack(alignment: .leading){
-                    Text("Continental | Indian | Chinese")
+                    Text(restaurant.type)
                         .foregroundStyle(.mainbw)
-                    Text("Indiranagar | 2 Km")
+                    Text("\(restaurant.city) | 2 Km")
                         .foregroundStyle(.secondary)
                  }
                 
@@ -155,7 +170,7 @@ extension RestaurantDetailView {
                     }
                     .font(.callout)
                     
-                    Text("₹ 2000 for two")
+                    Text("₹ \(restaurant.averageCost) for two")
                         .foregroundStyle(.mainbw)
                         .font(.callout)
                  }
@@ -181,7 +196,7 @@ extension RestaurantDetailView {
                     .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
-                Text("No.1, golf Avenue, HAL Old Airport Rd, Indiranagar, Bengaluru, Karnataka")
+                Text(restaurant.address)
                     .foregroundStyle(.mainbw)
                     .font(.subheadline)
                 Spacer()
@@ -193,7 +208,7 @@ extension RestaurantDetailView {
                     .foregroundStyle(.mainbw)
                     .font(.title2)
                     .fontWeight(.medium)
-                Text("12:00 PM - 11:00 PM")
+                Text("\(restaurant.openingTime.formattedTime2()) - \(restaurant.closingTime.formattedTime2())")
                     .foregroundStyle(.mainbw)
                 Spacer()
             }
@@ -230,5 +245,15 @@ extension RestaurantDetailView {
         }
         .padding(.horizontal)
         .padding(.bottom, 150)
+    }
+}
+
+extension Date {
+    func formattedTime2() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "hh:mm a"
+        formatter.amSymbol = "AM"
+        formatter.pmSymbol = "PM"
+        return formatter.string(from: self)
     }
 }
