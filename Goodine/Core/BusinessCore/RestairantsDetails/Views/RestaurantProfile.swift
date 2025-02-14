@@ -13,6 +13,14 @@ struct RestaurantProfile: View {
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @State var showEditProfile : Bool = false
     
+    var isOpen: Bool {
+        guard let openingTime = businessAuthVM.restaurant?.openingTime,
+              let closingTime = businessAuthVM.restaurant?.closingTime else { return false }
+        
+        let now = Date()
+        return now >= openingTime && now <= closingTime
+    }
+    
     var body: some View {
         ScrollView {
             if let imageUrls = businessAuthVM.restaurant?.imageUrls, !imageUrls.isEmpty {
@@ -36,12 +44,12 @@ struct RestaurantProfile: View {
                 VStack(alignment: .leading) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Open Now")
-                                .foregroundStyle(.black.opacity(0.8))
+                            Text(isOpen ? "Open Now" : "Closed")
+                                .foregroundStyle(isOpen ? .black.opacity(0.8) : .white)
                                 .font(.callout)
                                 .fontWeight(.semibold)
                                 .padding(7)
-                                .background(.openGreen)
+                                .background(isOpen ? .openGreen : .red)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             
                             Spacer()
