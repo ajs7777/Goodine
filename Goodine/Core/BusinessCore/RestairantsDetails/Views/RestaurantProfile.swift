@@ -16,10 +16,30 @@ struct RestaurantProfile: View {
     var isOpen: Bool {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
               let closingTime = businessAuthVM.restaurant?.closingTime else { return false }
-        
+
         let now = Date()
         return now >= openingTime && now <= closingTime
     }
+
+    var statusText: String {
+        guard let openingTime = businessAuthVM.restaurant?.openingTime,
+              let closingTime = businessAuthVM.restaurant?.closingTime else { return "Closed" }
+
+        let now = Date()
+        let halfHourBeforeOpening = Calendar.current.date(byAdding: .minute, value: -30, to: openingTime) ?? openingTime
+        let halfHourBeforeClosing = Calendar.current.date(byAdding: .minute, value: -30, to: closingTime) ?? closingTime
+
+        if now >= halfHourBeforeOpening && now < openingTime {
+            return "Opens Soon"
+        } else if now >= halfHourBeforeClosing && now < closingTime {
+            return "Closes Soon"
+        } else if isOpen {
+            return "Open Now"
+        } else {
+            return "Closed"
+        }
+    }
+
     
     var body: some View {
         ScrollView {
@@ -44,13 +64,19 @@ struct RestaurantProfile: View {
                 VStack(alignment: .leading) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(isOpen ? "Open Now" : "Closed")
-                                .foregroundStyle(isOpen ? .black.opacity(0.8) : .white)
+                            Text(statusText)
+                                .foregroundStyle(statusText == "Closed" ? .white : statusText == "Closes Soon" ? .white : .black.opacity(0.8))
                                 .font(.callout)
                                 .fontWeight(.semibold)
                                 .padding(7)
-                                .background(isOpen ? .openGreen : .red)
+                                .padding(.horizontal, 3)
+                                .background(
+                                    statusText == "Open Now" ? .openGreen :
+                                    statusText == "Opens Soon" ? .yellow :
+                                    statusText == "Closes Soon" ? .orange : .red
+                                )
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
+
                             
                             Spacer()
                             Button {
