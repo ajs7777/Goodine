@@ -30,19 +30,19 @@ class BusinessAuthViewModel: ObservableObject {
         }
     }
     
-    func signUp(email: String, password: String, ownerName: String) async throws {
+    func signUp(email: String, password: String, name : String, type : String, city : String, address : String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
         self.businessUser = result.user
         
         let userId = result.user.uid
         let newRestaurant = Restaurant(
             id: userId,
-            ownerName: ownerName,
-            name: "",
-            type: "",
-            city: "",
+            ownerName: "",
+            name: name,
+            type: type,
+            city: city,
             state: "",
-            address: "",
+            address: address,
             zipcode: "",
             averageCost: "",
             openingTime: Date(),
@@ -138,7 +138,7 @@ class BusinessAuthViewModel: ObservableObject {
             "state": updatedRestaurant.state,
             "address": updatedRestaurant.address,
             "zipcode": updatedRestaurant.zipcode,
-            "averageCost": updatedRestaurant.averageCost,
+            "averageCost": updatedRestaurant.averageCost ?? "",
             "openingTime": Timestamp(date: updatedRestaurant.openingTime),
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls
