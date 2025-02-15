@@ -39,7 +39,7 @@ struct RestaurantDetailView: View {
         } else if now >= halfHourBeforeClosing && now < closingTime {
             return "Closes Soon"
         } else if isOpen {
-            return "Open"
+            return "Open Now"
         } else {
             return "Closed"
         }
