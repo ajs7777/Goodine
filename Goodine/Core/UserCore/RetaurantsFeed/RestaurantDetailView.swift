@@ -169,10 +169,12 @@ extension RestaurantDetailView {
                             .foregroundStyle(.mainbw)
                     }
                     .font(.callout)
-                    
-                    Text("₹ \(restaurant.averageCost) for two")
-                        .foregroundStyle(.mainbw)
-                        .font(.callout)
+                                     
+                    if restaurant.averageCost != "" {
+                        Text("₹\(restaurant.averageCost ?? "") for two")
+                            .foregroundStyle(.mainbw)
+                            .font(.callout)
+                    }
                  }
             }
             .padding(.bottom)

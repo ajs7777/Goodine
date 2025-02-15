@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RestaurantTabView: View {
+    
     var body: some View {
         TabView{
             RestaurantProfile()

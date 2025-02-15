@@ -18,7 +18,7 @@ struct Restaurant: Identifiable, Codable {
     var state: String
     var address: String
     var zipcode: String
-    var averageCost: String
+    var averageCost: String?
     var openingTime: Date
     var closingTime: Date
     var imageUrls: [String]

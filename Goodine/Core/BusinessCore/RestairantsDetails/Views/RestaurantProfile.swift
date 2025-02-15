@@ -87,10 +87,12 @@ struct RestaurantProfile: View {
                                         .foregroundStyle(.mainbw)
                                 }
                                 .font(.callout)
+                                if restaurant.averageCost != "" {
+                                    Text("₹\(restaurant.averageCost ?? "") for two")
+                                        .foregroundStyle(.mainbw)
+                                        .font(.callout)
+                                }
                                 
-                                Text("₹\(restaurant.averageCost) for two")
-                                    .foregroundStyle(.mainbw)
-                                    .font(.callout)
                             }
                         }
                         .padding(.bottom)
@@ -183,6 +185,7 @@ struct RestaurantProfile: View {
 
 #Preview {
     RestaurantProfile()
+        .environmentObject(BusinessAuthViewModel())
 }
 
 
