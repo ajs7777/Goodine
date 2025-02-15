@@ -120,53 +120,26 @@ struct CreateBusinessView: View {
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.mainbw)
                         }
-                        dismiss()
-                    } label: {
-                        Text("Sign Up")
-                            .goodineButtonStyle(.mainbw)
+                        .foregroundStyle(.gray)
+                        .font(.caption2)
                     }
-                    .padding(.vertical, 10)
-                    
                 }
-                .padding(.top, 10)
-                
-                Spacer()
-                VStack {
-                    Image(.goodinetext)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 100, height: 50)
-                        .opacity(0.4)
-                    HStack(spacing: 0.0){
-                        Text("By clicking, I accept the")
-                        Text(" Terms & Conditions ")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.mainbw)
-                        Text(" & ")
-                        Text(" Privacy Policy")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.mainbw)
-                    }
-                    .foregroundStyle(.gray)
-                    .font(.caption2)
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .padding()
+                .onTapGesture {
+                    hideKeyboard()
                 }
             }
-            .toolbar(content: {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .tint(.mainbw)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .padding(.trailing, 6)
-                    }
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .tint(.mainbw)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.trailing, 30)
                 }
-            })
-            .padding()
-            .onTapGesture {
-                hideKeyboard()
             }
         }
     }
@@ -178,4 +151,5 @@ struct CreateBusinessView: View {
 
 #Preview {
     CreateBusinessView()
+        .environmentObject(BusinessAuthViewModel())
 }
