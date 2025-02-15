@@ -18,6 +18,15 @@ struct CreateBusinessView: View {
     @State private var city = ""
     @State private var address = ""
     
+    var isFormValid: Bool {
+        return !email.isEmpty && email.contains("@") && email.contains(".") &&
+        !password.isEmpty &&
+        !name.isEmpty &&
+        !type.isEmpty &&
+        !city.isEmpty &&
+        !address.isEmpty
+    }
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -99,6 +108,8 @@ struct CreateBusinessView: View {
                                 .goodineButtonStyle(.mainbw)
                         }
                         .padding(.vertical, 10)
+                        .disabled(!isFormValid)
+                        .opacity(isFormValid ? 1 : 0.5)
                         
                     }
                     .padding(.top, 10)
