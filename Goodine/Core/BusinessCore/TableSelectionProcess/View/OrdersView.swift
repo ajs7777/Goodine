@@ -1,110 +1,141 @@
+//
+//  OrdersView.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 16/02/25.
+//
+
+
 import SwiftUI
 import Firebase
+import FirebaseFirestore
+import FirebaseAuth
 
 struct OrdersView: View {
-    @State private var orders: [Reservation] = []
-    @State private var isLoading = false
-
+    
+    @ObservedObject var tableVM = TableViewModel()
+    
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+    
     var body: some View {
         NavigationView {
             VStack {
-                if isLoading {
-                    ProgressView("Loading Orders...")
-                } else if orders.isEmpty {
-                    Text("No Orders Found")
-                        .foregroundColor(.gray)
+                Button(action: {
+                    tableVM.fetchAllReservations()
+                }) {
+                    Text("Refresh Reservations")
+                        .font(.headline)
+                        .foregroundColor(.white)
                         .padding()
-                } else {
-                    List {
-                        ForEach(orders) { order in
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("🆔 Reservation ID: \(order.id)")
-                                    .font(.headline)
-                                Text("🍽 Table: \(order.tableNumber)")
-                                Text("👥 People: \(order.peopleCount)")
-                                Text("💺 Seats: \(order.selectedSeats.joined(separator: ", "))")
-
-                                Button(action: {
-                                    payBill(for: order)
-                                }) {
-                                    Text("Pay Bill 💳")
-                                        .fontWeight(.bold)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Color.red)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(10)
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                }
+                
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 20) {
+                        
+                        // Active Reservations
+                        Text("Active Reservations (\(tableVM.reservations.count))")
+                            .font(.title2)
+                            .bold()
+                            .padding(.leading)
+                        
+                        if tableVM.reservations.isEmpty {
+                            Text("No active reservations")
+                                .foregroundColor(.gray)
+                                .padding()
+                        } else {
+                            ForEach(tableVM.reservations, id: \.id) { reservation in
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Reservation ID: \(reservation.id)")
+                                        .font(.headline)
+                                    Text("Timestamp: \(reservation.timestamp, formatter: dateFormatter)")
+                                    Text("Billing Time: \(reservation.billingTime, formatter: dateFormatter)")
+                                    Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
+                                    
+                                    ForEach(reservation.tables, id: \.self) { table in
+                                        if let seats = reservation.seats[table] {
+                                            Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
+                                        }
+                                        if let count = reservation.peopleCount[table] {
+                                            Text("People at Table \(table): \(count)")
+                                        }
+                                    }
+                                    
+                                    if !reservation.isPaid {
+                                        Button(action: {
+                                            tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
+                                        }) {
+                                            Text("Pay Bill")
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                                .padding()
+                                                .background(Color.red)
+                                                .cornerRadius(10)
+                                        }
+                                        .padding(.top, 10)
+                                    }
                                 }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
                             }
-                            .padding()
+                        }
+                        
+                        // Order History
+                        Text("Order History (\(tableVM.history.count))")
+                            .font(.title2)
+                            .bold()
+                            .padding(.leading)
+                        
+                        if tableVM.history.isEmpty {
+                            Text("No order history available")
+                                .foregroundColor(.gray)
+                                .padding()
+                        } else {
+                            ForEach(tableVM.history, id: \.id) { historyItem in
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Reservation ID: \(historyItem.id)")
+                                        .font(.headline)
+                                    Text("Timestamp: \(historyItem.timestamp, formatter: dateFormatter)")
+                                    Text("Billing Time: \(historyItem.billingTime, formatter: dateFormatter)")
+                                    Text("Selected Tables: \(historyItem.tables.map { String($0) }.joined(separator: ", "))")
+                                    
+                                    ForEach(historyItem.tables, id: \.self) { table in
+                                        if let seats = historyItem.seats[table] {
+                                            Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
+                                        }
+                                        if let count = historyItem.peopleCount[table] {
+                                            Text("People at Table \(table): \(count)")
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+                            }
                         }
                     }
+                    .padding()
+                }
+                .navigationTitle("Orders & History")
+                .onAppear {
+                    tableVM.fetchAllReservations()
+                    tableVM.fetchOrderHistory()
                 }
             }
-            .navigationTitle("Orders")
-            .onAppear(perform: fetchOrders)
-        }
-    }
-
-    // Fetch Orders from Firestore
-    func fetchOrders() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        let reservationsRef = db.collection("business_users").document(userID).collection("reservations")
-
-        isLoading = true
-
-        reservationsRef.getDocuments { (snapshot, error) in
-            DispatchQueue.main.async {
-                isLoading = false
-            }
-            if let error = error {
-                print("❌ Error fetching orders: \(error.localizedDescription)")
-                return
-            }
-
-            guard let documents = snapshot?.documents else {
-                print("ℹ️ No orders found")
-                return
-            }
-
-            let fetchedOrders = documents.map { doc -> Reservation in
-                let data = doc.data()
-                let id = doc.documentID
-                let tableNumber = data["tableNumber"] as? Int ?? 0
-                let peopleCount = data["peopleCount"] as? Int ?? 0
-                let selectedSeats = data["selectedSeats"] as? [String] ?? []
-
-                return Reservation(id: id, tableNumber: tableNumber, peopleCount: peopleCount, selectedSeats: selectedSeats)
-            }
-
-            DispatchQueue.main.async {
-                self.orders = fetchedOrders
-            }
-        }
-    }
-
-    // Unlock Seats and Delete Reservation
-    func payBill(for order: Reservation) {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        let reservationRef = db.collection("business_users").document(userID).collection("reservations").document(order.id)
-
-        reservationRef.delete { error in
-            if let error = error {
-                print("❌ Error deleting reservation: \(error.localizedDescription)")
-            } else {
-                print("✅ Reservation \(order.id) removed")
-                self.orders.removeAll { $0.id == order.id } // Remove from UI
-            }
         }
     }
 }
 
-// Reservation Model
-struct Reservation: Identifiable {
-    let id: String
-    let tableNumber: Int
-    let peopleCount: Int
-    let selectedSeats: [String] // ["Seat 1", "Seat 2"]
+#Preview {
+    OrdersView()
 }
+
+
+
