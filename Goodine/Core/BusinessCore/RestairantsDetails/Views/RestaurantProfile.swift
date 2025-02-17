@@ -16,22 +16,49 @@ struct RestaurantProfile: View {
     var isOpen: Bool {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
               let closingTime = businessAuthVM.restaurant?.closingTime else { return false }
-
+        
         let now = Date()
-        return now >= openingTime && now <= closingTime
+        let calendar = Calendar.current
+        
+        // Extract hours and minutes from stored opening and closing times
+        let openingComponents = calendar.dateComponents([.hour, .minute], from: openingTime)
+        let closingComponents = calendar.dateComponents([.hour, .minute], from: closingTime)
+        
+        // Create opening and closing Date objects for today
+        let todayOpening = calendar.date(bySettingHour: openingComponents.hour ?? 0,
+                                         minute: openingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        let todayClosing = calendar.date(bySettingHour: closingComponents.hour ?? 0,
+                                         minute: closingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        
+        return now >= todayOpening && now <= todayClosing
     }
+
 
     var statusText: String {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
               let closingTime = businessAuthVM.restaurant?.closingTime else { return "Closed" }
 
         let now = Date()
-        let halfHourBeforeOpening = Calendar.current.date(byAdding: .minute, value: -30, to: openingTime) ?? openingTime
-        let halfHourBeforeClosing = Calendar.current.date(byAdding: .minute, value: -30, to: closingTime) ?? closingTime
+        let calendar = Calendar.current
+        
+        let openingComponents = calendar.dateComponents([.hour, .minute], from: openingTime)
+        let closingComponents = calendar.dateComponents([.hour, .minute], from: closingTime)
 
-        if now >= halfHourBeforeOpening && now < openingTime {
+        let todayOpening = calendar.date(bySettingHour: openingComponents.hour ?? 0,
+                                         minute: openingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        let todayClosing = calendar.date(bySettingHour: closingComponents.hour ?? 0,
+                                         minute: closingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        
+        let halfHourBeforeOpening = calendar.date(byAdding: .minute, value: -30, to: todayOpening) ?? todayOpening
+        let halfHourBeforeClosing = calendar.date(byAdding: .minute, value: -30, to: todayClosing) ?? todayClosing
+
+        if now >= halfHourBeforeOpening && now < todayOpening {
             return "Opens Soon"
-        } else if now >= halfHourBeforeClosing && now < closingTime {
+        } else if now >= halfHourBeforeClosing && now < todayClosing {
             return "Closes Soon"
         } else if isOpen {
             return "Open Now"
@@ -39,6 +66,7 @@ struct RestaurantProfile: View {
             return "Closed"
         }
     }
+
 
     
     var body: some View {
