@@ -25,21 +25,10 @@ struct OrdersView: View {
     var body: some View {
         NavigationView {
             VStack {
-                Button(action: {
-                    tableVM.fetchAllReservations()
-                }) {
-                    Text("Refresh Reservations")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                }
-                
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 20) {
                         
-                        // Active Reservations
+                        // Active Reservations Header
                         Text("Active Reservations (\(tableVM.reservations.count))")
                             .font(.title2)
                             .bold()
@@ -52,8 +41,17 @@ struct OrdersView: View {
                         } else {
                             ForEach(tableVM.reservations, id: \.id) { reservation in
                                 VStack(alignment: .leading, spacing: 10) {
-                                    Text("Reservation ID: \(reservation.id)")
-                                        .font(.headline)
+                                    
+                                    // Reservation ID with Business Icon
+                                    HStack {
+                                        Image("businessicon") // Custom business icon
+                                            .resizable()
+                                            .frame(width: 20, height: 20)
+                                        
+                                        Text("Reservation ID: \(reservation.id)")
+                                            .font(.headline)
+                                    }
+                                    
                                     Text("Timestamp: \(reservation.timestamp, formatter: dateFormatter)")
                                     Text("Billing Time: \(reservation.billingTime, formatter: dateFormatter)")
                                     Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
@@ -87,7 +85,7 @@ struct OrdersView: View {
                             }
                         }
                         
-                        // Order History
+                        // Order History Header
                         Text("Order History (\(tableVM.history.count))")
                             .font(.title2)
                             .bold()
@@ -100,8 +98,18 @@ struct OrdersView: View {
                         } else {
                             ForEach(tableVM.history, id: \.id) { historyItem in
                                 VStack(alignment: .leading, spacing: 10) {
-                                    Text("Reservation ID: \(historyItem.id)")
-                                        .font(.headline)
+                                    
+                                    // Reservation ID with Checkmark Icon
+                                    HStack {
+                                        Image(systemName: "checkmark.circle.fill") // Checkmark icon
+                                            .resizable()
+                                            .frame(width: 20, height: 20)
+                                            .foregroundColor(.green)
+                                        
+                                        Text("Reservation ID: \(historyItem.id)")
+                                            .font(.headline)
+                                    }
+                                    
                                     Text("Timestamp: \(historyItem.timestamp, formatter: dateFormatter)")
                                     Text("Billing Time: \(historyItem.billingTime, formatter: dateFormatter)")
                                     Text("Selected Tables: \(historyItem.tables.map { String($0) }.joined(separator: ", "))")
@@ -136,6 +144,5 @@ struct OrdersView: View {
 #Preview {
     OrdersView()
 }
-
 
 
