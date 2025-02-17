@@ -55,17 +55,6 @@ struct TableView: View {
                     }
                     .padding()
                     
-                    VStack {
-                        Text("People Count Per Table:")
-                            .font(.headline)
-                            .bold()
-                        ForEach(tableVM.tablePeopleCount.sorted(by: { $0.key < $1.key }), id: \.key) { table, count in
-                            Text("Table \(table): \(count) people")
-                                .font(.subheadline)
-                                .foregroundStyle(.mainbw)
-                        }
-                    }
-                    .padding()
                 }
             }
             .navigationTitle(Text("Table Selection"))
