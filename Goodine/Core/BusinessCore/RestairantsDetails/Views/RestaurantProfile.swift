@@ -35,7 +35,6 @@ struct RestaurantProfile: View {
         return now >= todayOpening && now <= todayClosing
     }
 
-
     var statusText: String {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
               let closingTime = businessAuthVM.restaurant?.closingTime else { return "Closed" }
@@ -66,8 +65,6 @@ struct RestaurantProfile: View {
             return "Closed"
         }
     }
-
-
     
     var body: some View {
         ScrollView {
