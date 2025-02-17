@@ -24,7 +24,7 @@ struct RestaurantTabView: View {
                     Text("Table")
                 }
             
-            Text("Order History")
+            OrdersView()
                 .tabItem {
                     Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
                     Text("History")
