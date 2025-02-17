@@ -124,11 +124,18 @@ class TableViewModel: ObservableObject {
                 print("Error saving seat selections: \(error.localizedDescription)")
             } else {
                 print("Seat selections saved successfully with ID: \(reservationID)")
+                self.fetchAllSeatSelections {
+                    DispatchQueue.main.async {
+                        self.selectedButtons = Array(repeating: Array(repeating: false, count: 4), count: 100)
+                        self.tablePeopleCount.removeAll()
+                    }
+                }
             }
         }
+
     }
     
-    func fetchAllSeatSelections() {
+    func fetchAllSeatSelections(completion: (() -> Void)? = nil) {
         guard let userID = Auth.auth().currentUser?.uid else { return }
 
         let db = Firestore.firestore()
@@ -178,7 +185,9 @@ class TableViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.tablePeopleCount = updatedPeopleCount
                 self.reservedSeats = updatedReservedSeats
+                self.objectWillChange.send()
                 print("Reserved Seats Updated for All Reservations: \(self.reservedSeats)")
+                completion?()
             }
         }
     }
@@ -239,7 +248,6 @@ class TableViewModel: ObservableObject {
             print("Reservations Count:", self.reservations.count)  // Debugging
         }
     }
-
     
     func deleteReservationAndSaveToHistory(reservationID: String) {
         guard let userID = Auth.auth().currentUser?.uid else { return }
