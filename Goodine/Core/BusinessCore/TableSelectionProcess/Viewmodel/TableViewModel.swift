@@ -307,33 +307,35 @@ class TableViewModel: ObservableObject {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         let historyCollection = db.collection("business_users").document(userID).collection("history")
-        
+
         isLoading = true
         history.removeAll()
-        
+
         historyCollection.getDocuments { (snapshot, error) in
             defer { self.isLoading = false }
-            
+
             if let error = error {
                 print("Error fetching order history: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let documents = snapshot?.documents, !documents.isEmpty else {
                 print("No order history found.")
                 return
             }
-            
+
+            var fetchedHistory: [(id: String, tables: [Int], seats: [Int: [Bool]], peopleCount: [Int: Int], timestamp: Date, billingTime: Date)] = []
+
             for document in documents {
                 let data = document.data()
-                let reservationID = data["reservationID"] as? String ?? "Unknown"
+                let reservationID = document.documentID
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
                 let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
-                
+
                 var tables: [Int] = []
                 var seats: [Int: [Bool]] = [:]
                 var peopleCount: [Int: Int] = [:]
-                
+
                 for (key, value) in data {
                     if key.hasPrefix("table_") {
                         let components = key.components(separatedBy: "_")
@@ -347,10 +349,19 @@ class TableViewModel: ObservableObject {
                         }
                     }
                 }
-                
-                self.history.append((id: reservationID, tables: tables, seats: seats, peopleCount: peopleCount, timestamp: timestamp, billingTime: billingTime))
+
+                fetchedHistory.append((id: reservationID, tables: tables, seats: seats, peopleCount: peopleCount, timestamp: timestamp, billingTime: billingTime))
+            }
+
+            fetchedHistory.sort { $0.billingTime > $1.billingTime }
+
+            // Update history in the main thread
+            DispatchQueue.main.async {
+                self.history = fetchedHistory
+                print("History updated (sorted by billing time). Count: \(self.history.count)")
             }
         }
     }
+
     
 }
