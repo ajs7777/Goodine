@@ -255,26 +255,50 @@ class TableViewModel: ObservableObject {
         let reservationRef = db.collection("business_users").document(userID).collection("reservations").document(reservationID)
         let historyRef = db.collection("business_users").document(userID).collection("history").document(reservationID)
         
+        isLoading = true // Start loading
+        
         reservationRef.getDocument { (document, error) in
             if let document = document, document.exists {
                 if var data = document.data() {
-                    data["isPaid"] = true
+                    let currentBillingTime = Date() // Get current timestamp
+                    data["billingTime"] = Timestamp(date: currentBillingTime) // Update billing time
+                    data["isPaid"] = true  // Mark as paid before moving to history
+                    
                     historyRef.setData(data) { error in
                         if let error = error {
                             print("Error saving to history: \(error.localizedDescription)")
+                            DispatchQueue.main.async { self.isLoading = false }
                         } else {
                             reservationRef.delete { error in
-                                if let error = error {
-                                    print("Error deleting reservation: \(error.localizedDescription)")
-                                } else {
-                                    print("Reservation moved to history and deleted successfully")
-                                    self.fetchAllReservations()
-                                    self.fetchOrderHistory()
+                                DispatchQueue.main.async {
+                                    if let error = error {
+                                        print("Error deleting reservation: \(error.localizedDescription)")
+                                    } else {
+                                        print("Reservation moved to history and deleted successfully")
+                                        
+                                        // **Update UI**
+                                        self.reservations.removeAll { $0.id == reservationID } // Remove from reservations
+                                        self.history.append((
+                                            id: reservationID,
+                                            tables: data["tables"] as? [Int] ?? [],
+                                            seats: data["seats"] as? [Int: [Bool]] ?? [:],
+                                            peopleCount: data["peopleCount"] as? [Int: Int] ?? [:],
+                                            timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                                            billingTime: currentBillingTime // Use updated billing time
+                                        ))
+
+                                        self.objectWillChange.send()
+                                    }
+                                    self.isLoading = false // Stop loading
                                 }
                             }
                         }
                     }
+                } else {
+                    DispatchQueue.main.async { self.isLoading = false }
                 }
+            } else {
+                DispatchQueue.main.async { self.isLoading = false }
             }
         }
     }
