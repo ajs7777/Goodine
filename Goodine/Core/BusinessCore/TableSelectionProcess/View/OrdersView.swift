@@ -25,117 +25,48 @@ struct OrdersView: View {
     var body: some View {
         NavigationView {
             VStack {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 20) {
-                        
-                        // Active Reservations Header
-                        Text("Active Reservations (\(tableVM.reservations.count))")
-                            .font(.title2)
-                            .bold()
-                            .padding(.leading)
-                        
-                        if tableVM.reservations.isEmpty {
-                            Text("No active reservations")
-                                .foregroundColor(.gray)
-                                .padding()
-                        } else {
-                            ForEach(tableVM.reservations, id: \.id) { reservation in
-                                VStack(alignment: .leading, spacing: 10) {
-                                    
-                                    // Reservation ID with Business Icon
-                                    HStack {
-                                        Image("businessicon") // Custom business icon
-                                            .resizable()
-                                            .frame(width: 20, height: 20)
-                                        
-                                        Text("Reservation ID: \(reservation.id)")
-                                            .font(.headline)
-                                    }
-                                    
-                                    Text("Timestamp: \(reservation.timestamp, formatter: dateFormatter)")
-                                    Text("Billing Time: \(reservation.billingTime, formatter: dateFormatter)")
-                                    Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
-                                    
-                                    ForEach(reservation.tables, id: \.self) { table in
-                                        if let seats = reservation.seats[table] {
-                                            Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
-                                        }
-                                        if let count = reservation.peopleCount[table] {
-                                            Text("People at Table \(table): \(count)")
-                                        }
-                                    }
-                                    
-                                    if !reservation.isPaid {
-                                        Button(action: {
-                                            tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
-                                        }) {
-                                            Text("Pay Bill")
-                                                .font(.headline)
-                                                .foregroundColor(.white)
-                                                .padding()
-                                                .background(Color.red)
-                                                .cornerRadius(10)
-                                        }
-                                        .padding(.top, 10)
-                                    }
-                                }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(10)
+                if tableVM.isLoading {
+                    ProgressView("Loading reservations...")
+                        .padding()
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 20) {
+                            
+                            Text("Active Reservations (\(tableVM.reservations.count))")
+                                .font(.title2)
+                                .bold()
+                                .padding(.leading)
+                            
+                            if tableVM.reservations.isEmpty {
+                                Text("No active reservations")
+                                    .foregroundColor(.gray)
+                                    .padding()
+                            } else {
+                                activeOrders
+                            }
+                            
+                            Text("Order History (\(tableVM.history.count))")
+                                .font(.title2)
+                                .bold()
+                                .padding(.leading)
+                            
+                            if tableVM.history.isEmpty {
+                                Text("No order history available")
+                                    .foregroundColor(.gray)
+                                    .padding()
+                            } else {
+                                ordersHistory
                             }
                         }
-                        
-                        // Order History Header
-                        Text("Order History (\(tableVM.history.count))")
-                            .font(.title2)
-                            .bold()
-                            .padding(.leading)
-                        
-                        if tableVM.history.isEmpty {
-                            Text("No order history available")
-                                .foregroundColor(.gray)
-                                .padding()
-                        } else {
-                            ForEach(tableVM.history, id: \.id) { historyItem in
-                                VStack(alignment: .leading, spacing: 10) {
-                                    
-                                    // Reservation ID with Checkmark Icon
-                                    HStack {
-                                        Image(systemName: "checkmark.circle.fill") // Checkmark icon
-                                            .resizable()
-                                            .frame(width: 20, height: 20)
-                                            .foregroundColor(.green)
-                                        
-                                        Text("Reservation ID: \(historyItem.id)")
-                                            .font(.headline)
-                                    }
-                                    
-                                    Text("Timestamp: \(historyItem.timestamp, formatter: dateFormatter)")
-                                    Text("Billing Time: \(historyItem.billingTime, formatter: dateFormatter)")
-                                    Text("Selected Tables: \(historyItem.tables.map { String($0) }.joined(separator: ", "))")
-                                    
-                                    ForEach(historyItem.tables, id: \.self) { table in
-                                        if let seats = historyItem.seats[table] {
-                                            Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
-                                        }
-                                        if let count = historyItem.peopleCount[table] {
-                                            Text("People at Table \(table): \(count)")
-                                        }
-                                    }
-                                }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(10)
-                            }
-                        }
+                        .padding()
                     }
-                    .padding()
                 }
-                .navigationTitle("Orders & History")
-                .onAppear {
-                    tableVM.fetchAllReservations()
-                    tableVM.fetchOrderHistory()
-                }
+            }
+            .navigationTitle("Orders & History")
+            .onAppear {
+                tableVM.isLoading = true
+                tableVM.fetchAllReservations()
+                tableVM.fetchOrderHistory()
             }
         }
     }
@@ -143,6 +74,94 @@ struct OrdersView: View {
 
 #Preview {
     OrdersView()
+}
+
+extension OrdersView {
+    
+    private var activeOrders : some View {
+        ForEach(tableVM.reservations, id: \.id) { reservation in
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image("businessicon")
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                    
+                    Text("Reservation ID: \(reservation.id)")
+                        .font(.headline)
+                }
+                
+                Text("Timestamp: \(reservation.timestamp, formatter: dateFormatter)")
+                Text("Billing Time: \(reservation.billingTime, formatter: dateFormatter)")
+                Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
+                
+                ForEach(reservation.tables, id: \.self) { table in
+                    if let seats = reservation.seats[table] {
+                        Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
+                    }
+                    if let count = reservation.peopleCount[table] {
+                        Text("People at Table \(table): \(count)")
+                    }
+                }
+                
+                if !reservation.isPaid {
+                    Button(action: {
+                        tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
+                    }) {
+                        HStack {
+                            if tableVM.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Pay Bill")
+                            }
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(10)
+                    }
+                    .padding(.top, 10)
+                    .disabled(tableVM.isLoading) // Disable button while loading
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+        }
+    }
+    
+    private var ordersHistory: some View {
+        ForEach(tableVM.history, id: \.id) { historyItem in
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .foregroundColor(.green)
+                    
+                    Text("Reservation ID: \(historyItem.id)")
+                        .font(.headline)
+                }
+                
+                Text("Timestamp: \(historyItem.timestamp, formatter: dateFormatter)")
+                Text("Billing Time: \(historyItem.billingTime, formatter: dateFormatter)")
+                Text("Selected Tables: \(historyItem.tables.map { String($0) }.joined(separator: ", "))")
+                
+                ForEach(historyItem.tables, id: \.self) { table in
+                    if let seats = historyItem.seats[table] {
+                        Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
+                    }
+                    if let count = historyItem.peopleCount[table] {
+                        Text("People at Table \(table): \(count)")
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+        }
+    }
 }
 
 
