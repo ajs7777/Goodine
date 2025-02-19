@@ -7,225 +7,321 @@
 
 import SwiftUI
 import FirebaseAuth
-import Firebase
 import FirebaseFirestore
+import Firebase
 
+@MainActor
 class TableViewModel: ObservableObject {
     
-    @Published var rows: Int = 4
-    @Published var columns: Int = 2
+    // MARK: - Published Properties
+    
+    @Published var rows: Int = 4 {
+        didSet { updateSelectedButtons() }
+    }
+    @Published var columns: Int = 2 {
+        didSet { updateSelectedButtons() }
+    }
+    
+    /// Number of people per table.
     @Published var tablePeopleCount: [Int: Int] = [:]
-    @Published var selectedButtons: [[Bool]] = Array(repeating: Array(repeating: false, count: 4), count: 100)
+    
+    /// Dictionary mapping table number to an array of Booleans representing seat selections.
+    @Published var selectedButtons: [Int: [Bool]] = [:]
+    
+    /// Dictionary mapping table number to an array of Booleans representing reserved seats.
     @Published var reservedSeats: [Int: [Bool]] = [:]
+    
     @Published var isLoading = false
-    @Published var currentTime = Date()
+    @Published var errorMessage: String?
+    
     @Published var selectedTable: Int? = nil
-    @Published var reservations: [(id: String, tables: [Int], seats: [Int: [Bool]], peopleCount: [Int: Int], timestamp: Date, billingTime: Date, isPaid: Bool)] = [] {
+    
+    @Published var reservations: [Reservation] = [] {
         didSet {
             print("Reservations updated! Count: \(reservations.count)")
         }
     }
     
-    @Published var history: [(id: String, tables: [Int], seats: [Int: [Bool]], peopleCount: [Int: Int], timestamp: Date, billingTime: Date)] = [] {
+    @Published var history: [HistoryRecord] = [] {
         didSet {
             print("History updated! Count: \(history.count)")
         }
     }
     
+    // MARK: - Private Properties
     
+    private var reservationListener: ListenerRegistration?
+    private var historyListener: ListenerRegistration?
+    private var layoutListener: ListenerRegistration?
+    
+    // MARK: - Initializer
+    
+    init() {
+        updateSelectedButtons()
+        // Setup real‑time listeners
+        fetchReservationsListener()
+        fetchHistoryListener()
+        fetchTableLayoutListener()
+    }
+    
+    deinit {
+        reservationListener?.remove()
+        historyListener?.remove()
+        layoutListener?.remove()
+    }
+    
+    // MARK: - Data Structures
+    
+    /// Reservation model.
+    struct Reservation: Identifiable, Codable {
+        var id: String
+        var tables: [Int]
+        var seats: [Int: [Bool]]
+        var peopleCount: [Int: Int]
+        var timestamp: Date
+        var billingTime: Date?
+        var isPaid: Bool
+    }
+    
+    /// History record model.
+    struct HistoryRecord: Identifiable, Codable {
+        var id: String
+        var tables: [Int]
+        var seats: [Int: [Bool]]
+        var peopleCount: [Int: Int]
+        var timestamp: Date
+        var billingTime: Date
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Log and update error message.
+    func logError(_ error: Error) {
+        DispatchQueue.main.async {
+            self.errorMessage = error.localizedDescription
+        }
+        print("Error: \(error.localizedDescription)")
+    }
+    
+    /// Update `selectedButtons` based on current table layout.
+    private func updateSelectedButtons() {
+        let tableCount = rows * columns
+        // Ensure every table number from 1 to tableCount is initialized.
+        for table in 1...tableCount {
+            if selectedButtons[table] == nil {
+                // Initialize with 4 seats per table.
+                selectedButtons[table] = Array(repeating: false, count: 4)
+            }
+        }
+    }
+    
+    /// Reset all seat selections and people counts.
+    private func resetSeatSelections() {
+        let tableCount = rows * columns
+        for table in 1...tableCount {
+            selectedButtons[table] = Array(repeating: false, count: 4)
+        }
+        tablePeopleCount.removeAll()
+    }
+    
+    // MARK: - Table Layout Methods
+    
+    /// Save the current table layout to Firestore.
     func saveTableLayout() {
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("No logged-in user found")
+            errorMessage = "No logged-in user found."
             return
         }
-        
+        isLoading = true
         let db = Firestore.firestore()
         let tableData: [String: Any] = [
             "rows": rows,
             "columns": columns,
             "userID": userID
         ]
-        
-        db.collection("business_users").document(userID).collection("tables").document("layout").setData(tableData) { error in
-            if let error = error {
-                print("Error saving table layout: \(error.localizedDescription)")
-            } else {
-                print("Table layout saved successfully for user \(userID)")
-            }
-        }
-    }
-    
-    func fetchTableLayout() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            print("No logged-in user found")
-            return
-        }
-        
-        isLoading = true
-        let db = Firestore.firestore()
-        let docRef = db.collection("business_users").document(userID).collection("tables").document("layout")
-        
-        docRef.getDocument { (document, error) in
-            defer { self.isLoading = false }
-            
-            if let document = document, document.exists {
-                if let data = document.data() {
-                    self.rows = data["rows"] as? Int ?? 4
-                    self.columns = data["columns"] as? Int ?? 2
-                    print("Table layout fetched successfully for user \(userID)")
+        db.collection("business_users")
+            .document(userID)
+            .collection("tables")
+            .document("layout")
+            .setData(tableData) { error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
                 }
-            } else {
-                print("Document does not exist or failed to fetch: \(error?.localizedDescription ?? "Unknown error")")
+                if let error = error {
+                    self.logError(error)
+                } else {
+                    print("Table layout saved successfully for user \(userID)")
+                }
             }
+    }
+    
+    /// Set up a real‑time listener for table layout.
+    private func fetchTableLayoutListener() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let layoutRef = db.collection("business_users")
+            .document(userID)
+            .collection("tables")
+            .document("layout")
+        layoutListener = layoutRef.addSnapshotListener { documentSnapshot, error in
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let document = documentSnapshot, document.exists,
+                  let data = document.data() else {
+                print("No layout document found.")
+                return
+            }
+            // Update on the main thread
+            DispatchQueue.main.async {
+                self.rows = data["rows"] as? Int ?? 4
+                self.columns = data["columns"] as? Int ?? 2
+                self.updateSelectedButtons()
+            }
+            print("Table layout fetched successfully for user \(userID)")
         }
     }
     
+    // MARK: - Reservation Methods
+    
+    /// Save all seat selections as a new reservation.
     func saveAllSeatSelections() {
         guard let userID = Auth.auth().currentUser?.uid else {
-            print("No logged-in user found")
+            errorMessage = "No logged-in user found."
             return
         }
         
-        for (tableNumber, seats) in selectedButtons.enumerated() {
-            if let reservedSeatsForTable = reservedSeats[tableNumber] {
-                for (index, isSelected) in seats.enumerated() {
-                    if isSelected && reservedSeatsForTable.indices.contains(index) && reservedSeatsForTable[index] {
-                        print("Cannot save reservation: Table \(tableNumber), Seat \(index) is already reserved.")
+        // Merge conflict checking and data preparation in one loop.
+        var reservationData: [String: Any] = [
+            "reservationID": UUID().uuidString,
+            "timestamp": Timestamp(date: Date()),
+            "isPaid": false
+        ]
+        
+        for (tableNumber, seatStates) in selectedButtons {
+            // Check if there is a conflict with reserved seats.
+            if let reserved = reservedSeats[tableNumber] {
+                for (index, isSelected) in seatStates.enumerated() {
+                    if isSelected, index < reserved.count, reserved[index] {
+                        errorMessage = "Cannot reserve: Table \(tableNumber), Seat \(index) is already reserved."
+                        print(errorMessage!)
                         return
                     }
                 }
             }
-        }
-        
-        let db = Firestore.firestore()
-        let reservationID = UUID().uuidString
-        let reservationRef = db.collection("business_users").document(userID).collection("reservations").document(reservationID)
-        
-        var reservationData: [String: Any] = [
-            "reservationID": reservationID, // Store the ID itself
-            "timestamp": Timestamp(date: Date()) // Add timestamp
-        ]
-        
-        // Save people count per table
-        for (tableNumber, seatCount) in tablePeopleCount {
-            reservationData["table_\(tableNumber)"] = seatCount
-        }
-        
-        // Save seat selection states
-        for tableIndex in 1...(rows * columns) {
-            let seatStates = selectedButtons[tableIndex]
-            reservationData["table_\(tableIndex)_seats"] = seatStates
+            // Add seat selection and people count (if any) to the reservation data.
+            reservationData["table_\(tableNumber)_seats"] = seatStates
+            if let count = tablePeopleCount[tableNumber] {
+                reservationData["table_\(tableNumber)"] = count
+            }
         }
         
         print("Saving seat selections: \(reservationData)")
-        
+        isLoading = true
+        let db = Firestore.firestore()
+        let reservationID = reservationData["reservationID"] as! String
+        let reservationRef = db.collection("business_users")
+            .document(userID)
+            .collection("reservations")
+            .document(reservationID)
         reservationRef.setData(reservationData) { error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
             if let error = error {
-                print("Error saving seat selections: \(error.localizedDescription)")
+                self.logError(error)
             } else {
                 print("Seat selections saved successfully with ID: \(reservationID)")
-                self.fetchAllSeatSelections {
-                    DispatchQueue.main.async {
-                        self.selectedButtons = Array(repeating: Array(repeating: false, count: 4), count: 100)
-                        self.tablePeopleCount.removeAll()
-                    }
-                }
+                self.resetSeatSelections()
+                self.fetchAllSeatSelections()
             }
         }
-        
     }
     
+    /// Fetch all seat selections from reservations.
     func fetchAllSeatSelections(completion: (() -> Void)? = nil) {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        
+        guard let userID = Auth.auth().currentUser?.uid else {
+            errorMessage = "No logged-in user found."
+            completion?()
+            return
+        }
         let db = Firestore.firestore()
-        let reservationCollection = db.collection("business_users").document(userID).collection("reservations")
-        
+        let reservationCollection = db.collection("business_users")
+            .document(userID)
+            .collection("reservations")
         isLoading = true
         
-        reservationCollection.getDocuments { (snapshot, error) in
-            defer { self.isLoading = false }
-            
+        reservationCollection.getDocuments { snapshot, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
             if let error = error {
-                print("Error fetching reservations: \(error.localizedDescription)")
+                self.logError(error)
+                completion?()
                 return
             }
-            
             guard let documents = snapshot?.documents, !documents.isEmpty else {
                 print("No reservations found.")
                 DispatchQueue.main.async {
-                               self.reservedSeats.removeAll()
-                               self.objectWillChange.send() // Force SwiftUI to update UI
-                           }
+                    self.reservedSeats.removeAll()
+                }
+                completion?()
                 return
             }
             
             var updatedReservedSeats = [Int: [Bool]]()
             var updatedPeopleCount = [Int: Int]()
             
+            // Loop through each reservation document.
             for document in documents {
                 let data = document.data()
-                
                 for (key, value) in data {
-                    if key.hasPrefix("table_"),
-                       let tableNumber = Int(key.replacingOccurrences(of: "table_", with: "").components(separatedBy: "_").first ?? "") {
-                        
-                        if key.contains("_seats"), let seatData = value as? [Bool] {
-                            if updatedReservedSeats[tableNumber] == nil {
-                                updatedReservedSeats[tableNumber] = Array(repeating: false, count: 4)
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                let defaultSeats = updatedReservedSeats[tableNumber] ?? Array(repeating: false, count: 4)
+                                // Combine current and new seat selections.
+                                let combinedSeats = zip(defaultSeats, seatData).map { $0 || $1 }
+                                updatedReservedSeats[tableNumber] = combinedSeats
+                            } else if let peopleCount = value as? Int {
+                                updatedPeopleCount[tableNumber, default: 0] += peopleCount
                             }
-                            for (index, isReserved) in seatData.enumerated() {
-                                if isReserved {
-                                    updatedReservedSeats[tableNumber]?[index] = true
-                                }
-                            }
-                        } else if let peopleCount = value as? Int {
-                            updatedPeopleCount[tableNumber, default: 0] += peopleCount
                         }
                     }
                 }
             }
-            
+            // Update on the main thread.
             DispatchQueue.main.async {
                 self.tablePeopleCount = updatedPeopleCount
                 self.reservedSeats = updatedReservedSeats
-                self.objectWillChange.send()
-                print("Reserved Seats Updated for All Reservations: \(self.reservedSeats)")
-                completion?()
             }
+            print("Reserved Seats Updated: \(updatedReservedSeats)")
+            completion?()
         }
     }
     
-    func fetchAllReservations() {
+    /// Set up a real‑time listener for reservations.
+    private func fetchReservationsListener() {
         guard let userID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
-        let reservationCollection = db.collection("business_users").document(userID).collection("reservations")
-        
-        isLoading = true
-        reservations.removeAll()
-        
-        reservationCollection.getDocuments { (snapshot, error) in
-            defer { self.isLoading = false }
-            
+        let reservationCollection = db.collection("business_users")
+            .document(userID)
+            .collection("reservations")
+        reservationListener = reservationCollection.addSnapshotListener { snapshot, error in
             if let error = error {
-                print("Error fetching reservations: \(error.localizedDescription)")
+                self.logError(error)
                 return
             }
-            
-            guard let documents = snapshot?.documents, !documents.isEmpty else {
-                print("No reservations found.")
-                return
-            }
-            
+            guard let documents = snapshot?.documents else { return }
+            var newReservations: [Reservation] = []
             for document in documents {
                 let data = document.data()
-                print("Fetched Reservation Data:", data)  // Debugging
-                
                 let reservationID = document.documentID
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue()
                 let isPaid = data["isPaid"] as? Bool ?? false
-                
                 var tables: [Int] = []
                 var seats: [Int: [Bool]] = [:]
                 var peopleCount: [Int: Int] = [:]
@@ -233,162 +329,254 @@ class TableViewModel: ObservableObject {
                 for (key, value) in data {
                     if key.hasPrefix("table_") {
                         let components = key.components(separatedBy: "_")
-                        if components.count == 2, let tableNumber = Int(components[1]) {
-                            if let seatData = value as? [Bool] {
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
                                 seats[tableNumber] = seatData
                             } else if let count = value as? Int {
-                                tables.append(tableNumber)
-                                peopleCount[tableNumber] = count
-                            }
-                        }
-                    }
-                }
-                
-                DispatchQueue.main.async {
-                    self.reservations.append((id: reservationID, tables: tables, seats: seats, peopleCount: peopleCount, timestamp: timestamp, billingTime: billingTime, isPaid: isPaid))
-                }
-            }
-            
-            print("Reservations Count:", self.reservations.count)
-        }
-    }
-    
-    func deleteReservationAndSaveToHistory(reservationID: String) {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        let reservationRef = db.collection("business_users").document(userID).collection("reservations").document(reservationID)
-        let historyRef = db.collection("business_users").document(userID).collection("history").document(reservationID)
-        
-        isLoading = true // Start loading
-        
-        reservationRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                if var data = document.data() {
-                    let currentBillingTime = Date() // Get current timestamp
-                    data["billingTime"] = Timestamp(date: currentBillingTime) // Update billing time
-                    data["isPaid"] = true  // Mark as paid before moving to history
-                    
-                    
-                    
-                    // **1️⃣ Append to `history` list before saving to Firestore**
-                    DispatchQueue.main.async {
-                        self.history.append((
-                            id: reservationID,
-                            tables: data["tables"] as? [Int] ?? [],
-                            seats: data["seats"] as? [Int: [Bool]] ?? [:],
-                            peopleCount: data["peopleCount"] as? [Int: Int] ?? [:],
-                            timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                            billingTime: currentBillingTime // Use updated billing time
-                        ))
-                    }
-                    
-                    // **1️⃣ Remove the reserved seats immediately before deleting**
-                    DispatchQueue.main.async {
-                        if let tables = data["tables"] as? [Int] {
-                            for table in tables {
-                                self.reservedSeats[table] = Array(repeating: false, count: 4) // Reset seats
-                            }
-                        }
-                        self.fetchOrderHistory()
-                        self.objectWillChange.send() // Force SwiftUI to update UI
-                    }
-                    
-                    historyRef.setData(data) { error in
-                        if let error = error {
-                            print("Error saving to history: \(error.localizedDescription)")
-                            DispatchQueue.main.async { self.isLoading = false }
-                        } else {
-                            reservationRef.delete { error in
-                                DispatchQueue.main.async {
-                                    if let error = error {
-                                        print("Error deleting reservation: \(error.localizedDescription)")
-                                    } else {
-                                        print("Reservation moved to history and deleted successfully")
-                                        
-                                        self.reservations.removeAll { $0.id == reservationID }
-                                        
-                                        self.fetchAllSeatSelections {
-                                            self.fetchOrderHistory()
-                                            DispatchQueue.main.async {
-                                                self.objectWillChange.send()
-                                                self.isLoading = false // Stop loading
-                                            }
-                                        }
-                                    }
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
                                 }
-                            }
-                        }
-                    }
-                } else {
-                    DispatchQueue.main.async { self.isLoading = false }
-                }
-            } else {
-                DispatchQueue.main.async { self.isLoading = false }
-            }
-        }
-    }
-    
-    func fetchOrderHistory() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        let historyCollection = db.collection("business_users").document(userID).collection("history")
-        
-        isLoading = true
-        history.removeAll()
-        
-        historyCollection.getDocuments { (snapshot, error) in
-            defer { self.isLoading = false }
-            
-            if let error = error {
-                print("Error fetching order history: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let documents = snapshot?.documents, !documents.isEmpty else {
-                print("No order history found.")
-                return
-            }
-            
-            var fetchedHistory: [(id: String, tables: [Int], seats: [Int: [Bool]], peopleCount: [Int: Int], timestamp: Date, billingTime: Date)] = []
-            
-            for document in documents {
-                let data = document.data()
-                let reservationID = document.documentID
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
-                
-                var tables: [Int] = []
-                var seats: [Int: [Bool]] = [:]
-                var peopleCount: [Int: Int] = [:]
-                
-                for (key, value) in data {
-                    if key.hasPrefix("table_") {
-                        let components = key.components(separatedBy: "_")
-                        if components.count == 2, let tableNumber = Int(components[1]) {
-                            if let seatData = value as? [Bool] {
-                                seats[tableNumber] = seatData
-                            } else if let count = value as? Int {
-                                tables.append(tableNumber)
                                 peopleCount[tableNumber] = count
                             }
                         }
                     }
                 }
-                
-                fetchedHistory.append((id: reservationID, tables: tables, seats: seats, peopleCount: peopleCount, timestamp: timestamp, billingTime: billingTime))
+                let reservation = Reservation(id: reservationID,
+                                              tables: tables,
+                                              seats: seats,
+                                              peopleCount: peopleCount,
+                                              timestamp: timestamp,
+                                              billingTime: billingTime,
+                                              isPaid: isPaid)
+                newReservations.append(reservation)
             }
             
-            fetchedHistory.sort { $0.billingTime > $1.billingTime }
+            let sortedReservations = newReservations.sorted { $0.timestamp > $1.timestamp }
             
             DispatchQueue.main.async {
-                self.history = []
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    self.history = fetchedHistory
-                    print("History updated after delay! Count: \(self.history.count)")
-                }
+                self.reservations = sortedReservations
             }
-            
+            print("Reservations Updated: \(newReservations.count)")
         }
     }
     
+    // MARK: - History Methods
+    
+    /// Delete a reservation and save it to history.
+    func deleteReservationAndSaveToHistory(reservationID: String) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            errorMessage = "No logged-in user found."
+            return
+        }
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("business_users")
+            .document(userID)
+            .collection("reservations")
+            .document(reservationID)
+        let historyRef = db.collection("business_users")
+            .document(userID)
+            .collection("history")
+            .document(reservationID)
+        
+        isLoading = true
+        reservationRef.getDocument { documentSnapshot, error in
+            if let error = error {
+                self.logError(error)
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            guard let document = documentSnapshot, document.exists,
+                  var data = document.data() else {
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            let currentBillingTime = Date()
+            data["billingTime"] = Timestamp(date: currentBillingTime)
+            data["isPaid"] = true
+            
+            // Prepare local history record.
+            var tables: [Int] = []
+            var seats: [Int: [Bool]] = [:]
+            var peopleCount: [Int: Int] = [:]
+            for (key, value) in data {
+                if key.hasPrefix("table_") {
+                    let components = key.components(separatedBy: "_")
+                    if components.count >= 2, let tableNumber = Int(components[1]) {
+                        if key.contains("seats"), let seatData = value as? [Bool] {
+                            seats[tableNumber] = seatData
+                        } else if let count = value as? Int {
+                            if !tables.contains(tableNumber) {
+                                tables.append(tableNumber)
+                            }
+                            peopleCount[tableNumber] = count
+                        }
+                    }
+                }
+            }
+            let historyRecord = HistoryRecord(id: reservationID,
+                                              tables: tables,
+                                              seats: seats,
+                                              peopleCount: peopleCount,
+                                              timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                                              billingTime: currentBillingTime)
+            DispatchQueue.main.async {
+                self.history.append(historyRecord)
+            }
+            
+            // Update reserved seats locally.
+            if let tables = data["tables"] as? [Int] {
+                for table in tables {
+                    self.reservedSeats[table] = Array(repeating: false, count: 4)
+                }
+            }
+            
+            // Use a batch write for atomicity.
+            let batch = db.batch()
+            batch.setData(data, forDocument: historyRef)
+            batch.deleteDocument(reservationRef)
+            
+            batch.commit { error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+                if let error = error {
+                    self.logError(error)
+                } else {
+                    print("Reservation moved to history and deleted successfully")
+                    DispatchQueue.main.async {
+                        self.reservations.removeAll { $0.id == reservationID }
+                    }
+                    self.fetchAllSeatSelections {
+                        self.fetchOrderHistory()
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Fetch order history once.
+    func fetchOrderHistory() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            errorMessage = "No logged-in user found."
+            return
+        }
+        let db = Firestore.firestore()
+        let historyCollection = db.collection("business_users")
+            .document(userID)
+            .collection("history")
+        isLoading = true
+        
+        historyCollection.getDocuments { snapshot, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                print("No order history found.")
+                DispatchQueue.main.async {
+                    self.history.removeAll()
+                }
+                return
+            }
+            var fetchedHistory: [HistoryRecord] = []
+            for document in documents {
+                let data = document.data()
+                let reservationID = document.documentID
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
+                var tables: [Int] = []
+                var seats: [Int: [Bool]] = [:]
+                var peopleCount: [Int: Int] = [:]
+                
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                seats[tableNumber] = seatData
+                            } else if let count = value as? Int {
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
+                                }
+                                peopleCount[tableNumber] = count
+                            }
+                        }
+                    }
+                }
+                let record = HistoryRecord(id: reservationID,
+                                           tables: tables,
+                                           seats: seats,
+                                           peopleCount: peopleCount,
+                                           timestamp: timestamp,
+                                           billingTime: billingTime)
+                fetchedHistory.append(record)
+            }
+            
+            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
+            
+            DispatchQueue.main.async {
+                self.history = sortedHistory
+            }
+            print("Fetched Order History: \(fetchedHistory.count)")
+        }
+    }
+    
+    /// Set up a real‑time listener for history.
+    private func fetchHistoryListener() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let historyCollection = db.collection("business_users")
+            .document(userID)
+            .collection("history")
+        historyListener = historyCollection.addSnapshotListener { snapshot, error in
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let documents = snapshot?.documents else { return }
+            var fetchedHistory: [HistoryRecord] = []
+            for document in documents {
+                let data = document.data()
+                let reservationID = document.documentID
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
+                var tables: [Int] = []
+                var seats: [Int: [Bool]] = [:]
+                var peopleCount: [Int: Int] = [:]
+                
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                seats[tableNumber] = seatData
+                            } else if let count = value as? Int {
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
+                                }
+                                peopleCount[tableNumber] = count
+                            }
+                        }
+                    }
+                }
+                let record = HistoryRecord(id: reservationID,
+                                           tables: tables,
+                                           seats: seats,
+                                           peopleCount: peopleCount,
+                                           timestamp: timestamp,
+                                           billingTime: billingTime)
+                fetchedHistory.append(record)
+            }
+            
+            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
+            
+            DispatchQueue.main.async {
+                self.history = sortedHistory
+            }
+            print("Real-time Order History Updated: \(fetchedHistory.count)")
+        }
+    }
 }
