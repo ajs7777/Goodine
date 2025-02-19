@@ -18,6 +18,18 @@ struct OrdersView: View {
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
+        return formatter
+    }()
+    
+    private let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }()
+    
+    private let dateTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter
     }()
@@ -65,7 +77,6 @@ struct OrdersView: View {
             .navigationTitle("Orders & History")
             .onAppear {
                 tableVM.isLoading = true
-                tableVM.fetchAllReservations()
                 tableVM.fetchOrderHistory()
             }
         }
@@ -81,49 +92,72 @@ extension OrdersView {
     private var activeOrders : some View {
         ForEach(tableVM.reservations, id: \.id) { reservation in
             VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5){
+                    HStack{
+                        Text("Booking Date: \(reservation.timestamp, formatter: dateFormatter)")
+                            .font(.caption)
+                        Spacer()
+                        Text("\(reservation.timestamp, formatter: timeFormatter)")
+                            .font(.caption)
+                    }
+                    Text("ID: \(reservation.id)")
+                        .font(.caption2)
+                        .foregroundStyle(.gray)
+                }
+                
                 HStack {
                     Image("businessicon")
                         .resizable()
-                        .frame(width: 20, height: 20)
+                        .scaledToFill()
+                        .frame(width: 50, height: 50)
                     
-                    Text("Reservation ID: \(reservation.id)")
-                        .font(.headline)
-                }
-                
-                Text("Timestamp: \(reservation.timestamp, formatter: dateFormatter)")
-                Text("Billing Time: \(reservation.billingTime, formatter: dateFormatter)")
-                Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
-                
-                ForEach(reservation.tables, id: \.self) { table in
-                    if let seats = reservation.seats[table] {
-                        Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
-                    }
-                    if let count = reservation.peopleCount[table] {
-                        Text("People at Table \(table): \(count)")
-                    }
-                }
-                
-                if !reservation.isPaid {
-                    Button(action: {
-                        tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
-                    }) {
-                        HStack {
-                            if tableVM.isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text("Pay Bill")
+                    VStack{
+                        ForEach(
+                            reservation.tables.filter { tableNumber in
+                                let seatArray = reservation.seats[tableNumber] ?? []
+                                return seatArray.contains(true)
+                            },
+                            id: \.self
+                        ) { tableNumber in
+                            let seatArray = reservation.seats[tableNumber] ?? []
+                            let selectedSeatCount = seatArray.filter { $0 }.count
+                            HStack{
+                                if selectedSeatCount > 0 {
+                                    Text("Table \(tableNumber) : \(selectedSeatCount)")
+                                }
+                                Image(systemName: "person.fill")
                             }
+                            
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(10)
                     }
-                    .padding(.top, 10)
-                    .disabled(tableVM.isLoading) // Disable button while loading
+                    
+                    Spacer()
+                    
+                    if !reservation.isPaid {
+                        Button(action: {
+                            tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
+                        }) {
+                            HStack {
+                                if tableVM.isLoading {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                } else {
+                                    Text("Pay Bill")
+                                }
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.orange)
+                            .cornerRadius(10)
+                        }
+                        .padding(.top, 10)
+                        .disabled(tableVM.isLoading) // Disable button while loading
+                    }
+                    
                 }
+                .padding(.top)
+                // Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
             }
             .padding()
             .background(Color(.systemGray6))
@@ -134,28 +168,67 @@ extension OrdersView {
     private var ordersHistory: some View {
         ForEach(tableVM.history, id: \.id) { historyItem in
             VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .resizable()
-                        .frame(width: 20, height: 20)
-                        .foregroundColor(.green)
+                
+                VStack(alignment: .leading, spacing: 5){
+                    HStack{
+                        Text("Booking Date: \(historyItem.timestamp, formatter: dateFormatter)")
+                            .font(.caption)
+                            .foregroundStyle(.gray)
+                        
+                        Spacer()
+                        
+                        Text("\(historyItem.timestamp, formatter: timeFormatter)")
+                            .font(.caption)
+                            .foregroundStyle(.gray)
+                    }
                     
-                    Text("Reservation ID: \(historyItem.id)")
-                        .font(.headline)
+                    Text("ID: \(historyItem.id)")
+                        .font(.caption2)
+                        .foregroundStyle(.gray)
+                }
+                HStack {
+                    Image(systemName: "checkmark.seal.fill")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 60, height: 50)
+                        .foregroundColor(.gray)
+                    
+                    VStack {
+                        ForEach(
+                            historyItem.tables.filter { tableNumber in
+                                let seatArray = historyItem.seats[tableNumber] ?? []
+                                return seatArray.contains(true)
+                            },
+                            id: \.self
+                        ) { tableNumber in
+                                HStack{
+                                    let seatArray = historyItem.seats[tableNumber] ?? []
+                                    let selectedSeatCount = seatArray.filter { $0 }.count
+                                    Text("Table \(tableNumber) : \(selectedSeatCount)")
+                                    Image(systemName: "person.fill")
+                                }
+                            
+                        }
+                    }
+                    Spacer()
+                    
+                    HStack{
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("Paid")
+                    }
+                    .font(.headline)
+                    
                 }
                 
-                Text("Timestamp: \(historyItem.timestamp, formatter: dateFormatter)")
-                Text("Billing Time: \(historyItem.billingTime, formatter: dateFormatter)")
-                Text("Selected Tables: \(historyItem.tables.map { String($0) }.joined(separator: ", "))")
-                
-                ForEach(historyItem.tables, id: \.self) { table in
-                    if let seats = historyItem.seats[table] {
-                        Text("Table \(table) Seats: \(seats.map { $0 ? "🔴" : "⚪" }.joined())")
-                    }
-                    if let count = historyItem.peopleCount[table] {
-                        Text("People at Table \(table): \(count)")
-                    }
+                HStack(){
+                    Spacer()
+                    Text("Billing Time: \(historyItem.billingTime, formatter: dateTimeFormatter)")
+                        .font(.caption)
+                        .foregroundStyle(.gray)
                 }
+                
+                
             }
             .padding()
             .background(Color(.systemGray6))
