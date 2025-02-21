@@ -67,170 +67,183 @@ struct RestaurantProfile: View {
     }
     
     var body: some View {
-        ScrollView {
-            if let imageUrls = businessAuthVM.restaurant?.imageUrls, !imageUrls.isEmpty {
-                TabView {
-                    ForEach(imageUrls, id: \.self) { imageUrl in
-                        KFImage(URL(string: imageUrl)) // Using Kingfisher
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 270)
-                            
-                    }
-                }
-                .frame(height: 250)
-                .tabViewStyle(PageTabViewStyle()) // Adds swipe dots at the bottom
-                .indexViewStyle(PageIndexViewStyle())
-            } else {
-                Image(systemName: "photo")
-                    .frame(height: 250)
-            }
-            if let restaurant = businessAuthVM.restaurant {
-                VStack(alignment: .leading) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(statusText)
-                                .foregroundStyle(statusText == "Closed" ? .white : statusText == "Closes Soon" ? .white : .black.opacity(0.8))
-                                .font(.callout)
-                                .fontWeight(.semibold)
-                                .padding(7)
-                                .padding(.horizontal, 3)
-                                .background(
-                                    statusText == "Open Now" ? .openGreen :
-                                    statusText == "Opens Soon" ? .yellow :
-                                    statusText == "Closes Soon" ? .orange : .red
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                            
-                            Spacer()
-                            Button {
-                                showEditProfile.toggle()
-                            } label: {
-                                Text("Edit Profile")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.mainbw)
-                            }
-                            .buttonStyle(BorderedButtonStyle())
-                        }
-                        
-                        Text(restaurant.name)
-                            .foregroundStyle(.mainbw)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(restaurant.type)
-                                    .foregroundStyle(.mainbw)
-                                Text("\(restaurant.city) | 2 Km")
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 8.0) {
-                                HStack(alignment: .center, spacing: 3.0) {
-                                    Image(systemName: "star.fill")
-                                        .foregroundStyle(.yellow)
-                                        .font(.footnote)
-                                    Text("4.5(3k Ratings)")
-                                        .foregroundStyle(.mainbw)
-                                }
-                                .font(.callout)
-                                if restaurant.averageCost != "" {
-                                    Text("₹\(restaurant.averageCost ?? "") for two")
-                                        .foregroundStyle(.mainbw)
-                                        .font(.callout)
-                                }
+        NavigationView {
+            ZStack {
+                ScrollView {
+                    // images
+                    if let imageUrls = businessAuthVM.restaurant?.imageUrls, !imageUrls.isEmpty {
+                        TabView {
+                            ForEach(imageUrls, id: \.self) { imageUrl in
+                                KFImage(URL(string: imageUrl)) // Using Kingfisher
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(height: 270)
                                 
                             }
                         }
-                        .padding(.bottom)
-                        
-                        Divider()
+                        .frame(height: 250)
+                        .tabViewStyle(PageTabViewStyle()) // Adds swipe dots at the bottom
+                        .indexViewStyle(PageIndexViewStyle())
+                    } else {
+                        Image(systemName: "photo")
+                            .frame(height: 250)
                     }
-                    .padding(.top, 8)
-                    .padding(.horizontal)
+                    if let restaurant = businessAuthVM.restaurant {
+                        VStack(alignment: .leading) {
+                            
+                            //Rerstaurant Details
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(statusText)
+                                        .foregroundStyle(statusText == "Closed" ? .white : statusText == "Closes Soon" ? .white : .black.opacity(0.8))
+                                        .font(.callout)
+                                        .fontWeight(.semibold)
+                                        .padding(7)
+                                    // .padding(.horizontal, 3)
+                                        .background(
+                                            statusText == "Open Now" ? .openGreen :
+                                                statusText == "Opens Soon" ? .yellow :
+                                                statusText == "Closes Soon" ? .orange : .red
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    
+                                    
+                                    Spacer()
+                                    Button {
+                                        showEditProfile.toggle()
+                                    } label: {
+                                        Text("Edit Profile")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.mainbw)
+                                    }
+                                    .buttonStyle(BorderedButtonStyle())
+                                }
+                                
+                                Text(restaurant.name)
+                                    .foregroundStyle(.mainbw)
+                                    .font(.largeTitle)
+                                    .fontWeight(.bold)
+                                
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(restaurant.type)
+                                            .foregroundStyle(.mainbw)
+                                        Text("\(restaurant.city) | 2 Km")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    VStack(alignment: .trailing) {
+                                        HStack(alignment: .center, spacing: 1) {
+                                            Image(systemName: "star.fill")
+                                                .foregroundStyle(.yellow)
+                                                .font(.caption)
+                                            Text("4.5(3k Ratings)")
+                                                .foregroundStyle(.mainbw)
+                                        }
+                                        .font(.footnote)
+                                        if restaurant.averageCost != "" {
+                                            Text("₹\(restaurant.averageCost ?? "") for two")
+                                                .foregroundStyle(.mainbw)
+                                                .font(.callout)
+                                        }
+                                        
+                                    }
+                                }
+                                .padding(.bottom)
+                                
+                                Divider()
+                            }
+                            .padding(.top, 8)
+                            .padding(.horizontal)
+                            
+                            //Location and Timings
+                            VStack(alignment: .leading, spacing: 20.0) {
+                                Text("Location")
+                                    .foregroundStyle(.mainbw)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                
+                                HStack{
+                                    Image(systemName: "location.circle")
+                                        .foregroundStyle(.mainbw)
+                                        .font(.title2)
+                                        .fontWeight(.medium)
+                                    Text(restaurant.address)
+                                        .foregroundStyle(.mainbw)
+                                        .font(.subheadline)
+                                    Spacer()
+                                }
+                                
+                                HStack {
+                                    Image(systemName: "clock")
+                                        .foregroundStyle(.mainbw)
+                                        .font(.title2)
+                                        .fontWeight(.medium)
+                                    
+                                    Text("\(restaurant.openingTime.formattedTime()) - \(restaurant.closingTime.formattedTime())")
+                                        .foregroundStyle(.mainbw)
+                                    
+                                    Spacer()
+                                }
+                                
+                                Divider()
+                            }
+                            .padding()
+                            
+                            //features
+                            VStack(alignment: .leading, spacing: 20.0) {
+                                Text("Features")
+                                    .foregroundStyle(.mainbw)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                
+                                VStack(alignment: .leading) {
+                                    Text("Reservation Available")
+                                        .foregroundStyle(.mainbw)
+                                        .fontWeight(.medium)
+                                        .padding(10)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    Text("Parking Available")
+                                        .foregroundStyle(.mainbw)
+                                        .fontWeight(.medium)
+                                        .padding(10)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    
+                                    
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.bottom, 30)
+                        }
+                    } else {
+                        ProgressView()
+                        
+                    }
                     
-                    VStack(alignment: .leading, spacing: 20.0) {
-                        Text("Location")
-                            .foregroundStyle(.mainbw)
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        HStack(alignment: .top, spacing: 20.0) {
-                            Image(systemName: "location.circle")
-                                .foregroundStyle(.mainbw)
-                                .font(.title2)
-                                .fontWeight(.medium)
-                            Text(restaurant.address)
-                                .foregroundStyle(.mainbw)
-                                .font(.subheadline)
-                            Spacer()
+                    Button{
+                        Task{
+                            businessAuthVM.signOut()
                         }
-                        
-                        HStack(alignment: .top, spacing: 20.0) {
-                            Image(systemName: "clock")
-                                .foregroundStyle(.mainbw)
-                                .font(.title2)
-                                .fontWeight(.medium)
-                            
-                            Text("\(restaurant.openingTime.formattedTime()) - \(restaurant.closingTime.formattedTime())")
-                                .foregroundStyle(.mainbw)
-                            
-                            Spacer()
-                        }
-                        
-                        Divider()
+                    }label: {
+                        Text("Log Out")
+                            .foregroundStyle(.red)
                     }
-                    .padding()
-                    
-                    VStack(alignment: .leading, spacing: 20.0) {
-                        Text("Features")
-                            .foregroundStyle(.mainbw)
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        HStack {
-                            Text("Reservation Available")
-                                .foregroundStyle(.mainbw)
-                                .fontWeight(.medium)
-                                .padding(10)
-                                .background(Color(.systemGray5))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            Text("Parking Available")
-                                .foregroundStyle(.mainbw)
-                                .fontWeight(.medium)
-                                .padding(10)
-                                .background(Color(.systemGray5))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            
-                            Spacer()
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 120)
                 }
-            } else {
-                ProgressView()
-                    
+                .edgesIgnoringSafeArea(.top)
+                .scrollIndicators(.hidden)
+                
+                menuIcon
             }
-            Button{
-                Task{
-                    businessAuthVM.signOut()
-                }
-            }label: {
-                Text("Log Out")
-                    .foregroundStyle(.red)
+            .sheet(isPresented: $showEditProfile) {
+                RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
             }
-            .padding(.bottom, 120)
         }
-        .ignoresSafeArea()
-        .scrollIndicators(.hidden)
-        .sheet(isPresented: $showEditProfile) {
-            RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
-        }
+        
     }
 }
 
@@ -239,6 +252,43 @@ struct RestaurantProfile: View {
         .environmentObject(BusinessAuthViewModel())
 }
 
+
+extension RestaurantProfile {
+    
+    
+    private var menuIcon : some View {
+        VStack(){
+            Spacer()
+            HStack{
+                Spacer()
+                NavigationLink {
+                    RestaurantMenu()
+                        .navigationBarBackButtonHidden()
+                } label: {
+                    HStack {
+                        Image(.businessicon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 20, height: 20)
+                        
+                        Text("Menu")
+                        
+                    }
+                    .foregroundStyle(.mainInvert)
+                    .padding()
+                    .background(.mainbw)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(radius: 7)
+                    .padding()
+                    .padding(.bottom)
+                }
+            }
+        }
+    }
+    
+    
+}
 
 extension Date {
     func formattedTime() -> String {
