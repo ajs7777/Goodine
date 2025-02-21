@@ -15,7 +15,7 @@ struct TableView: View {
     @StateObject var tableVM = TableViewModel()
     @State var currentTime = Date()
     @State private var showTableEditor = false
-    @State private var showFoodMenu = false  // (This flag can be used to present a food menu view if needed)
+    @State private var showFoodMenu = false
     
     // Timer for updating the current time every second.
     let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -59,6 +59,7 @@ struct TableView: View {
                     
                     Button {
                         tableVM.saveAllSeatSelections()
+                        showFoodMenu.toggle()
                     } label: {
                         Text("Done")
                             .goodineButtonStyle(.mainbw)
@@ -66,6 +67,7 @@ struct TableView: View {
                     .padding()
                 }
             }
+            .sheet(isPresented: $showFoodMenu, content: { FoodMenuView() })
             .navigationTitle("Table Selection")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
