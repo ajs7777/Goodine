@@ -35,7 +35,7 @@ struct OrdersView: View {
     }()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 if tableVM.isLoading {
                     ProgressView("Loading reservations...")
@@ -100,7 +100,9 @@ extension OrdersView {
                         Text("\(reservation.timestamp, formatter: timeFormatter)")
                             .font(.caption)
                     }
-                    Text("ID: \(reservation.id)")
+                    
+                    let shortID = String(reservation.id.suffix(12))
+                    Text("ID: \(shortID)")
                         .font(.caption2)
                         .foregroundStyle(.gray)
                 }
@@ -181,8 +183,8 @@ extension OrdersView {
                             .font(.caption)
                             .foregroundStyle(.gray)
                     }
-                    
-                    Text("ID: \(historyItem.id)")
+                    let shortID = String(historyItem.id.suffix(12))
+                    Text("ID: \(shortID)")
                         .font(.caption2)
                         .foregroundStyle(.gray)
                 }
