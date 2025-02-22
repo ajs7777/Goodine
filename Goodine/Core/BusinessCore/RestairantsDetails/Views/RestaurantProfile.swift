@@ -9,9 +9,11 @@ import SwiftUI
 import Kingfisher
 
 struct RestaurantProfile: View {
+    
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @State var showEditProfile : Bool = false
+    @ObservedObject var viewModel = RestaurantMenuViewModel()
     
     var isOpen: Bool {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
@@ -113,6 +115,7 @@ struct RestaurantProfile: View {
                                         showEditProfile.toggle()
                                     } label: {
                                         Text("Edit Profile")
+                                            .fontWeight(.semibold)
                                             .font(.subheadline)
                                             .foregroundStyle(.mainbw)
                                     }
@@ -243,6 +246,9 @@ struct RestaurantProfile: View {
                 RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
             }
         }
+        .onAppear(
+            perform: viewModel.fetchMenuItems
+        )
         
     }
 }

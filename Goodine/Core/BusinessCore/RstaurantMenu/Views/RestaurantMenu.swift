@@ -10,21 +10,33 @@ import SwiftUI
 struct RestaurantMenu: View {
     
     @Environment(\.dismiss) var dismiss
+    @StateObject var viewModel = RestaurantMenuViewModel()
+    @State private var showAddItemSheet = false
+    @State private var selectedItem: MenuItem?
+    @State private var editingItem: MenuItem?
     
     var body: some View {
-        NavigationStack{
+        NavigationStack {
             ScrollView {
-                ForEach(0..<10) { item in
-                    FoodRowView()
+                ForEach(viewModel.items) { item in
+                    FoodRowView(menuItem: item, onDelete: {
+                        viewModel.deleteItem(item)
+                    })
+                    .onTapGesture {
+                        editingItem = item
+                        showAddItemSheet = true
+                    }
                 }
                 .navigationTitle("Menu")
             }
+            .scrollIndicators(.hidden)
             .padding(.top, 20)
             .padding(.horizontal)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        
+                        editingItem = nil
+                        showAddItemSheet = true
                     } label: {
                         HStack {
                             Text("Add Item")
@@ -35,13 +47,12 @@ struct RestaurantMenu: View {
                         .padding(.trailing)
                         .padding(.top)
                     }
-
                 }
                 
                 ToolbarItem(placement: .topBarLeading) {
                     Button{
                         dismiss()
-                    }label: {
+                    } label: {
                         Image(systemName: "arrow.left")
                             .foregroundStyle(.mainbw)
                             .fontWeight(.bold)
@@ -49,6 +60,22 @@ struct RestaurantMenu: View {
                 }
             }
         }
+        .sheet(isPresented: $showAddItemSheet) {
+            AddItemView(menuItem: editingItem) { updatedItem, image in
+                if let index = viewModel.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                    viewModel.items[index] = updatedItem // 🔥 Update local list
+                } else {
+                    viewModel.items.append(updatedItem) // Add if new
+                }
+                viewModel.saveItemToFirestore(updatedItem, image: image)
+            }
+        }
+        .onAppear {
+            viewModel.fetchMenuItems()
+            
+        }
+        
+        
     }
 }
 
