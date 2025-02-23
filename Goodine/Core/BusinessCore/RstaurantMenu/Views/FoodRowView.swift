@@ -70,39 +70,5 @@ struct FoodRowView: View {
     }
 }
 
-//#Preview {
-//    FoodRowView( menuItem: [MenuItem(id: "1", foodname: "Mutton Biriyani", foodDescription: "Best Biriyani", foodPrice: 599, foodQuantity: 1, foodImage: "fork.knife")])
-//}
 
 
-//HStack(spacing: 8) {
-//            Button(action: {
-//                if count > 0 { count -= 1 } // Prevent going below 0
-//            }) {
-//                Image(systemName: "minus")
-//                    .foregroundStyle(.mainbw)
-//                    .font(.system(size: 15, weight: .heavy))
-//                    .frame(width: 20, height: 15)
-//                    .background(Color(.systemGray6))
-//                    .clipShape(Circle())
-//            }
-//            .disabled(count == 0) // Disable button at 0
-//            .opacity(count == 0 ? 0.5 : 1.0) // Reduce opacity when disabled
-//
-//            Text("\(count)")
-//                .font(.system(size: 15, weight: .heavy))
-//                .frame(width: 20, alignment: .center)
-//
-//            Button(action: { count += 1 }) {
-//                Image(systemName: "plus")
-//                    .foregroundStyle(.mainbw)
-//                    .font(.system(size: 15, weight: .heavy))
-//                    .frame(width: 20, height: 15)
-//                    .background(Color(.systemGray6))
-//                    .clipShape(Circle())
-//            }
-//        }
-//        .padding(8)
-//        .background(Color(.systemGray6))
-//        .clipShape(RoundedRectangle(cornerRadius: 12))
-//        .shadow(radius: 1)

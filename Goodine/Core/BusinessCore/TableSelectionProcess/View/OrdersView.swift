@@ -35,7 +35,7 @@ struct OrdersView: View {
     }()
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack {
                 if tableVM.isLoading {
                     ProgressView("Loading reservations...")

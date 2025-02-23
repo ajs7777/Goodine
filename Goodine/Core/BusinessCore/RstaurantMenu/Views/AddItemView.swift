@@ -78,7 +78,6 @@ struct AddItemView: View {
                                 foodname: foodname,
                                 foodDescription: foodDescription,
                                 foodPrice: price,
-                                foodQuantity: nil,
                                 foodImage: menuItem?.foodImage, // 🔥 Keeps old image if not changed
                                 veg: isVeg
                             )
