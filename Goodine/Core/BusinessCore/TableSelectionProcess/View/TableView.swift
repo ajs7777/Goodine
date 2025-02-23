@@ -65,6 +65,7 @@ struct TableView: View {
                             .goodineButtonStyle(.mainbw)
                     }
                     .padding()
+                    .disabled(!tableVM.selectedButtons.values.contains(where: { $0.contains(true) }))
                 }
             }
             .sheet(isPresented: $showFoodMenu, content: { FoodMenuView() })
