@@ -44,7 +44,6 @@ class RestaurantMenuViewModel: ObservableObject {
                 }
             }
     }
-
     
     func saveItemToFirestore(_ item: MenuItem, image: UIImage?) {
         guard let userId = Auth.auth().currentUser?.uid else {
@@ -74,9 +73,6 @@ class RestaurantMenuViewModel: ObservableObject {
             }
         }
     }
-
-
-
     
     func deleteItem(_ item: MenuItem) {
         guard let userId = Auth.auth().currentUser?.uid else {
