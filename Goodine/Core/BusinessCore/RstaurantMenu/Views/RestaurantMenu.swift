@@ -12,7 +12,6 @@ struct RestaurantMenu: View {
     @Environment(\.dismiss) var dismiss
     @StateObject var viewModel = RestaurantMenuViewModel()
     @State private var showAddItemSheet = false
-    @State private var selectedItem: MenuItem?
     @State private var editingItem: MenuItem?
     
     var body: some View {
@@ -61,20 +60,25 @@ struct RestaurantMenu: View {
             }
         }
         .sheet(isPresented: $showAddItemSheet) {
-            AddItemView(menuItem: editingItem) { updatedItem, image in
-                if let index = viewModel.items.firstIndex(where: { $0.id == updatedItem.id }) {
-                    viewModel.items[index] = updatedItem // 🔥 Update local list
-                } else {
-                    viewModel.items.append(updatedItem) // Add if new
+                    if let item = editingItem {
+                        // 🔥 Editing an existing item
+                        AddItemView(menuItem: item) { updatedItem, image in
+                            if let index = viewModel.items.firstIndex(where: { $0.id == updatedItem.id }) {
+                                viewModel.items[index] = updatedItem // 🔥 Update local list
+                            }
+                            viewModel.saveItemToFirestore(updatedItem, image: image)
+                        }
+                    } else {
+                        // 🔥 Adding a new item
+                        AddItemView { newItem, image in
+                            viewModel.items.append(newItem) // 🔥 Add to list
+                            viewModel.saveItemToFirestore(newItem, image: image)
+                        }
+                    }
                 }
-                viewModel.saveItemToFirestore(updatedItem, image: image)
-            }
-        }
         .onAppear {
             viewModel.fetchMenuItems()
-            
         }
-        
         
     }
 }

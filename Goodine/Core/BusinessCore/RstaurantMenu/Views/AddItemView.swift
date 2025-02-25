@@ -22,14 +22,13 @@ struct AddItemView: View {
     var onSave: (MenuItem, UIImage?) -> Void
     
     init(menuItem: MenuItem? = nil, onSave: @escaping (MenuItem, UIImage?) -> Void) {
+        self.menuItem = menuItem
+        self.onSave = onSave
         
         _foodname = State(initialValue: menuItem?.foodname ?? "")
         _foodDescription = State(initialValue: menuItem?.foodDescription ?? "")
         _foodPrice = State(initialValue: menuItem?.foodPrice != nil ? "\(menuItem!.foodPrice)" : "")
         _isVeg = State(initialValue: menuItem?.veg ?? false)
-        
-        self.menuItem = menuItem
-        self.onSave = onSave
     }
     
     var body: some View {
@@ -96,14 +95,6 @@ struct AddItemView: View {
             }
         }
         .presentationDetents(menuItem == nil ? [.fraction(0.65)] : [.fraction(0.75)])
-        .onAppear { // 🔥 Update form fields when the view appears
-                    if let menuItem = menuItem {
-                        foodname = menuItem.foodname
-                        foodDescription = menuItem.foodDescription ?? ""
-                        foodPrice = "\(menuItem.foodPrice)"
-                        isVeg = menuItem.veg
-                    }
-                }
         .sheet(isPresented: $showImagePicker) {
             FoodImagePicker(selectedImage: $selectedImage)
         }
