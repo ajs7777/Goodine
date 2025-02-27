@@ -14,6 +14,7 @@ import FirebaseAuth
 struct OrdersView: View {
     
     @ObservedObject var tableVM = TableViewModel()
+    @State private var showFoodMenu = false
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -91,80 +92,100 @@ extension OrdersView {
     
     private var activeOrders : some View {
         ForEach(tableVM.reservations, id: \.id) { reservation in
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 5){
-                    HStack{
-                        Text("Booking Date: \(reservation.timestamp, formatter: dateFormatter)")
-                            .font(.caption)
-                        Spacer()
-                        Text("\(reservation.timestamp, formatter: timeFormatter)")
-                            .font(.caption)
+            NavigationLink {
+                ReservationDetailedView(reservationId: reservation.id)
+            } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 5){
+                        HStack{
+                            Text("Booking Date: \(reservation.timestamp, formatter: dateFormatter)")
+                                .font(.caption)
+                            Spacer()
+                            Text("\(reservation.timestamp, formatter: timeFormatter)")
+                                .font(.caption)
+                        }
+                        
+                        let shortID = String(reservation.id.suffix(12))
+                        Text("ID: \(shortID)")
+                            .font(.caption2)
+                            .foregroundStyle(.gray)
                     }
                     
-                    let shortID = String(reservation.id.suffix(12))
-                    Text("ID: \(shortID)")
-                        .font(.caption2)
-                        .foregroundStyle(.gray)
-                }
-                
-                HStack {
-                    Image("businessicon")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 50, height: 50)
-                    
-                    VStack{
-                        ForEach(
-                            reservation.tables.filter { tableNumber in
+                    HStack {
+                        Image("businessicon")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 50, height: 50)
+                        
+                        VStack{
+                            ForEach(
+                                reservation.tables.filter { tableNumber in
+                                    let seatArray = reservation.seats[tableNumber] ?? []
+                                    return seatArray.contains(true)
+                                },
+                                id: \.self
+                            ) { tableNumber in
                                 let seatArray = reservation.seats[tableNumber] ?? []
-                                return seatArray.contains(true)
-                            },
-                            id: \.self
-                        ) { tableNumber in
-                            let seatArray = reservation.seats[tableNumber] ?? []
-                            let selectedSeatCount = seatArray.filter { $0 }.count
-                            HStack{
-                                if selectedSeatCount > 0 {
-                                    Text("Table \(tableNumber) : \(selectedSeatCount)")
+                                let selectedSeatCount = seatArray.filter { $0 }.count
+                                HStack{
+                                    if selectedSeatCount > 0 {
+                                        Text("Table \(tableNumber) : \(selectedSeatCount)")
+                                    }
+                                    Image(systemName: "person.fill")
                                 }
-                                Image(systemName: "person.fill")
+                                
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing){
+                            if !reservation.isPaid {
+                                Button(action: {
+                                    tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
+                                }) {
+                                    HStack {
+                                        if tableVM.isLoading {
+                                            ProgressView()
+                                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        } else {
+                                            Text("Pay Bill")
+                                        }
+                                    }
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.orange)
+                                    .cornerRadius(10)
+                                }
+                                .padding(.top, 10)
+                                .disabled(tableVM.isLoading) // Disable button while loading
                             }
                             
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    if !reservation.isPaid {
-                        Button(action: {
-                            tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
-                        }) {
-                            HStack {
-                                if tableVM.isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                } else {
-                                    Text("Pay Bill")
-                                }
+                            Button{
+                                showFoodMenu.toggle()
+                            }label: {
+                                Text("Add Food")
                             }
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding(8)
-                            .background(Color.orange)
+                            .background(.mainbw)
                             .cornerRadius(10)
                         }
-                        .padding(.top, 10)
-                        .disabled(tableVM.isLoading) // Disable button while loading
+                        
+                        
                     }
-                    
+                    .padding(.top)
+                    // Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
                 }
-                .padding(.top)
-                // Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
+
         }
+        .sheet(isPresented: $showFoodMenu, content: { FoodMenuView() })
     }
     
     private var ordersHistory: some View {
@@ -238,5 +259,3 @@ extension OrdersView {
         }
     }
 }
-
-
