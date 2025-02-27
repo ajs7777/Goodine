@@ -9,29 +9,26 @@ import SwiftUI
 import Kingfisher
 
 struct FoodMenuView: View {
-    let tableNumber: Int = 1
+    
+    @StateObject var orderVM = OrdersViewModel()
     @ObservedObject var tableVM = TableViewModel()
     @ObservedObject var viewModel = RestaurantMenuViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var selectedItems: [String: Int] = [:]
     
     var body: some View {
         NavigationStack {
                    VStack(alignment: .leading) {
-                       Text("Table \(tableNumber)")
-                           .font(.title)
-                           .bold()
-                           .padding(.leading)
-                       
                        ScrollView {
                            LazyVStack(alignment: .leading) {
                                ForEach(viewModel.items) { item in
-                                   FoodMenuItemView(item: item)
+                                   FoodMenuItemView(item: item, selectedItems: $selectedItems)
                                }
                            }
                            
                        }
                        Button("Place Order") {
-                           
+                           orderVM.saveOrderToFirestore(reservationId: tableVM.reservations.first?.id ?? "", selectedItems: selectedItems, menuItems: viewModel.items)
                            dismiss()
                        }
                        .goodineButtonStyle(.mainbw)
@@ -50,6 +47,7 @@ struct FoodMenuView: View {
 struct FoodMenuItemView: View {
     var item: MenuItem
     
+    @Binding var selectedItems: [String: Int]
     @State private var quantity: Int = 0
     
     var body: some View {
@@ -86,7 +84,6 @@ struct FoodMenuItemView: View {
                 Text(item.foodDescription ?? "Food Description")
                     .font(.caption)
                     .foregroundStyle(.mainbw.opacity(0.5))
-                
                 Text("₹\(item.foodPrice)")
                     .foregroundStyle(.mainbw.opacity(0.5))
             }
@@ -95,12 +92,18 @@ struct FoodMenuItemView: View {
             
             HStack(spacing: 8) {
                 Button(action: {
-                    if quantity > 0 { quantity -= 1 }
+                    if quantity > 0 {
+                        quantity -= 1
+                        selectedItems[item.id] = quantity
+                        if quantity == 0 {
+                            selectedItems.removeValue(forKey: item.id)
+                        }
+                    }
                 }) {
                     Image(systemName: "minus")
                         .foregroundStyle(.mainbw)
                         .font(.system(size: 15, weight: .heavy))
-                        .frame(width: 20, height: 15)
+                        .frame(width: 25, height: 25)
                         .background(Color(.systemGray6))
                         .clipShape(Circle())
                 }
@@ -108,14 +111,17 @@ struct FoodMenuItemView: View {
                 .opacity(quantity == 0 ? 0.5 : 1.0)
 
                 Text("\(quantity)")
-                    .font(.system(size: 15, weight: .heavy))
-                    .frame(width: 20, alignment: .center)
+                    .font(.system(size: 16, weight: .bold))
+                    .frame(width: 25, alignment: .center)
 
-                Button(action: { quantity += 1 }) {
+                Button(action: {
+                    quantity += 1
+                    selectedItems[item.id] = quantity
+                }) {
                     Image(systemName: "plus")
                         .foregroundStyle(.mainbw)
                         .font(.system(size: 15, weight: .heavy))
-                        .frame(width: 20, height: 15)
+                        .frame(width: 25, height: 25)
                         .background(Color(.systemGray6))
                         .clipShape(Circle())
                 }
@@ -125,5 +131,9 @@ struct FoodMenuItemView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 1)
         }
+        .onAppear {
+            quantity = selectedItems[item.id] ?? 0
+        }
     }
 }
+
