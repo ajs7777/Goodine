@@ -5,94 +5,77 @@
 //  Created by Abhijit Saha on 26/02/25.
 //
 
-import FirebaseFirestore
 import Foundation
+import FirebaseFirestore
+import FirebaseAuth
 
 class OrdersViewModel: ObservableObject {
-    
+    @Published var orders: [Order] = []
+
     private let db = Firestore.firestore()
 
-    func saveOrderToFirestore(selectedItems: [String: Int], menuItems: [MenuItem]) {
-        guard !selectedItems.isEmpty else {
-            print("❌ No items selected for order.")
-            return
+    func saveOrderToFirestore(
+        reservationId: String,
+        selectedItems: [String: Int],
+        menuItems: [MenuItem]
+    ) {
+        guard let userId = Auth.auth().currentUser?.uid else { return } // Ensure user is authenticated
+
+        let ordersRef = db.collection("business_users")
+                          .document(userId)
+                          .collection("reservations")
+                          .document(reservationId)
+                          .collection("orders")
+                          .document()
+
+        var orderData: [String: OrderItem] = [:]
+
+        for (itemId, quantity) in selectedItems {
+            if let menuItem = menuItems.first(where: { $0.id == itemId }) {
+                orderData[itemId] = OrderItem(name: menuItem.foodname, price: Double(menuItem.foodPrice), quantity: quantity)
+            }
         }
 
-        // Step 1: Get the business ID
-        db.collection("business_users").getDocuments { (snapshot, error) in
-            if let error = error {
-                print("❌ Error fetching business ID: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let businessDocs = snapshot?.documents,
-                  let businessID = businessDocs.first?.documentID else {
-                print("❌ No business found.")
-                return
-            }
-            
-            print("✅ Found Business ID: \(businessID)")
-            
-            // Step 2: Get the active reservation (for today)
-            let today = Calendar.current.startOfDay(for: Date())
-            
-            self.db.collection("business_users")
-                .document(businessID)
-                .collection("reservations")
-                .whereField("timestamp", isGreaterThanOrEqualTo: Timestamp(date: today)) // Today's reservations
-                .order(by: "timestamp", descending: true)
-                .limit(to: 1)
-                .getDocuments { (snapshot, error) in
-                    if let error = error {
-                        print("❌ Error fetching reservation ID: \(error.localizedDescription)")
-                        return
-                    }
-                    
-                    guard let reservationDocs = snapshot?.documents,
-                          let reservationID = reservationDocs.first?.documentID else {
-                        print("❌ No active reservations found for today.")
-                        return
-                    }
-                    
-                    print("✅ Found Reservation ID: \(reservationID)")
-                    
-                    // Step 3: Prepare order details with full item information
-                    var orderedItems: [[String: Any]] = []
-                    
-                    for (itemID, quantity) in selectedItems {
-                        if let menuItem = menuItems.first(where: { $0.id == itemID }) {
-                            let itemData: [String: Any] = [
-                                "item_id": itemID,
-                                "name": menuItem.foodname,
-                                "price": menuItem.foodPrice,
-                                "quantity": quantity,
-                                "image_url": menuItem.foodImage ?? "",
-                                "isVeg": menuItem.veg
-                            ]
-                            orderedItems.append(itemData)
-                        }
-                    }
-                    
-                    let orderData: [String: Any] = [
-                        "timestamp": Timestamp(date: Date()),
-                        "items": orderedItems
-                    ]
+        let orderDetails = Order(
+            id: ordersRef.documentID,
+            userId: userId,
+            items: orderData,
+            timestamp: Timestamp(date: Date()),
+            status: "pending"
+        )
 
-                    // Step 4: Save the order in Firestore
-                    self.db.collection("business_users")
-                        .document(businessID)
-                        .collection("reservations")
-                        .document(reservationID)
-                        .collection("orders")
-                        .addDocument(data: orderData) { error in
-                            if let error = error {
-                                print("❌ Error saving order: \(error.localizedDescription)")
-                            } else {
-                                print("🎉 Order placed successfully under Business ID: \(businessID), Reservation ID: \(reservationID)!")
-                            }
-                        }
+        do {
+            try ordersRef.setData(from: orderDetails) { error in
+                if let error = error {
+                    print("Error saving order: \(error.localizedDescription)")
+                } else {
+                    print("Order successfully saved!")
                 }
+            }
+        } catch {
+            print("Error encoding order: \(error.localizedDescription)")
         }
     }
-}
 
+    func fetchOrders(reservationId: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("business_users")
+            .document(userId)
+            .collection("reservations")
+            .document(reservationId)
+            .collection("orders")
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    print("Error fetching orders: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let documents = snapshot?.documents else { return }
+
+                self.orders = documents.compactMap { document in
+                    try? document.data(as: Order.self)
+                }
+            }
+    }
+}
