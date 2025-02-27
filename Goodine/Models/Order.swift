@@ -1,8 +1,16 @@
+//
+//  Order.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 27/02/25.
+//
+
+import Foundation
+import Firebase
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 struct Order: Identifiable, Codable {
-    @DocumentID var id: String?  // Firestore-generated document ID
+    @DocumentID var id: String?
     var userId: String
     var items: [String: OrderItem]
     var timestamp: Timestamp
