@@ -72,17 +72,6 @@ class TableViewModel: ObservableObject {
     
     // MARK: - Data Structures
     
-    /// Reservation model.
-    struct Reservation: Identifiable, Codable {
-        var id: String
-        var tables: [Int]
-        var seats: [Int: [Bool]]
-        var peopleCount: [Int: Int]
-        var timestamp: Date
-        var billingTime: Date?
-        var isPaid: Bool
-    }
-    
     /// History record model.
     struct HistoryRecord: Identifiable, Codable {
         var id: String

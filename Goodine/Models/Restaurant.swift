@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 struct Restaurant: Identifiable, Codable {
     var id: String
     var ownerName: String
