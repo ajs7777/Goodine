@@ -136,10 +136,8 @@ struct ReservationDetailedView: View {
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = pdfMetaData as [String: Any]
         
-        // Define receipt size (suitable for 80mm receipt printer)
-        let pageWidth: CGFloat = 250 // 80mm printer width
-        let pageHeight: CGFloat = 600
-        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight), format: format)
+        let pageWidth: CGFloat = 250 // Standard 80mm receipt printer width
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: 600), format: format)
         
         let pdfData = renderer.pdfData { context in
             context.beginPage()
@@ -150,43 +148,81 @@ struct ReservationDetailedView: View {
             
             var yOffset: CGFloat = 20
             let padding: CGFloat = 10
+            let priceColumnWidth: CGFloat = 60 // Adjust to fit numbers properly
             
-            func drawText(_ text: String, font: UIFont, align: NSTextAlignment = .left, bold: Bool = false) {
-                let paragraphStyle = NSMutableParagraphStyle()
-                paragraphStyle.alignment = align
+            func drawCenteredText(_ text: String, font: UIFont, bold: Bool = false) {
                 let attributes: [NSAttributedString.Key: Any] = [
                     .font: bold ? UIFont.boldSystemFont(ofSize: font.pointSize) : font,
-                    .paragraphStyle: paragraphStyle
+                    .paragraphStyle: {
+                        let paragraph = NSMutableParagraphStyle()
+                        paragraph.alignment = .center
+                        return paragraph
+                    }()
                 ]
                 let attributedString = NSAttributedString(string: text, attributes: attributes)
-                attributedString.draw(in: CGRect(x: padding, y: yOffset, width: pageWidth - 2 * padding, height: 20))
+                let textSize = attributedString.size()
+                let xPos = (pageWidth - textSize.width) / 2
+                attributedString.draw(at: CGPoint(x: xPos, y: yOffset))
                 yOffset += 20
             }
             
-            // Print Header
-            drawText("RESTAURANT ORDER SLIP", font: titleFont, align: .center, bold: true)
-            drawText("Reservation ID: \(String(reservation.id.suffix(12)))", font: bodyFont)
-            drawText("Date: \(dateFormatter.string(from: reservation.timestamp))", font: bodyFont)
-            drawText("Time: \(timeFormatter.string(from: reservation.timestamp))", font: bodyFont)
+            func drawLeftText(_ text: String, font: UIFont, bold: Bool = false) {
+                let attributes: [NSAttributedString.Key: Any] = [
+                    .font: bold ? UIFont.boldSystemFont(ofSize: font.pointSize) : font
+                ]
+                let attributedString = NSAttributedString(string: text, attributes: attributes)
+                attributedString.draw(at: CGPoint(x: padding, y: yOffset))
+                yOffset += 20
+            }
+            
+            func drawItemRow(itemName: String, quantity: Int, price: Double) {
+                let formattedPrice = String(format: "₹%.2f", price)
+                let formattedQty = String(format: "%2d", quantity)
+                
+                let maxItemWidth = pageWidth - (padding + priceColumnWidth) // Leave space for quantity & price
+                let truncatedItemName = itemName.count > 15 ? "\(itemName.prefix(15))…" : itemName
+                
+                // Draw item name (left-aligned)
+                let itemAttributes: [NSAttributedString.Key: Any] = [.font: monospaceFont]
+                let itemString = NSAttributedString(string: truncatedItemName, attributes: itemAttributes)
+                itemString.draw(at: CGPoint(x: padding, y: yOffset))
+                
+                // Draw quantity & price (right-aligned)
+                let qtyPriceString = "\(formattedQty)  \(formattedPrice)"
+                let qtyPriceSize = qtyPriceString.size(withAttributes: itemAttributes)
+                qtyPriceString.draw(at: CGPoint(x: pageWidth - qtyPriceSize.width - padding, y: yOffset), withAttributes: itemAttributes)
+                
+                yOffset += 20
+            }
+            
+            // Header
+            drawCenteredText("RESTAURANT ORDER SLIP", font: titleFont, bold: true)
+            drawCenteredText("Reservation ID: \(String(reservation.id.suffix(12)))", font: bodyFont)
+            drawCenteredText("Date: \(dateFormatter.string(from: reservation.timestamp))", font: bodyFont)
+            drawCenteredText("Time: \(timeFormatter.string(from: reservation.timestamp))", font: bodyFont)
             
             yOffset += 10
-            drawText("Ordered Items", font: titleFont, bold: true)
+            drawCenteredText("Ordered Items", font: titleFont, bold: true)
             
-            drawText("------------------------------------------------", font: monospaceFont)
+            drawCenteredText("--------------------------------", font: monospaceFont)
             
+            // Table Header
+            drawCenteredText("Item                                   Qty    Price", font: monospaceFont, bold: true)
+            drawCenteredText("--------------------------------", font: monospaceFont)
+            
+            // Ordered Items
             for order in orderVM.orders {
                 for key in order.items.keys.sorted() {
                     if let item = order.items[key] {
-                        let itemText = String(format: "%-15s %2d x ₹%5.2f", item.name, item.quantity, item.price)
-                        drawText(itemText, font: monospaceFont)
+                        drawItemRow(itemName: item.name, quantity: item.quantity, price: item.price)
                     }
                 }
             }
             
-            drawText("------------------------------------------------", font: monospaceFont)
+            drawCenteredText("--------------------------------", font: monospaceFont)
             
             yOffset += 10
-            drawText(String(format: "TOTAL: ₹%.2f", totalPrice), font: titleFont, align: .right, bold: true)
+            drawCenteredText(String(format: "TOTAL: ₹%.2f", totalPrice), font: titleFont, bold: true)
         }
         
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("OrderSlip.pdf")
@@ -200,7 +236,7 @@ struct ReservationDetailedView: View {
         }
     }
 
-    
+
     // MARK: - Print PDF
     private func printPDF(url: URL) {
         let printController = UIPrintInteractionController.shared
