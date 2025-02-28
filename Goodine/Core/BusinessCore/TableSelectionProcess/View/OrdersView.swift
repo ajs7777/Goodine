@@ -95,7 +95,7 @@ extension OrdersView {
             NavigationLink {
                 ReservationDetailedView(reservationId: reservation.id)
             } label: {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
                     VStack(alignment: .leading, spacing: 5){
                         HStack{
                             Text("Booking Date: \(reservation.timestamp, formatter: dateFormatter)")
@@ -135,7 +135,7 @@ extension OrdersView {
                                 }
                                 
                             }
-                        }
+                        } .font(.footnote)
                         
                         Spacer()
                         
@@ -176,8 +176,6 @@ extension OrdersView {
                         
                         
                     }
-                    .padding(.top)
-                    // Text("Selected Tables: \(reservation.tables.map { String($0) }.joined(separator: ", "))")
                 }
                 .padding()
                 .background(Color(.systemGray6))

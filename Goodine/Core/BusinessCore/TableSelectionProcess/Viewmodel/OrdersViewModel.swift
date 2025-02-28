@@ -78,4 +78,29 @@ class OrdersViewModel: ObservableObject {
                 }
             }
     }
+    
+    
+    func deleteOrder(orderId: String, reservationId: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        let orderRef = db.collection("business_users")
+                         .document(userId)
+                         .collection("reservations")
+                         .document(reservationId)
+                         .collection("orders")
+                         .document(orderId)
+
+        orderRef.delete { error in
+            if let error = error {
+                print("Error deleting order: \(error.localizedDescription)")
+            } else {
+                print("Order successfully deleted!")
+                // Optionally, remove the deleted order from the local orders array
+                DispatchQueue.main.async {
+                    self.orders.removeAll { $0.id == orderId }
+                }
+            }
+        }
+    }
+
 }

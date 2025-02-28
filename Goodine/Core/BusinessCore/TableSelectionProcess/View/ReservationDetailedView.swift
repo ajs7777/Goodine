@@ -77,11 +77,12 @@ struct ReservationDetailedView: View {
                         .foregroundColor(.gray)
                 } else {
                     ForEach(orderVM.orders) { order in
-                        VStack(alignment: .leading) {
-                            ForEach(order.items.keys.sorted(), id: \.self) { key in
+                        VStack(alignment: .leading, spacing: 7) {
+                            let sortedKeys = order.items.keys.sorted() // Precompute sorted keys
+                            
+                            ForEach(sortedKeys, id: \.self) { key in
                                 if let item = order.items[key] {
-                                    Text("\(item.name) - \(item.quantity) x ₹\(item.price, specifier: "%.2f")")
-                                        .font(.body)
+                                    OrderRow(item: item, orderId: order.id ?? "", reservationId: reservationId, orderVM: orderVM)
                                 }
                             }
                         }
@@ -179,7 +180,7 @@ struct ReservationDetailedView: View {
                 let formattedPrice = String(format: "₹%.2f", price)
                 let formattedQty = String(format: "%2d", quantity)
                 
-                let maxItemWidth = pageWidth - (padding + priceColumnWidth) // Leave space for quantity & price
+                _ = pageWidth - (padding + priceColumnWidth) // Leave space for quantity & price
                 let truncatedItemName = itemName.count > 15 ? "\(itemName.prefix(15))…" : itemName
                 
                 // Draw item name (left-aligned)
@@ -200,6 +201,20 @@ struct ReservationDetailedView: View {
             drawCenteredText("Reservation ID: \(String(reservation.id.suffix(12)))", font: bodyFont)
             drawCenteredText("Date: \(dateFormatter.string(from: reservation.timestamp))", font: bodyFont)
             drawCenteredText("Time: \(timeFormatter.string(from: reservation.timestamp))", font: bodyFont)
+            
+            yOffset += 10
+                    drawCenteredText("Table & Seats", font: titleFont, bold: true)
+                    
+                    drawCenteredText("--------------------------------", font: monospaceFont)
+                    
+                    // Display Selected Tables and Seats
+                    for tableNumber in reservation.tables {
+                        if let seatArray = reservation.seats[tableNumber], seatArray.contains(true) {
+                            let selectedSeatCount = seatArray.filter { $0 }.count
+                            let seatText = "Table \(tableNumber) - \(selectedSeatCount) Seats"
+                            drawLeftText(seatText, font: monospaceFont, bold: true)
+                        }
+                    }
             
             yOffset += 10
             drawCenteredText("Ordered Items", font: titleFont, bold: true)
@@ -252,3 +267,23 @@ struct ReservationDetailedView: View {
     }
 }
 
+struct OrderRow: View {
+    let item: OrderItem
+    let orderId: String
+    let reservationId: String
+    @ObservedObject var orderVM: OrdersViewModel
+
+    var body: some View {
+        HStack {
+            Text("\(item.name) - \(item.quantity) x ₹\(item.price, specifier: "%.2f")")
+                .font(.body)
+            Spacer()
+            Button(action: {
+                orderVM.deleteOrder(orderId: orderId, reservationId: reservationId)
+            }) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
+            }
+        }
+    }
+}
