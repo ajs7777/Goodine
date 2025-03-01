@@ -73,14 +73,7 @@ class TableViewModel: ObservableObject {
     // MARK: - Data Structures
     
     /// History record model.
-    struct HistoryRecord: Identifiable, Codable {
-        var id: String
-        var tables: [Int]
-        var seats: [Int: [Bool]]
-        var peopleCount: [Int: Int]
-        var timestamp: Date
-        var billingTime: Date
-    }
+   
     
     // MARK: - Helper Methods
     
@@ -438,6 +431,114 @@ class TableViewModel: ObservableObject {
                     self.fetchAllSeatSelections {
                         self.fetchOrderHistory()
                     }
+                }
+            }
+        }
+    }
+    
+    func deleteReservation(reservationID: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(false, "No logged-in user found.")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("business_users")
+            .document(userID)
+            .collection("reservations")
+            .document(reservationID)
+        
+        // Reference to the orders subcollection
+        let ordersCollectionRef = reservationRef.collection("orders")
+        
+        isLoading = true
+        
+        // Step 1: Delete all documents in the orders subcollection
+        ordersCollectionRef.getDocuments { [weak self] (querySnapshot, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve orders: \(error.localizedDescription)")
+                return
+            }
+            
+            // If no orders or error retrieving them, proceed with reservation deletion
+            guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                // No orders to delete, proceed to delete the reservation document
+                self?.deleteReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                return
+            }
+            
+            // Create a batch to delete all order documents
+            let batch = db.batch()
+            
+            // Add each order document to the batch for deletion
+            for document in documents {
+                batch.deleteDocument(document.reference)
+            }
+            
+            // Commit the batch delete of all orders
+            batch.commit { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.isLoading = false
+                    }
+                    self?.logError(error)
+                    completion(false, "Failed to delete orders: \(error.localizedDescription)")
+                } else {
+                    // Orders deleted successfully, now delete the reservation document
+                    self?.deleteReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                }
+            }
+        }
+    }
+
+    // Helper function to delete the reservation document itself
+    private func deleteReservationDocument(reservationRef: DocumentReference, reservationID: String, completion: @escaping (Bool, String?) -> Void) {
+        // First get the document to identify any fields we need for cleanup
+        reservationRef.getDocument { [weak self] (document, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve reservation: \(error.localizedDescription)")
+                return
+            }
+            
+            let data = document?.data() ?? [:]
+            
+            // Delete the reservation document
+            reservationRef.delete { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                
+                if let error = error {
+                    self?.logError(error)
+                    completion(false, "Failed to delete reservation: \(error.localizedDescription)")
+                } else {
+                    // Clean up local data
+                    DispatchQueue.main.async {
+                        // Remove from local array
+                        self?.reservations.removeAll { $0.id == reservationID }
+                        
+                        // Reset any reserved seats associated with this reservation
+                        if let tables = data["tables"] as? [Int] {
+                            for table in tables {
+                                self?.reservedSeats[table] = Array(repeating: false, count: 4)
+                            }
+                        }
+                    }
+                    
+                    // Refresh data
+                    self?.fetchAllSeatSelections {
+                        completion(true, nil)
+                    }
+                    
+                    print("Reservation and all associated orders deleted successfully")
                 }
             }
         }
