@@ -1,3 +1,12 @@
+//
+//  HistoryRecord.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 01/03/25.
+//
+
+import Foundation
+
  struct HistoryRecord: Identifiable, Codable {
         var id: String
         var tables: [Int]
