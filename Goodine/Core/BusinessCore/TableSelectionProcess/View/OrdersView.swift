@@ -172,6 +172,22 @@ extension OrdersView {
                             .padding(8)
                             .background(.mainbw)
                             .cornerRadius(10)
+                            
+                            Button(action: {
+                                // Add confirmation alert here if needed
+                                tableVM.deleteReservation(reservationID: reservation.id) { success, error in
+                                    // Handle success/error if needed
+                                }
+                            }) {
+                                Text("Delete")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.red)
+                                    .cornerRadius(10)
+                            }
+                            .padding(.top, 5)
+                            .disabled(tableVM.isLoading)
                         }
                         
                         
@@ -181,79 +197,84 @@ extension OrdersView {
                 .background(Color(.systemGray6))
                 .cornerRadius(10)
             }
-
+            
         }
         .sheet(isPresented: $showFoodMenu, content: { FoodMenuView() })
     }
     
     private var ordersHistory: some View {
         ForEach(tableVM.history, id: \.id) { historyItem in
-            VStack(alignment: .leading, spacing: 10) {
-                
-                VStack(alignment: .leading, spacing: 5){
-                    HStack{
-                        Text("Booking Date: \(historyItem.timestamp, formatter: dateFormatter)")
-                            .font(.caption)
-                            .foregroundStyle(.gray)
-                        
-                        Spacer()
-                        
-                        Text("\(historyItem.timestamp, formatter: timeFormatter)")
-                            .font(.caption)
+            NavigationLink {
+                HistoryDetailedView(reservationId: historyItem.id)
+            } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    
+                    VStack(alignment: .leading, spacing: 5){
+                        HStack{
+                            Text("Booking Date: \(historyItem.timestamp, formatter: dateFormatter)")
+                                .font(.caption)
+                                .foregroundStyle(.gray)
+                            
+                            Spacer()
+                            
+                            Text("\(historyItem.timestamp, formatter: timeFormatter)")
+                                .font(.caption)
+                                .foregroundStyle(.gray)
+                        }
+                        let shortID = String(historyItem.id.suffix(12))
+                        Text("ID: \(shortID)")
+                            .font(.caption2)
                             .foregroundStyle(.gray)
                     }
-                    let shortID = String(historyItem.id.suffix(12))
-                    Text("ID: \(shortID)")
-                        .font(.caption2)
-                        .foregroundStyle(.gray)
-                }
-                HStack {
-                    Image(systemName: "checkmark.seal.fill")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 60, height: 50)
-                        .foregroundColor(.gray)
-                    
-                    VStack {
-                        ForEach(
-                            historyItem.tables.filter { tableNumber in
-                                let seatArray = historyItem.seats[tableNumber] ?? []
-                                return seatArray.contains(true)
-                            },
-                            id: \.self
-                        ) { tableNumber in
+                    HStack {
+                        Image(systemName: "checkmark.seal.fill")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 60, height: 50)
+                            .foregroundColor(.gray)
+                        
+                        VStack {
+                            ForEach(
+                                historyItem.tables.filter { tableNumber in
+                                    let seatArray = historyItem.seats[tableNumber] ?? []
+                                    return seatArray.contains(true)
+                                },
+                                id: \.self
+                            ) { tableNumber in
                                 HStack{
                                     let seatArray = historyItem.seats[tableNumber] ?? []
                                     let selectedSeatCount = seatArray.filter { $0 }.count
                                     Text("Table \(tableNumber) : \(selectedSeatCount)")
                                     Image(systemName: "person.fill")
                                 }
-                            
+                                
+                            }
                         }
+                        Spacer()
+                        
+                        HStack{
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("Paid")
+                        }
+                        .font(.headline)
+                        
                     }
-                    Spacer()
                     
-                    HStack{
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("Paid")
+                    HStack(){
+                        Spacer()
+                        Text("Billing Time: \(historyItem.billingTime, formatter: dateTimeFormatter)")
+                            .font(.caption)
+                            .foregroundStyle(.gray)
                     }
-                    .font(.headline)
+                    
                     
                 }
-                
-                HStack(){
-                    Spacer()
-                    Text("Billing Time: \(historyItem.billingTime, formatter: dateTimeFormatter)")
-                        .font(.caption)
-                        .foregroundStyle(.gray)
-                }
-                
-                
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
+            
         }
     }
 }
