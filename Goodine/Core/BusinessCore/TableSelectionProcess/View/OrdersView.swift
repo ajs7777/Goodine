@@ -15,6 +15,9 @@ struct OrdersView: View {
     
     @ObservedObject var tableVM = TableViewModel()
     @State private var showFoodMenu = false
+    @State private var showDeleteAlert = false
+    @State private var showPayAlert = false
+    @State private var selectedReservationID: String?
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -80,6 +83,26 @@ struct OrdersView: View {
                 tableVM.isLoading = true
                 tableVM.fetchOrderHistory()
             }
+            .alert("Cancel Reservation", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    if let reservationID = selectedReservationID {
+                        tableVM.deleteReservation(reservationID: reservationID) { success, error in }
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete this reservation?")
+            }
+            .alert("Confirm Payment", isPresented: $showPayAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Done", role: .none) {
+                    if let reservationID = selectedReservationID {
+                        tableVM.deleteReservationAndSaveToHistory(reservationID: reservationID)
+                    }
+                }
+            } message: {
+                Text("Do you want to complete the payment?")
+            }
         }
     }
 }
@@ -97,12 +120,22 @@ extension OrdersView {
             } label: {
                 VStack(alignment: .leading, spacing: 5) {
                     VStack(alignment: .leading, spacing: 5){
-                        HStack{
+                        HStack(alignment: .bottom){
                             Text("Booking Date: \(reservation.timestamp, formatter: dateFormatter)")
                                 .font(.caption)
                             Spacer()
                             Text("\(reservation.timestamp, formatter: timeFormatter)")
                                 .font(.caption)
+                            
+                            Button(action: {
+                                selectedReservationID = reservation.id
+                                showDeleteAlert = true
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(.red)
+                            }
+                            .offset(y: 2)
+                            .disabled(tableVM.isLoading)
                         }
                         
                         let shortID = String(reservation.id.suffix(12))
@@ -142,7 +175,8 @@ extension OrdersView {
                         VStack(alignment: .trailing){
                             if !reservation.isPaid {
                                 Button(action: {
-                                    tableVM.deleteReservationAndSaveToHistory(reservationID: reservation.id)
+                                    selectedReservationID = reservation.id
+                                    showPayAlert = true
                                 }) {
                                     HStack {
                                         if tableVM.isLoading {
@@ -173,21 +207,7 @@ extension OrdersView {
                             .background(.mainbw)
                             .cornerRadius(10)
                             
-                            Button(action: {
-                                // Add confirmation alert here if needed
-                                tableVM.deleteReservation(reservationID: reservation.id) { success, error in
-                                    // Handle success/error if needed
-                                }
-                            }) {
-                                Text("Delete")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.red)
-                                    .cornerRadius(10)
-                            }
-                            .padding(.top, 5)
-                            .disabled(tableVM.isLoading)
+                            
                         }
                         
                         
