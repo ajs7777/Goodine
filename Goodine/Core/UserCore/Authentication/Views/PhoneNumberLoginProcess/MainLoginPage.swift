@@ -26,57 +26,58 @@ struct LoginWithNumberView: View {
                     .frame(width: 400, height: 250)
                 
                 
-                VStack(alignment: .leading){
+                VStack {
                     Text("Get started with App")
-                        .font(.title2)
+                        .font(.title)
                         .fontWeight(.bold)
                     Text("Login or signup to use App")
-                        .font(.caption)
+                        .font(.callout)
                         .foregroundStyle(.gray)
-                } .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                    .padding(.bottom, 50)
                 
                 
                 // phone number textfield
-                VStack(alignment: .leading){
-                    Text("Enter phone number")
-                        .fontWeight(.medium)
-                    HStack {
-                        HStack{
-                            Text("🇮🇳")
-                                .font(.title)
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                        }
-                        .padding(7)
-                        .overlay(RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray, lineWidth: 2))
-                        
-                        TextField("0000000000", text: $phoneNumber)
-                            .keyboardType(.numberPad)
-                            .onReceive(phoneNumber.publisher.collect()) {
-                                self.phoneNumber = String($0.prefix(10))
-                            }
-                        
-                            .padding(13)
-                            .padding(.leading, 38)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray, lineWidth: 2)
-                            )
-                            .overlay(alignment: .leading) {
-                                Text("+91")
-                                    .padding(.leading, 15)
-                                
-                            }
-                        
-                    }
-                } .padding(.vertical)
+//                VStack(alignment: .leading){
+//                    Text("Enter phone number")
+//                        .fontWeight(.medium)
+//                    HStack {
+//                        HStack{
+//                            Text("🇮🇳")
+//                                .font(.title)
+//                            Image(systemName: "chevron.down")
+//                                .font(.caption)
+//                        }
+//                        .padding(7)
+//                        .overlay(RoundedRectangle(cornerRadius: 8)
+//                            .stroke(Color.gray, lineWidth: 2))
+//                        
+//                        TextField("0000000000", text: $phoneNumber)
+//                            .keyboardType(.numberPad)
+//                            .onReceive(phoneNumber.publisher.collect()) {
+//                                self.phoneNumber = String($0.prefix(10))
+//                            }
+//                        
+//                            .padding(13)
+//                            .padding(.leading, 38)
+//                            .overlay(
+//                                RoundedRectangle(cornerRadius: 8)
+//                                    .stroke(Color.gray, lineWidth: 2)
+//                            )
+//                            .overlay(alignment: .leading) {
+//                                Text("+91")
+//                                    .padding(.leading, 15)
+//                                
+//                            }
+//                        
+//                    }
+//                } .padding(.vertical)
                 
-                Spacer()
+//                Spacer()
                 
                 
                 //another way login buttons
-                HStack{
+                VStack{
                     NavigationLink {
                         LoginWithEmail()
                             .navigationBarBackButtonHidden()
@@ -84,12 +85,10 @@ struct LoginWithNumberView: View {
                         HStack {
                             Image(systemName: "envelope.fill")
                                 .font(.subheadline)
-                                .tint(.mainbw.opacity(0.8))
-                            Text("Login Another Way")
+                            Text("Login as User")
                                 .font(.caption)
-                                .tint(.mainbw.opacity(0.8))
                                 .bold()
-                        }
+                        } .goodineButtonStyle(.mainbw)
                     }
                     
 //                    Text("|")
@@ -103,28 +102,30 @@ struct LoginWithNumberView: View {
                             Image("store")
                                 .resizable()
                                 .renderingMode(.template)
-                                .foregroundStyle(.mainbw.opacity(0.8))
                                 .frame(width: 17, height: 15)
                                 
                             Text("Login With Business")
                                 .font(.caption)
-                                .tint(.mainbw.opacity(0.8))
                                 .bold()
                         }
+                        .goodineButtonStyle(.orange)
                     }
                     
                 }
-                .padding(.bottom, 5)
+                .padding(.bottom, 15)
                 
+                
+                
+                Spacer()
                 VStack(spacing: 15.0) {
-                    NavigationLink {
-                        VerifyDetailsView()
-                            .navigationBarBackButtonHidden()
-                    } label: {
-                        Text("Continue")
-                            .goodineButtonStyle(!isACtive ? .gray : .mainbw)
-                    }
-                    .disabled(!isACtive)
+//                    NavigationLink {
+//                        VerifyDetailsView()
+//                            .navigationBarBackButtonHidden()
+//                    } label: {
+//                        Text("Continue")
+//                            .goodineButtonStyle(!isACtive ? .gray : .mainbw)
+//                    }
+//                    .disabled(!isACtive)
                     
                     
                     HStack(spacing: 0.0){

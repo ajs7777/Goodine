@@ -96,6 +96,7 @@ struct BusinessLoginView: View {
                     .font(.caption2)
                 }
             }
+            .frame(maxWidth: 500)
             .toolbar(content: {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {

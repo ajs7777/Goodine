@@ -135,6 +135,7 @@ struct CreateBusinessView: View {
                         .font(.caption2)
                     }
                 }
+                .frame(maxWidth: 500)
                 .toolbarVisibility(.hidden, for: .navigationBar)
                 .padding()
                 .onTapGesture {

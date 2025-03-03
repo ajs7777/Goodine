@@ -99,6 +99,7 @@ struct CreateAccountView: View {
                     .font(.caption2)
                 }
             }
+            .frame(maxWidth: 500)
             .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

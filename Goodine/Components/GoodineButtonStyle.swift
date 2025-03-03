@@ -15,7 +15,7 @@ struct GoodineButtonModifier: ViewModifier {
         content
             .fontWeight(.semibold)
             .foregroundColor(.mainInvert)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: 500)
             .frame(height: 60)
             .background(backgroundColor)
             .clipShape(RoundedRectangle(cornerRadius: 8))
