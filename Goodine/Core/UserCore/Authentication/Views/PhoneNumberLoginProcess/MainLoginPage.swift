@@ -117,7 +117,7 @@ struct LoginWithNumberView: View {
                 
                 
                 Spacer()
-                VStack(spacing: 15.0) {
+                VStack {
 //                    NavigationLink {
 //                        VerifyDetailsView()
 //                            .navigationBarBackButtonHidden()
@@ -127,6 +127,11 @@ struct LoginWithNumberView: View {
 //                    }
 //                    .disabled(!isACtive)
                     
+                        Image(.goodinetext)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 50)
+                            .opacity(0.4)
                     
                     HStack(spacing: 0.0){
                         Text("By clicking, I accept the")
