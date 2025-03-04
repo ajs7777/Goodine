@@ -17,6 +17,9 @@ class BusinessAuthViewModel: ObservableObject {
     @Published var restaurant: Restaurant?
     @Published var allRestaurants: [Restaurant] = []
     @Published var isLoading = true
+    @Published var errorMessage: String?
+    @Published var emailNotVerified: Bool = false
+    @Published var isCheckingEmailVerification = false
     
     private var db = Firestore.firestore()
     private let storage = Storage.storage()
@@ -33,6 +36,8 @@ class BusinessAuthViewModel: ObservableObject {
     func signUp(email: String, password: String, name : String, type : String, city : String, address : String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
         self.businessUser = result.user
+        
+        try await result.user.sendEmailVerification()
         
         let userId = result.user.uid
         let newRestaurant = Restaurant(
@@ -55,6 +60,17 @@ class BusinessAuthViewModel: ObservableObject {
     
     func signIn(email: String, password: String) async throws {
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
+        
+        guard result.user.isEmailVerified else {
+                    self.emailNotVerified = true
+                    self.errorMessage = "Please verify your email before logging in."
+                    try? Auth.auth().signOut()
+                    
+                    // Start automatic email verification check
+                    checkEmailVerificationPeriodically()
+                    return
+                }
+        
         self.businessUser = result.user
         fetchBusinessDetails()
     }
@@ -64,6 +80,56 @@ class BusinessAuthViewModel: ObservableObject {
         self.businessUser = nil
         self.restaurant = nil
     }
+    
+    func resendVerificationEmail() async throws {
+            guard let user = Auth.auth().currentUser else { return }
+            try await user.sendEmailVerification()
+            self.errorMessage = "Verification email sent. Please check your inbox."
+        }
+    
+    
+    /// Automatically checks email verification status every 5 seconds
+    func checkEmailVerificationPeriodically() {
+        guard let user = Auth.auth().currentUser else { return }
+        
+        self.isCheckingEmailVerification = true
+        Task {
+            while self.emailNotVerified {
+                do {
+                    try await user.reload() // Refresh user info
+                    if user.isEmailVerified {
+                        DispatchQueue.main.async {
+                            self.emailNotVerified = false
+                            self.errorMessage = nil
+                            self.businessUser = user
+                            self.fetchBusinessDetails()
+                        }
+                        return
+                    }
+                } catch {
+                    print("Error reloading user: \(error.localizedDescription)")
+                }
+                try await Task.sleep(nanoseconds: 5_000_000_000) // Wait 5 seconds before checking again
+            }
+        }
+    }
+    
+    func refreshEmailVerification() async {
+            guard let user = Auth.auth().currentUser else { return }
+            do {
+                try await user.reload()
+                if user.isEmailVerified {
+                    DispatchQueue.main.async {
+                        self.emailNotVerified = false
+                        self.errorMessage = nil
+                        self.businessUser = user
+                        self.fetchBusinessDetails()
+                    }
+                }
+            } catch {
+                print("Error refreshing email verification: \(error.localizedDescription)")
+            }
+        }
     
     func fetchBusinessDetails() {
         guard let userId = Auth.auth().currentUser?.uid else {
