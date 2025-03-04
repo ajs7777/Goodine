@@ -28,5 +28,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        
+        .environmentObject(BusinessAuthViewModel())
+        .environmentObject(AuthViewModel())
 }

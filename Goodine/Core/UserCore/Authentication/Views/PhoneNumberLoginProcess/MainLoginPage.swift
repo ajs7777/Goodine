@@ -10,11 +10,11 @@ import Combine
 
 struct LoginWithNumberView: View {
     
-    @State var phoneNumber = ""
+//    @State var phoneNumber = ""
     
-    var isACtive : Bool {
-        phoneNumber.count == 10 && phoneNumber.allSatisfy(\.isNumber)
-    }
+//    var isACtive : Bool {
+//        phoneNumber.count == 10 && phoneNumber.allSatisfy(\.isNumber)
+//    }
     
     var body: some View {
         NavigationStack {
@@ -78,18 +78,18 @@ struct LoginWithNumberView: View {
                 
                 //another way login buttons
                 VStack{
-                    NavigationLink {
-                        LoginWithEmail()
-                            .navigationBarBackButtonHidden()
-                    } label: {
-                        HStack {
-                            Image(systemName: "envelope.fill")
-                                .font(.subheadline)
-                            Text("Login as User")
-                                .font(.caption)
-                                .bold()
-                        } .goodineButtonStyle(.mainbw)
-                    }
+//                    NavigationLink {
+//                        LoginWithEmail()
+//                            .navigationBarBackButtonHidden()
+//                    } label: {
+//                        HStack {
+//                            Image(systemName: "envelope.fill")
+//                                .font(.subheadline)
+//                            Text("Login as User")
+//                                .font(.caption)
+//                                .bold()
+//                        } .goodineButtonStyle(.mainbw)
+//                    }
                     
 //                    Text("|")
 //                        .font(.caption)
@@ -108,7 +108,7 @@ struct LoginWithNumberView: View {
                                 .font(.caption)
                                 .bold()
                         }
-                        .goodineButtonStyle(.orange)
+                        .goodineButtonStyle(.mainbw)
                     }
                     
                 }

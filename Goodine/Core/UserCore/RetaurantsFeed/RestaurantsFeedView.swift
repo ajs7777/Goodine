@@ -40,6 +40,7 @@ struct RestaurantsFeedView: View {
 
 #Preview {
     RestaurantsFeedView()
+        .environmentObject(BusinessAuthViewModel())
 }
 
 extension RestaurantsFeedView {
