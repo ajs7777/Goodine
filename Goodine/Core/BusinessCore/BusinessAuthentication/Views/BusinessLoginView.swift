@@ -48,6 +48,12 @@ struct BusinessLoginView: View {
                             .goodineButtonStyle(.mainbw)
                     }
                     
+                    if let errorMessage = businessAuthVM.errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                    
                 }
                 
                 HStack{
