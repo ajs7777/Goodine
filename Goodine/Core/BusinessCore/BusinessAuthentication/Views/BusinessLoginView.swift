@@ -63,7 +63,9 @@ struct BusinessLoginView: View {
                     Spacer()
                     
                     Button {
-                        
+                        Task{
+                            await businessAuthVM.resetPassword(email: email)
+                        }
                     } label: {
                         Text("Forgot password?")
                             .font(.subheadline)

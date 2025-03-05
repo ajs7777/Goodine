@@ -209,7 +209,7 @@ struct RestaurantProfile: View {
                                         .padding(10)
                                         .background(Color(.systemGray5))
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    Text("Parking Available")
+                                    Text("Dine in Available")
                                         .foregroundStyle(.mainbw)
                                         .fontWeight(.medium)
                                         .padding(10)

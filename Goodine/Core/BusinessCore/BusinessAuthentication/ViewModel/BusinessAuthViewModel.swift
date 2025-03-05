@@ -147,6 +147,20 @@ class BusinessAuthViewModel: ObservableObject {
             }
         }
     
+    func resetPassword(email: String) async {
+        do {
+            try await Auth.auth().sendPasswordReset(withEmail: email)
+            DispatchQueue.main.async {
+                self.errorMessage = "Password reset email sent. Please check your inbox."
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = "Failed to send reset email: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    
     func fetchBusinessDetails() {
         guard let userId = Auth.auth().currentUser?.uid else {
             isLoading = false
