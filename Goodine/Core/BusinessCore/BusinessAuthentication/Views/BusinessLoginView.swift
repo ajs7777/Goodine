@@ -41,7 +41,7 @@ struct BusinessLoginView: View {
                     
                     Button {
                         Task{
-                           try await businessAuthVM.signIn(email: email, password: password)
+                           await businessAuthVM.signIn(email: email, password: password)
                         }
                     } label: {
                         Text("Log In")

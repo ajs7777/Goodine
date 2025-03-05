@@ -58,22 +58,38 @@ class BusinessAuthViewModel: ObservableObject {
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
     }
     
-    func signIn(email: String, password: String) async throws {
-        let result = try await Auth.auth().signIn(withEmail: email, password: password)
-        
-        guard result.user.isEmailVerified else {
-                    self.emailNotVerified = true
-                    self.errorMessage = "Please verify your email before logging in."
-                    try? Auth.auth().signOut()
-                    
-                    // Start automatic email verification check
-                    checkEmailVerificationPeriodically()
-                    return
+    func signIn(email: String, password: String) async {
+        do {
+            let result = try await Auth.auth().signIn(withEmail: email, password: password)
+            
+            guard result.user.isEmailVerified else {
+                self.emailNotVerified = true
+                self.errorMessage = "Please verify your email before logging in."
+                try? Auth.auth().signOut()
+                
+                // Start automatic email verification check
+                checkEmailVerificationPeriodically()
+                return
+            }
+            
+            self.businessUser = result.user
+            fetchBusinessDetails()
+        } catch let error as NSError {
+            DispatchQueue.main.async {
+                switch error.code {
+                case AuthErrorCode.wrongPassword.rawValue:
+                    self.errorMessage = "Incorrect password. Please try again."
+                case AuthErrorCode.invalidEmail.rawValue:
+                    self.errorMessage = "Invalid email format. Please enter a valid email."
+                case AuthErrorCode.userNotFound.rawValue:
+                    self.errorMessage = "No account found with this email. Please check or sign up."
+                default:
+                    self.errorMessage = "Login failed: \(error.localizedDescription)"
                 }
-        
-        self.businessUser = result.user
-        fetchBusinessDetails()
+            }
+        }
     }
+
     
     func signOut() {
         try? Auth.auth().signOut()
