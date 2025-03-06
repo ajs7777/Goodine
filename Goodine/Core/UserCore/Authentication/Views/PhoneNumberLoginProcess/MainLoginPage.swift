@@ -20,7 +20,7 @@ struct LoginWithNumberView: View {
         NavigationStack {
             VStack{
                 //ICON
-                Image("login-icon")
+                Image(.loginIcon)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 400, height: 250)

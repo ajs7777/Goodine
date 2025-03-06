@@ -18,7 +18,7 @@ struct BusinessLoginView: View {
     var body: some View {
         NavigationStack {
             VStack{
-                Image(.businessicon)
+                Image("businessicon")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 300, height: 280)
