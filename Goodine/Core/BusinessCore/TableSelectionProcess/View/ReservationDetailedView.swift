@@ -112,7 +112,12 @@ struct ReservationDetailedView: View {
                         Image(systemName: "printer")
                         Text("Print Slip")
                     }
-                    .goodineButtonStyle(.mainbw)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.mainInvert)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .background(.mainbw)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.top, 10)
             } else {

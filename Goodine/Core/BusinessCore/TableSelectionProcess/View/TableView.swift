@@ -62,7 +62,12 @@ struct TableView: View {
                         showFoodMenu.toggle()
                     } label: {
                         Text("Done")
-                            .goodineButtonStyle(.mainbw)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.mainInvert)
+                            .frame(maxWidth: 700)
+                            .frame(height: 60)
+                            .background(.mainbw)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding()
                     .disabled(!tableVM.selectedButtons.values.contains(where: { $0.contains(true) }))
