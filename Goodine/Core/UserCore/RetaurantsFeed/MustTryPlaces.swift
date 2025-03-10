@@ -67,7 +67,9 @@ struct MustTryPlaces: View {
         averageCost: "₹500",
         openingTime: Date(),
         closingTime: Date(),
-        imageUrls: ["https://example.com/image.jpg"] // Replace with actual image URL
+        imageUrls: ["https://example.com/image.jpg"],
+        currency: "INR",
+        currencySymbol: "₹"
     ))
 }
 

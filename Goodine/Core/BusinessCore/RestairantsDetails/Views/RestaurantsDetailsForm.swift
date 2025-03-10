@@ -15,6 +15,12 @@ struct RestaurantsDetailsForm: View {
     @Environment(\.dismiss) var dismiss
     @State private var selectedImages: [UIImage] = []
     @State private var isImagePickerPresented = false
+    @State private var selectedCurrency: String = "INR"
+    @State private var searchQuery: String = ""
+    
+    let currencySymbols: [String: String] = ["USD": "$", "EUR": "€", "INR": "₹", "GBP": "£", "JPY": "¥", "AUD": "A$", "CAD": "C$", "CNY": "¥", "SGD": "S$", "AED": "د.إ"]
+    let currencies = ["USD", "EUR", "INR", "GBP", "JPY", "AUD", "CAD", "CNY", "SGD", "AED"] // Add more as needed
+    
     
     var body: some View {
         NavigationStack {
@@ -124,7 +130,7 @@ struct RestaurantsDetailsForm: View {
                     HStack{
                         Text("Average Cost for two")
                             .font(.headline)
-                        TextField("₹", text: Binding(
+                        TextField("", text: Binding(
                             get: { businessAuthVM.restaurant?.averageCost ?? "" },
                             set: { businessAuthVM.restaurant?.averageCost = $0 }
                         ))
@@ -137,7 +143,34 @@ struct RestaurantsDetailsForm: View {
                                 .inset(by: 3)
                                 .stroke(.mainbw, lineWidth: 1)
                         )
-                        
+                        Menu {
+                            TextField("Search", text: $searchQuery)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding()
+                            
+                            ForEach(currencies.filter { searchQuery.isEmpty || $0.contains(searchQuery.uppercased()) }, id: \.self) { currency in
+                                Button(currency) {
+                                    selectedCurrency = currency
+                                    let symbol = currencySymbols[currency] ?? currency
+                                    businessAuthVM.restaurant?.currency = currency
+                                    businessAuthVM.restaurant?.currencySymbol = symbol
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text("\(businessAuthVM.restaurant?.currencySymbol ?? getCurrencySymbol(for: selectedCurrency)) \(selectedCurrency.isEmpty ? "Select Currency" : selectedCurrency)")
+                                Image(systemName: "chevron.down")
+                            }
+                            .foregroundStyle(.mainbw)
+                            .padding(9)
+                            .background(RoundedRectangle(cornerRadius: 7).stroke(.mainbw, lineWidth: 1))
+                        }
+                        .onAppear {
+                            if let savedCurrency = businessAuthVM.restaurant?.currency {
+                                selectedCurrency = savedCurrency
+                            }
+                        }
+
                     }
                     .padding(.vertical, 10)
                     
@@ -180,6 +213,11 @@ struct RestaurantsDetailsForm: View {
                                 Image(systemName: "plus")
                                     .font(.title2)
                                     .padding(20)
+                                    .frame(width: 100, height: 100)
+                                    .foregroundStyle(.mainbw)
+                                    .fontWeight(.semibold)
+                                    .background(.mainbw.opacity(0.1))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
                             }
                             
                             if let imageUrls = businessAuthVM.restaurant?.imageUrls {
@@ -275,11 +313,16 @@ struct RestaurantsDetailsForm: View {
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
+    func getCurrencySymbol(for currencyCode: String) -> String {
+        let locale = NSLocale(localeIdentifier: currencyCode)
+        return locale.displayName(forKey: .currencySymbol, value: currencyCode) ?? currencyCode
+    }
+
     
 }
 
 #Preview {
-    RestaurantsDetailsForm(businessAuthVM: BusinessAuthViewModel())    
+    RestaurantsDetailsForm(businessAuthVM: BusinessAuthViewModel())
 }
 
 

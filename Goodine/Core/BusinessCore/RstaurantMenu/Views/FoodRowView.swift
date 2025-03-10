@@ -11,7 +11,7 @@ import Kingfisher
 struct FoodRowView: View {
     let menuItem: MenuItem
     var onDelete: () -> Void
-    
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     var body: some View {
         HStack(spacing: 10){
@@ -52,7 +52,9 @@ struct FoodRowView: View {
                     .font(.caption)
                     .foregroundStyle(.mainbw.opacity(0.5))
                 
-                Text("₹\(menuItem.foodPrice)")
+                let restaurant = businessAuthVM.restaurant
+                
+                Text("\(restaurant?.currencySymbol ?? "")\(menuItem.foodPrice)")
                     .foregroundStyle(.mainbw.opacity(0.5))
             }
             

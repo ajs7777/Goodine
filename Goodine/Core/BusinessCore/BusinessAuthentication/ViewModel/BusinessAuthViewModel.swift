@@ -52,7 +52,9 @@ class BusinessAuthViewModel: ObservableObject {
             averageCost: "",
             openingTime: Date(),
             closingTime: Date(),
-            imageUrls: []
+            imageUrls: [],
+            currency: "INR",
+            currencySymbol: "₹"
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -189,7 +191,9 @@ class BusinessAuthViewModel: ObservableObject {
                         averageCost: data["averageCost"] as? String ?? "",
                         openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
                         closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
-                        imageUrls: data["imageUrls"] as? [String] ?? []
+                        imageUrls: data["imageUrls"] as? [String] ?? [],
+                        currency: data["currency"] as? String ?? "INR",
+                        currencySymbol: data["currencySymbol"] as? String ?? "₹"
                     )
                     self.isLoading = false
                 }
@@ -237,7 +241,9 @@ class BusinessAuthViewModel: ObservableObject {
             "averageCost": updatedRestaurant.averageCost ?? "",
             "openingTime": Timestamp(date: updatedRestaurant.openingTime),
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
-            "imageUrls": updatedRestaurant.imageUrls
+            "imageUrls": updatedRestaurant.imageUrls,
+            "currency": updatedRestaurant.currency,
+            "currencySymbol": updatedRestaurant.currencySymbol
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -285,7 +291,9 @@ class BusinessAuthViewModel: ObservableObject {
                     averageCost: data["averageCost"] as? String ?? "",
                     openingTime: (data["openingTime"] as? Timestamp)?.dateValue() ?? Date(),
                     closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
-                    imageUrls: data["imageUrls"] as? [String] ?? []
+                    imageUrls: data["imageUrls"] as? [String] ?? [],
+                    currency: data["currency"] as? String ?? "INR",
+                    currencySymbol: data["currencySymbol"] as? String ?? "₹"
                 )
             }
             

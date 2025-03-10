@@ -77,7 +77,7 @@ struct LoginWithNumberView: View {
                 
                 
                 //another way login buttons
-                VStack{
+                
 //                    NavigationLink {
 //                        LoginWithEmail()
 //                            .navigationBarBackButtonHidden()
@@ -93,7 +93,7 @@ struct LoginWithNumberView: View {
                     
 //                    Text("|")
 //                        .font(.caption)
-                    
+                VStack{
                     NavigationLink {
                         BusinessLoginView()
                             .navigationBarBackButtonHidden()

@@ -16,6 +16,7 @@ struct FoodMenuView: View {
     @Environment(\.dismiss) var dismiss
     @State private var selectedItems: [String: Int] = [:]
     
+    
     var body: some View {
         NavigationStack {
                    VStack(alignment: .leading) {
@@ -49,6 +50,7 @@ struct FoodMenuItemView: View {
     
     @Binding var selectedItems: [String: Int]
     @State private var quantity: Int = 0
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     var body: some View {
         HStack(spacing: 10) {
@@ -84,7 +86,9 @@ struct FoodMenuItemView: View {
                 Text(item.foodDescription ?? "Food Description")
                     .font(.caption)
                     .foregroundStyle(.mainbw.opacity(0.5))
-                Text("₹\(item.foodPrice)")
+                let restaurant = businessAuthVM.restaurant
+                
+                Text("\(restaurant?.currencySymbol ?? "")\(item.foodPrice)")
                     .foregroundStyle(.mainbw.opacity(0.5))
             }
             

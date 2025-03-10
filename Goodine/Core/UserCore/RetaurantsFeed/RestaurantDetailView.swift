@@ -88,7 +88,7 @@ struct RestaurantDetailView: View {
 }
 
 #Preview {
-    RestaurantDetailView( restaurant: Restaurant(id: "", ownerName: "", name: "Limelight - Orchid Heritage", type: "Indian, Chinese", city: "Agartala", state: "", address: "VN lane 1 - Agartala, Tripura 799009", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: []))
+    RestaurantDetailView( restaurant: Restaurant(id: "", ownerName: "", name: "Limelight - Orchid Heritage", type: "Indian, Chinese", city: "Agartala", state: "", address: "VN lane 1 - Agartala, Tripura 799009", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [], currency: "INR", currencySymbol: "₹"))
         .environmentObject(BusinessAuthViewModel())
 }
 

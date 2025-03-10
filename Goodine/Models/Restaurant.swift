@@ -21,4 +21,6 @@ struct Restaurant: Identifiable, Codable {
     var openingTime: Date
     var closingTime: Date
     var imageUrls: [String]
+    var currency: String
+    var currencySymbol: String
 }

@@ -147,7 +147,7 @@ struct RestaurantProfile: View {
                                         }
                                         .font(.footnote)
                                         if restaurant.averageCost != "" {
-                                            Text("₹\(restaurant.averageCost ?? "") for two")
+                                            Text("\(restaurant.currencySymbol)\(restaurant.averageCost ?? "") for two")
                                                 .foregroundStyle(.mainbw)
                                                 .font(.callout)
                                         }

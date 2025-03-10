@@ -12,6 +12,7 @@ struct ReservationDetailedView: View {
     
     @ObservedObject var orderVM = OrdersViewModel()
     @ObservedObject var tableVM = TableViewModel()
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel    
     
     let reservationId: String
     
@@ -37,6 +38,7 @@ struct ReservationDetailedView: View {
     }
     
     var body: some View {
+        
         VStack(alignment: .leading, spacing: 12) {
             if let reservation = tableVM.reservations.first(where: { $0.id == reservationId }) {
                 
@@ -96,7 +98,8 @@ struct ReservationDetailedView: View {
                         Text("Total Price: ")
                             .font(.headline)
                         Spacer()
-                        Text("₹\(totalPrice, specifier: "%.2f")")
+                        let restaurant = businessAuthVM.restaurant
+                        Text("\(restaurant?.currencySymbol ?? "")\(totalPrice, specifier: "%.2f")")
                             .font(.headline)
                             .foregroundColor(.mainbw)
                     }
@@ -181,8 +184,9 @@ struct ReservationDetailedView: View {
                 yOffset += 20
             }
             
-            func drawItemRow(itemName: String, quantity: Int, price: Double) {
-                let formattedPrice = String(format: "₹%.2f", price)
+            @MainActor func drawItemRow(itemName: String, quantity: Int, price: Double) {
+                let restaurant = businessAuthVM.restaurant
+                let formattedPrice = String(format: "\(restaurant?.currencySymbol ?? "")%.2f", price)
                 let formattedQty = String(format: "%2d", quantity)
                 
                 _ = pageWidth - (padding + priceColumnWidth) // Leave space for quantity & price
@@ -242,7 +246,8 @@ struct ReservationDetailedView: View {
             drawCenteredText("--------------------------------", font: monospaceFont)
             
             yOffset += 10
-            drawCenteredText(String(format: "TOTAL: ₹%.2f", totalPrice), font: titleFont, bold: true)
+            let restaurant = businessAuthVM.restaurant
+            drawCenteredText(String(format: "TOTAL: \(restaurant?.currencySymbol ?? "")%.2f", totalPrice), font: titleFont, bold: true)
         }
         
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("OrderSlip.pdf")
@@ -277,10 +282,13 @@ struct OrderRow: View {
     let orderId: String
     let reservationId: String
     @ObservedObject var orderVM: OrdersViewModel
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
 
     var body: some View {
         HStack {
-            Text("\(item.name) - \(item.quantity) x ₹\(item.price, specifier: "%.2f")")
+            let restaurant = businessAuthVM.restaurant            
+        
+            Text("\(item.name) - \(item.quantity) x \(restaurant?.currencySymbol ?? "")\(item.price, specifier: "%.2f")")
                 .font(.body)
             Spacer()
             Button(action: {
