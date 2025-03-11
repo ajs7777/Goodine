@@ -23,4 +23,7 @@ struct Restaurant: Identifiable, Codable {
     var imageUrls: [String]
     var currency: String
     var currencySymbol: String
+    var isSubscribed : Bool
+    var subscriptionType: String?
+    var subscriptionExpiry: Date?
 }

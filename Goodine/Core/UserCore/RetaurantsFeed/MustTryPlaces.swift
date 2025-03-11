@@ -69,7 +69,7 @@ struct MustTryPlaces: View {
         closingTime: Date(),
         imageUrls: ["https://example.com/image.jpg"],
         currency: "INR",
-        currencySymbol: "₹"
+        currencySymbol: "₹", isSubscribed: true
     ))
 }
 

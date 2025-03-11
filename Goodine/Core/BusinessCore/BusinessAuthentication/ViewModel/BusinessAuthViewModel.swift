@@ -54,7 +54,8 @@ class BusinessAuthViewModel: ObservableObject {
             closingTime: Date(),
             imageUrls: [],
             currency: "INR",
-            currencySymbol: "₹"
+            currencySymbol: "₹",
+            isSubscribed: false
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -91,7 +92,7 @@ class BusinessAuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     
     func signOut() {
         try? Auth.auth().signOut()
@@ -100,10 +101,10 @@ class BusinessAuthViewModel: ObservableObject {
     }
     
     func resendVerificationEmail() async throws {
-            guard let user = Auth.auth().currentUser else { return }
-            try await user.sendEmailVerification()
-            self.errorMessage = "Verification email sent. Please check your inbox."
-        }
+        guard let user = Auth.auth().currentUser else { return }
+        try await user.sendEmailVerification()
+        self.errorMessage = "Verification email sent. Please check your inbox."
+    }
     
     
     /// Automatically checks email verification status every 5 seconds
@@ -133,21 +134,21 @@ class BusinessAuthViewModel: ObservableObject {
     }
     
     func refreshEmailVerification() async {
-            guard let user = Auth.auth().currentUser else { return }
-            do {
-                try await user.reload()
-                if user.isEmailVerified {
-                    DispatchQueue.main.async {
-                        self.emailNotVerified = false
-                        self.errorMessage = nil
-                        self.businessUser = user
-                        self.fetchBusinessDetails()
-                    }
+        guard let user = Auth.auth().currentUser else { return }
+        do {
+            try await user.reload()
+            if user.isEmailVerified {
+                DispatchQueue.main.async {
+                    self.emailNotVerified = false
+                    self.errorMessage = nil
+                    self.businessUser = user
+                    self.fetchBusinessDetails()
                 }
-            } catch {
-                print("Error refreshing email verification: \(error.localizedDescription)")
             }
+        } catch {
+            print("Error refreshing email verification: \(error.localizedDescription)")
         }
+    }
     
     func resetPassword(email: String) async {
         do {
@@ -161,7 +162,7 @@ class BusinessAuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     
     func fetchBusinessDetails() {
         guard let userId = Auth.auth().currentUser?.uid else {
@@ -193,7 +194,8 @@ class BusinessAuthViewModel: ObservableObject {
                         closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                         imageUrls: data["imageUrls"] as? [String] ?? [],
                         currency: data["currency"] as? String ?? "INR",
-                        currencySymbol: data["currencySymbol"] as? String ?? "₹"
+                        currencySymbol: data["currencySymbol"] as? String ?? "₹",
+                        isSubscribed: data["isSubscribed"] as? Bool ?? false
                     )
                     self.isLoading = false
                 }
@@ -243,7 +245,10 @@ class BusinessAuthViewModel: ObservableObject {
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls,
             "currency": updatedRestaurant.currency,
-            "currencySymbol": updatedRestaurant.currencySymbol
+            "currencySymbol": updatedRestaurant.currencySymbol,
+            "isSubscribed": updatedRestaurant.isSubscribed,
+            "subscriptionType": updatedRestaurant.subscriptionType ?? "",
+            "subscriptionExpiry": updatedRestaurant.subscriptionExpiry != nil ? Timestamp(date: updatedRestaurant.subscriptionExpiry!) : nil ?? ""
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -293,7 +298,8 @@ class BusinessAuthViewModel: ObservableObject {
                     closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                     imageUrls: data["imageUrls"] as? [String] ?? [],
                     currency: data["currency"] as? String ?? "INR",
-                    currencySymbol: data["currencySymbol"] as? String ?? "₹"
+                    currencySymbol: data["currencySymbol"] as? String ?? "₹",
+                    isSubscribed: data["isSubscribed"] as? Bool ?? false
                 )
             }
             
@@ -309,4 +315,34 @@ class BusinessAuthViewModel: ObservableObject {
         }
     }
     
+    func updateSubscription(type: String) async {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let calendarComponent: Calendar.Component = (type == "monthly") ? .month : .year
+        guard let expiryDate = Calendar.current.date(byAdding: calendarComponent, value: 1, to: Date()) else {
+            print("Failed to calculate subscription expiry date")
+            return
+        }
+        
+        Task.detached {
+            do {
+                try await self.db.collection("business_users").document(userId).updateData([
+                    "isSubscribed": true,
+                    "subscriptionType": type,
+                    "subscriptionExpiry": Timestamp(date: expiryDate)
+                ])
+                
+                // Update UI on the main thread
+                await MainActor.run {
+                    self.restaurant?.isSubscribed = true
+                    self.restaurant?.subscriptionType = type
+                    self.restaurant?.subscriptionExpiry = expiryDate
+                }
+                
+            } catch {
+                print("Failed to update subscription: \(error.localizedDescription)")
+            }
+        }
+    }
+
 }
