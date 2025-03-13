@@ -9,17 +9,19 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
-    @StateObject var subscriptionManager = SubscriptionManager()
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
 
     var body: some View {
-        if businessAuthVM.restaurant != nil {
-            if subscriptionManager.isSubscribed {
+        if businessAuthVM.isLoading {
+            ProgressView()
+        } else if let restaurant = businessAuthVM.restaurant {
+            if subscriptionManager.isSubscribed || restaurant.isSubscribed {
                 RestaurantTabView()
             } else {
                 SubscriptionView()
             }
         } else {
-            LoginWithNumberView()
+            MainLoginPage()
         }
     }
 }
@@ -27,4 +29,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(BusinessAuthViewModel())
+        .environmentObject(SubscriptionManager())
 }
+
