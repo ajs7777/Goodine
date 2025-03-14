@@ -9,12 +9,7 @@ import SwiftUI
 import Combine
 
 struct MainLoginPage: View {
-    
-//    @State var phoneNumber = ""
-    
-//    var isACtive : Bool {
-//        phoneNumber.count == 10 && phoneNumber.allSatisfy(\.isNumber)
-//    }
+
     
     var body: some View {
         NavigationStack {
@@ -35,64 +30,7 @@ struct MainLoginPage: View {
                         .foregroundStyle(.gray)
                 }
                     .padding(.bottom, 50)
-                
-                
-                // phone number textfield
-//                VStack(alignment: .leading){
-//                    Text("Enter phone number")
-//                        .fontWeight(.medium)
-//                    HStack {
-//                        HStack{
-//                            Text("🇮🇳")
-//                                .font(.title)
-//                            Image(systemName: "chevron.down")
-//                                .font(.caption)
-//                        }
-//                        .padding(7)
-//                        .overlay(RoundedRectangle(cornerRadius: 8)
-//                            .stroke(Color.gray, lineWidth: 2))
-//                        
-//                        TextField("0000000000", text: $phoneNumber)
-//                            .keyboardType(.numberPad)
-//                            .onReceive(phoneNumber.publisher.collect()) {
-//                                self.phoneNumber = String($0.prefix(10))
-//                            }
-//                        
-//                            .padding(13)
-//                            .padding(.leading, 38)
-//                            .overlay(
-//                                RoundedRectangle(cornerRadius: 8)
-//                                    .stroke(Color.gray, lineWidth: 2)
-//                            )
-//                            .overlay(alignment: .leading) {
-//                                Text("+91")
-//                                    .padding(.leading, 15)
-//                                
-//                            }
-//                        
-//                    }
-//                } .padding(.vertical)
-                
-//                Spacer()
-                
-                
-                //another way login buttons
-                
-//                    NavigationLink {
-//                        LoginWithEmail()
-//                            .navigationBarBackButtonHidden()
-//                    } label: {
-//                        HStack {
-//                            Image(systemName: "envelope.fill")
-//                                .font(.subheadline)
-//                            Text("Login as User")
-//                                .font(.caption)
-//                                .bold()
-//                        } .goodineButtonStyle(.mainbw)
-//                    }
-                    
-//                    Text("|")
-//                        .font(.caption)
+
                 VStack{
                     NavigationLink {
                         BusinessLoginView()
