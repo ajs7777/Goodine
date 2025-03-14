@@ -45,7 +45,7 @@ struct LaunchScreenView: View {
                     .scaleEffect(boltScale)
                     .offset(y: showBoltIcon ? -30 : -300)
                     .animation(.easeInOut(duration: 0.2), value: showBoltIcon)
-                    .animation(.easeInOut(duration: 1), value: boltScale)
+                    .animation(.easeInOut(duration: 0.8), value: boltScale)
             }
             .onAppear {
                 isAnimating = true
@@ -55,10 +55,12 @@ struct LaunchScreenView: View {
                     boltScale = 2.5
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-                    
                     boltScale = 30
+                    
                 }
-                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                    isAnimating = false
+                }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.99) {
                     withAnimation {

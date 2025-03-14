@@ -17,9 +17,10 @@
 
   ],
   "settings" : {
+    "_billingGracePeriodEnabled" : true,
     "_failTransactionsEnabled" : false,
     "_locale" : "en_US",
-    "_storefront" : "USA",
+    "_storefront" : "IND",
     "_storeKitErrors" : [
       {
         "current" : null,
@@ -72,9 +73,13 @@
     {
       "id" : "7DA9C6AE",
       "localizations" : [
-
+        {
+          "description" : "Get full access to Goodine Pro features.",
+          "displayName" : "Goodine Pro",
+          "locale" : "en_US"
+        }
       ],
-      "name" : "Restaurant Pro",
+      "name" : "Goodine Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -83,21 +88,21 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "11.99",
+          "displayPrice" : "1199",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "8B4B948E",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Get full access to Goodine Pro features.",
+              "displayName" : "Goodine Pro",
               "locale" : "en_US"
             }
           ],
           "productID" : "com.goodine.subscription.1month",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Restaurant Pro Monthly",
+          "referenceName" : "Goodine Pro Monthly",
           "subscriptionGroupID" : "7DA9C6AE",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
@@ -111,21 +116,26 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "119.99",
+          "displayPrice" : "11999",
           "familyShareable" : false,
-          "groupNumber" : 1,
+          "groupNumber" : 2,
           "internalID" : "7BE93915",
-          "introductoryOffer" : null,
+          "introductoryOffer" : {
+            "displayPrice" : "0.99",
+            "internalID" : "C5FF96A4",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1M"
+          },
           "localizations" : [
             {
-              "description" : "",
-              "displayName" : "",
+              "description" : "Get full access to Goodine Pro features.",
+              "displayName" : "Goodine Pro",
               "locale" : "en_US"
             }
           ],
           "productID" : "com.goodine.subscription.12month",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Restaurant Pro Yearly",
+          "referenceName" : "Goodine Pro Yearly",
           "subscriptionGroupID" : "7DA9C6AE",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
