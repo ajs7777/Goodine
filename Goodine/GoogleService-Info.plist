@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBEGWGxPrcmh6on1c2ujeolzj8MPmAIkfc</string>
+	<string>AIzaSyDLMxDA31dTqDMR3jF5qVrldHIfttUPTXI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>833451726552</string>
+	<string>790558441423</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.abhijitsaha.Goodine</string>
 	<key>PROJECT_ID</key>
-	<string>goodine-cc29b</string>
+	<string>goodine-e651a</string>
 	<key>STORAGE_BUCKET</key>
-	<string>goodine-cc29b.firebasestorage.app</string>
+	<string>goodine-e651a.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:833451726552:ios:ccbdd43d2d842dadb4a9ad</string>
+	<string>1:790558441423:ios:a3a44ec9a2498b32b0dcba</string>
 </dict>
 </plist>

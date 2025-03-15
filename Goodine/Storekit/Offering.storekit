@@ -120,12 +120,7 @@
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "7BE93915",
-          "introductoryOffer" : {
-            "displayPrice" : "0.99",
-            "internalID" : "C5FF96A4",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1M"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Get full access to Goodine Pro features.",

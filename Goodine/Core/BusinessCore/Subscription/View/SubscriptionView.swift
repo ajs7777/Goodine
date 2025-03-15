@@ -22,9 +22,6 @@ struct SubscriptionView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                
-                Spacer()
-                
                 // Image preview section
                 GeometryReader { geo in
                     HStack(spacing: -150) {
@@ -174,7 +171,9 @@ struct SubscriptionView: View {
                 .padding(.top, 10)
                 
                 Spacer()
-                // Free Trial Button
+                
+//
+                
                 Button(action: {
                     Task {
                         try? await subscriptionManager.purchaseSubscription(type: selectedPlan)
@@ -191,7 +190,6 @@ struct SubscriptionView: View {
                         .clipShape(Capsule())
                 }
                 .padding(.horizontal, 50)
-                .padding(.top, 20)
                 
                 // Terms and Privacy
                 HStack {

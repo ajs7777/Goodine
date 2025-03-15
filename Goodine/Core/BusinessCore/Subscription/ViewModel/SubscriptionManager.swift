@@ -70,6 +70,15 @@ class SubscriptionManager: ObservableObject {
         
         await transaction.finish()
     }
+    
+    func restorePurchases() async {
+        do {
+            try await AppStore.sync()
+            await fetchSubscriptionStatus()  // ✅ Ensures UI is updated correctly
+            print("✅ Purchases Restored")
+        } catch {
+            print("❌ Failed to restore purchases: \(error.localizedDescription)")
+        }
+    }
+
 }
-
-
