@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0C50C5D32D85429F00F52E93 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0C74350B2D852DF800DE1396 /* StoreKit.framework */; };
-		0C50C5D42D85429F00F52E93 /* StoreKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0C74350B2D852DF800DE1396 /* StoreKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0C87A7122D53D73600080324 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 0C87A7112D53D73600080324 /* Kingfisher */; };
 		0CBEF7A72D524CA100311306 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0CBEF7A62D524CA100311306 /* FirebaseAuth */; };
 		0CBEF7A92D524CA100311306 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0CBEF7A82D524CA100311306 /* FirebaseCore */; };
@@ -20,14 +19,13 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		0C50C5D52D85429F00F52E93 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 8;
+			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				0C50C5D42D85429F00F52E93 /* StoreKit.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -225,7 +223,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
