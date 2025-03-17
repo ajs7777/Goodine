@@ -26,6 +26,7 @@ struct GoodineApp: App {
     @StateObject var userAuthVM = AuthViewModel()
     @StateObject var subscriptionManager = SubscriptionManager()
     
+    
     var body: some Scene {
         WindowGroup {
             LaunchScreenView()

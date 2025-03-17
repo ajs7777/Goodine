@@ -31,7 +31,19 @@ class BusinessAuthViewModel: ObservableObject {
         Task{
             await fetchAllRestaurants()
         }
+        Task{
+            checkUserAuthentication
+        }
     }
+    
+    func checkUserAuthentication() async {
+        guard ((Auth.auth().currentUser?.uid) != nil) else {
+             isLoading = false
+             return
+         }
+         
+          fetchBusinessDetails()
+     }
     
     func signUp(email: String, password: String, name : String, type : String, city : String, address : String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
@@ -54,8 +66,7 @@ class BusinessAuthViewModel: ObservableObject {
             closingTime: Date(),
             imageUrls: [],
             currency: "INR",
-            currencySymbol: "₹",
-            isSubscribed: false
+            currencySymbol: "₹"
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -194,8 +205,7 @@ class BusinessAuthViewModel: ObservableObject {
                         closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                         imageUrls: data["imageUrls"] as? [String] ?? [],
                         currency: data["currency"] as? String ?? "INR",
-                        currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                        isSubscribed: data["isSubscribed"] as? Bool ?? false
+                        currencySymbol: data["currencySymbol"] as? String ?? "₹"
                     )
                     self.isLoading = false
                 }
@@ -245,10 +255,7 @@ class BusinessAuthViewModel: ObservableObject {
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls,
             "currency": updatedRestaurant.currency,
-            "currencySymbol": updatedRestaurant.currencySymbol,
-            "isSubscribed": updatedRestaurant.isSubscribed,
-            "subscriptionType": updatedRestaurant.subscriptionType ?? "",
-            "subscriptionExpiry": updatedRestaurant.subscriptionExpiry != nil ? Timestamp(date: updatedRestaurant.subscriptionExpiry!) : nil ?? ""
+            "currencySymbol": updatedRestaurant.currencySymbol
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -298,8 +305,7 @@ class BusinessAuthViewModel: ObservableObject {
                     closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                     imageUrls: data["imageUrls"] as? [String] ?? [],
                     currency: data["currency"] as? String ?? "INR",
-                    currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                    isSubscribed: data["isSubscribed"] as? Bool ?? false
+                    currencySymbol: data["currencySymbol"] as? String ?? "₹"
                 )
             }
             
@@ -315,34 +321,4 @@ class BusinessAuthViewModel: ObservableObject {
         }
     }
     
-    func updateSubscription(type: String) async {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let calendarComponent: Calendar.Component = (type == "monthly") ? .month : .year
-        guard let expiryDate = Calendar.current.date(byAdding: calendarComponent, value: 1, to: Date()) else {
-            print("Failed to calculate subscription expiry date")
-            return
-        }
-        
-        Task.detached {
-            do {
-                try await self.db.collection("business_users").document(userId).updateData([
-                    "isSubscribed": true,
-                    "subscriptionType": type,
-                    "subscriptionExpiry": Timestamp(date: expiryDate)
-                ])
-                
-                // Update UI on the main thread
-                await MainActor.run {
-                    self.restaurant?.isSubscribed = true
-                    self.restaurant?.subscriptionType = type
-                    self.restaurant?.subscriptionExpiry = expiryDate
-                }
-                
-            } catch {
-                print("Failed to update subscription: \(error.localizedDescription)")
-            }
-        }
-    }
-
 }

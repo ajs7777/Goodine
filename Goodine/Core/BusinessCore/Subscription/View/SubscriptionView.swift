@@ -15,7 +15,7 @@ struct SubscriptionView: View {
     
     @State private var isYearly = true
     @State private var currentIndex = 0
-    @State private var selectedPlan: String = "yearly"
+    @State private var selectedProductID: String?
     
     let images: [String] = ["im1", "im2", "im3", "im4" ]
     
@@ -49,24 +49,24 @@ struct SubscriptionView: View {
                         }
                     }
                 }
-                
-                // Subscription details
-                VStack(alignment: .leading, spacing: 16){
+                VStack(alignment: .leading) {
                     Text("Subscription")
                         .font(.title)
                         .fontWeight(.heavy)
                         .foregroundColor(.mainbw)
-                        .padding(.top, 20)
-                        .offset(y: 25)
                     
-                    Text("Access to premium feature and Easy generate bills.")
+                    Text("Access premium restaurant management tools with a monthly or yearly subscription.")
                         .fontWeight(.medium)
-                        .multilineTextAlignment(.leading)
-                        .font(.headline)
+                        .font(.subheadline)
                         .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, -10)
-                        .offset(y: 30)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 50)
+                .offset(y: 42)
+               
+
+                // Subscription details
+                VStack(alignment: .leading, spacing: 16){
                     
                     // Pricing Toggle
                     
@@ -81,7 +81,6 @@ struct SubscriptionView: View {
                                 .background(.orange)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
                                 .offset(y: 42)
-                            Spacer()
                         }
                         
                         HStack() {
@@ -110,7 +109,7 @@ struct SubscriptionView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .onTapGesture {
                             isYearly = true
-                            selectedPlan = "yearly"
+                            selectedProductID = "com.goodine.subscription.12month"
                         }
                         
                     }
@@ -141,7 +140,7 @@ struct SubscriptionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18))
                     .onTapGesture {
                         isYearly = false
-                        selectedPlan = "monthly"
+                        selectedProductID = "com.goodine.subscription.1month"
                     }
                     
                 }
@@ -168,16 +167,16 @@ struct SubscriptionView: View {
                     }
                 }
                 .padding(.horizontal, 30)
-                .padding(.top, 10)
-                
-                Spacer()
-                
-//
-                
+                .padding(.vertical, 10)
+                   
                 Button(action: {
                     Task {
-                        try? await subscriptionManager.purchaseSubscription(type: selectedPlan)
-                        await businessAuthVM.updateSubscription(type: selectedPlan)
+                        if let productID = selectedProductID,
+                           let product = subscriptionManager.products.first(where: { $0.id == productID }) {
+                            await subscriptionManager.purchaseSubscription(product: product)
+                        } else {
+                            print("❌ No product selected")
+                        }
                     }
                 }) {
                     Text("Buy Premium")
@@ -193,11 +192,11 @@ struct SubscriptionView: View {
                 
                 // Terms and Privacy
                 HStack {
-                    Text("Terms of use")
-                        .underline()
+                    Link("Terms of Use", destination: URL(string: "https://sites.google.com/view/goodine-terms-of-use")!)
+                            .underline()
                     Spacer()
-                    Text("Privacy policy")
-                        .underline()
+                    Link("Privacy Policy", destination: URL(string: "https://sites.google.com/view/goodine-privacy-policy")!)
+                            .underline()
                     
                 }
                 .foregroundColor(.black.opacity(0.2))
@@ -229,6 +228,6 @@ struct SubscriptionView: View {
 
 #Preview {
     SubscriptionView()
-        .environmentObject(BusinessAuthViewModel())  // 🔥 Fix: Add environment objects
+        .environmentObject(BusinessAuthViewModel())
         .environmentObject(SubscriptionManager())
 }

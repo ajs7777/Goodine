@@ -12,16 +12,24 @@ struct ContentView: View {
     @EnvironmentObject var subscriptionManager: SubscriptionManager
 
     var body: some View {
-        if businessAuthVM.isLoading {
-            ProgressView()
-        } else if let restaurant = businessAuthVM.restaurant {
-            if subscriptionManager.isSubscribed || restaurant.isSubscribed {
-                RestaurantTabView()
+        Group {
+            if businessAuthVM.isLoading {
+                ProgressView()
+            } else if businessAuthVM.restaurant != nil {
+                if subscriptionManager.isSubscribed {
+                    RestaurantTabView()
+                } else {
+                    SubscriptionView()
+                }
             } else {
-                SubscriptionView()
+                MainLoginPage()
             }
-        } else {
-            MainLoginPage()
+        }
+        .onAppear {
+            Task {
+                await businessAuthVM.checkUserAuthentication()
+                await subscriptionManager.checkSubscriptionStatus()
+            }
         }
     }
 }
@@ -31,4 +39,5 @@ struct ContentView: View {
         .environmentObject(BusinessAuthViewModel())
         .environmentObject(SubscriptionManager())
 }
+
 

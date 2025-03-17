@@ -95,7 +95,7 @@
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Get full access to Goodine Pro features.",
+              "description" : "Access Pro features with monthly subscription",
               "displayName" : "Goodine Pro",
               "locale" : "en_US"
             }
@@ -123,7 +123,7 @@
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Get full access to Goodine Pro features.",
+              "description" : "Access Pro features with yearly subscription",
               "displayName" : "Goodine Pro",
               "locale" : "en_US"
             }
