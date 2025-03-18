@@ -24,8 +24,7 @@ struct GoodineApp: App {
     
     @StateObject var businessAuthVM = BusinessAuthViewModel()
     @StateObject var userAuthVM = AuthViewModel()
-    @StateObject var subscriptionManager = SubscriptionManager()
-    
+    @StateObject private var subscriptionManager = SubscriptionManager.shared    
     
     var body: some Scene {
         WindowGroup {

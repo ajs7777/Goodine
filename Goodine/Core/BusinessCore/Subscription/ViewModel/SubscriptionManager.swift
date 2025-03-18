@@ -1,11 +1,3 @@
-//
-//  SubscriptionManager.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 11/03/25.
-//
-
-
 import SwiftUI
 import StoreKit
 import FirebaseFirestore
@@ -24,10 +16,10 @@ class SubscriptionManager: ObservableObject {
         Task {
             await fetchProducts()
             await checkSubscriptionStatus()
+            listenForTransactions()
         }
-        listenForTransactions()
+        
     }
-    
     
     /// Fetch products from App Store
     func fetchProducts() async {
@@ -38,6 +30,80 @@ class SubscriptionManager: ObservableObject {
             }
         } catch {
             print("❌ Failed to fetch products: \(error)")
+        }
+    }
+    
+    /// Listen for transactions
+    private func listenForTransactions() {
+        Task {
+            for await transactionResult in Transaction.updates {
+                await handleTransactions([transactionResult])
+            }
+        }
+    }
+    
+    /// Function to process transactions
+    func handleTransactions(_ transactions: [VerificationResult<StoreKit.Transaction>]) async {
+        for verificationResult in transactions {
+            switch verificationResult {
+            case .verified(let transaction):
+                guard let userID = Auth.auth().currentUser?.uid,
+                      let businessUserID = await fetchBusinessUserID() else { continue }
+                
+                let expirationDate = Calendar.current.date(
+                    byAdding: transaction.productID.contains("1month") ? .month : .year,
+                    value: 1,
+                    to: transaction.purchaseDate
+                )!
+                
+                await storeSubscriptionDetails(userID: userID, businessUserID: businessUserID, productID: transaction.productID, expirationDate: expirationDate)
+                
+                await transaction.finish()
+            case .unverified(_, let error):
+                print("❌ Unverified transaction: \(error)")
+            }
+        }
+    }
+    
+    /// Purchase a subscription
+    func purchaseSubscription(product: Product) async {
+        guard let userID = Auth.auth().currentUser?.uid,
+              let businessUserID = await fetchBusinessUserID() else { return }
+        
+        isProcessing = true
+        defer { isProcessing = false }
+        
+        do {
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                switch verification {
+                case .verified(let transaction):
+                    let expirationDate = Calendar.current.date(
+                        byAdding: product.id.contains("1month") ? .month : .year,
+                        value: 1,
+                        to: transaction.purchaseDate
+                    )!
+                    
+                    DispatchQueue.main.async {
+                        self.isSubscribed = true
+                    }
+                    
+                    await storeSubscriptionDetails(userID: userID, businessUserID: businessUserID, productID: product.id, expirationDate: expirationDate)
+                    await transaction.finish()
+                    
+                case .unverified(_, let error):
+                    print("❌ Unverified transaction: \(error)")
+                }
+            case .userCancelled:
+                print("⚠️ Purchase cancelled by user.")
+            case .pending:
+                print("⏳ Purchase pending approval.")
+            @unknown default:
+                print("❓ Unknown purchase result.")
+            }
+        } catch {
+            print("❌ Purchase failed: \(error)")
         }
     }
     
@@ -66,108 +132,6 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
-    /// Purchase a subscription
-    /// Purchase a subscription
-    func purchaseSubscription(product: Product) async {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            print("❌ No logged-in user found")
-            return
-        }
-        
-        guard let businessUserID = await fetchBusinessUserID() else {
-            print("❌ Business User ID not found")
-            return
-        }
-        
-        isProcessing = true
-        defer { isProcessing = false }
-        
-        do {
-            let result = try await product.purchase()
-            switch result {
-            case .success(let verification):
-                switch verification {
-                case .verified(let transaction):
-                    print("✅ Purchase successful: \(transaction.productID)")
-                    
-                    let expirationDate = Calendar.current.date(
-                        byAdding: product.id.contains("1month") ? .month : .year,
-                        value: 1,
-                        to: transaction.purchaseDate
-                    )!
-                    
-                    await storeSubscriptionDetails(userID: userID, businessUserID: businessUserID, productID: product.id, expirationDate: expirationDate)
-                    
-                    await transaction.finish()
-                    
-                case .unverified(_, let error):
-                    print("❌ Unverified transaction: \(error)")
-                }
-                
-            case .userCancelled:
-                print("⚠️ Purchase cancelled by user.")
-                
-            case .pending:
-                print("⏳ Purchase pending approval.")
-                
-            @unknown default:
-                print("❓ Unknown purchase result.")
-            }
-        } catch {
-            print("❌ Purchase failed: \(error)")
-        }
-    }
-    
-    /// Function to process transactions
-    func handleTransactions(_ transactions: [VerificationResult<StoreKit.Transaction>]) async {
-        for verificationResult in transactions {
-            switch verificationResult {
-            case .verified(let verifiedTransaction):
-                print("✅ Verified transaction: \(verifiedTransaction.productID)")
-                
-                guard let userID = Auth.auth().currentUser?.uid else {
-                    print("❌ Missing user ID")
-                    continue
-                }
-                
-                guard let businessUserID = await fetchBusinessUserID() else {
-                    print("❌ Missing business user ID")
-                    continue
-                }
-                
-                let expirationDate = Calendar.current.date(
-                    byAdding: verifiedTransaction.productID.contains("1month") ? .month : .year,
-                    value: 1,
-                    to: verifiedTransaction.purchaseDate
-                )!
-                
-                await storeSubscriptionDetails(
-                    userID: userID,
-                    businessUserID: businessUserID,
-                    productID: verifiedTransaction.productID,
-                    expirationDate: expirationDate
-                )
-                
-                await verifiedTransaction.finish() // ✅ Mark transaction as complete
-            
-            case .unverified(_, let error):
-                print("❌ Unverified transaction: \(error.localizedDescription)")
-            }
-        }
-    }
-
-
-    
-    /// Start listening for transaction updates
-
-    private func listenForTransactions() {
-          Task {
-              for await transactionResult in Transaction.updates {
-                  await handleTransactions([transactionResult])
-              }
-          }
-      }
-    
     /// Store subscription details in Firestore
     func storeSubscriptionDetails(userID: String, businessUserID: String, productID: String, expirationDate: Date) async {
         let db = Firestore.firestore()
@@ -179,15 +143,13 @@ class SubscriptionManager: ObservableObject {
             "expirationDate": Timestamp(date: expirationDate),
             "isActive": true
         ]
-
+        
         do {
-            let docRef = db.collection("business_users")
+            try await db.collection("business_users")
                 .document(businessUserID)
                 .collection("subscriptions")
-                .document(userID)  // Using userID as the document ID
-            
-            try await docRef.setData(subscriptionData)
-            print("✅ Subscription saved successfully!")
+                .document(userID)
+                .setData(subscriptionData)
             
             DispatchQueue.main.async {
                 self.isSubscribed = true
@@ -199,18 +161,8 @@ class SubscriptionManager: ObservableObject {
     
     /// Check if the user has an active subscription
     func checkSubscriptionStatus() async {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            print("❌ No logged-in user")
-            DispatchQueue.main.async {
-                self.isSubscribed = false
-            }
-            return
-        }
-        
-        guard let businessUserID = await fetchBusinessUserID() else {
-            print("❌ Business User ID not found")
-            return
-        }
+        guard let userID = Auth.auth().currentUser?.uid,
+              let businessUserID = await fetchBusinessUserID() else { return }
         
         let db = Firestore.firestore()
         let docRef = db.collection("business_users")
@@ -224,22 +176,14 @@ class SubscriptionManager: ObservableObject {
                let expirationTimestamp = data["expirationDate"] as? Timestamp {
                 
                 let expirationDate = expirationTimestamp.dateValue()
-                let isActive = expirationDate > Date()  // Check if expired
+                let isActive = expirationDate > Date()
                 
                 DispatchQueue.main.async {
                     self.isSubscribed = isActive
                 }
                 
-                print("✅ Subscription status checked. Active: \(isActive)")
-                
-                // If expired, update Firestore
                 if !isActive {
                     await updateSubscriptionStatus(userID: userID, businessUserID: businessUserID, isActive: false)
-                }
-            } else {
-                print("❌ No subscription data found")
-                DispatchQueue.main.async {
-                    self.isSubscribed = false
                 }
             }
         } catch {
@@ -247,7 +191,7 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
-    /// Update subscription status when expired
+    /// Update expired subscription
     func updateSubscriptionStatus(userID: String, businessUserID: String, isActive: Bool) async {
         let db = Firestore.firestore()
         let docRef = db.collection("business_users")
@@ -255,20 +199,18 @@ class SubscriptionManager: ObservableObject {
             .collection("subscriptions")
             .document(userID)
         
-        do {
-            DispatchQueue.main.async {
-                docRef.updateData(["isActive": isActive]) { error in
-                    if let error = error {
-                        print("❌ Error updating subscription status: \(error)")
-                    } else {
-                        print("✅ Subscription status updated: \(isActive)")
-                    }
+        await MainActor.run {
+            docRef.updateData(["isActive": isActive]) { error in
+                if let error = error {
+                    print("❌ Error updating subscription status: \(error.localizedDescription)")
+                } else {
+                    print("✅ Subscription status updated successfully: \(isActive)")
                 }
             }
         }
     }
     
-    /// Restore purchases (Re-check Firestore to verify active status)
+    /// Restore purchases
     func restorePurchases() async {
         do {
             for await result in Transaction.currentEntitlements {
@@ -278,20 +220,74 @@ class SubscriptionManager: ObservableObject {
                         DispatchQueue.main.async {
                             self.isSubscribed = true
                         }
-                        print("✅ Restored active subscription: \(transaction.productID)")
                         return
                     }
                 case .unverified(_, let error):
                     print("❌ Unverified restored purchase: \(error.localizedDescription)")
                 }
             }
-        } 
-
+        }
+        
         DispatchQueue.main.async {
             self.isSubscribed = false
         }
     }
-
+    
+    /// Receipt Validation
+    func validateReceipt() async {
+        guard let receiptString = await getReceiptData() else { return }
+        
+        let requestBody = [
+            "receipt_data": receiptString,
+            "password": "your_shared_secret"
+        ]
+        
+        guard let url = URL(string: "https://sandbox.itunes.apple.com/verifyReceipt") else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let status = json["status"] as? Int, status == 0 {
+                print("✅ Receipt is valid.")
+            } else {
+                print("❌ Invalid receipt.")
+            }
+        } catch {
+            print("❌ Error validating receipt: \(error)")
+        }
+    }
+    
+    func getReceiptData() async -> String? {
+        do {
+            let verificationResult = try await AppTransaction.shared
+            
+            switch verificationResult {
+            case .verified(let appTransaction):
+                // Extract necessary fields
+                let receiptDict: [String: Any] = [
+                    "originalPurchaseDate": appTransaction.originalPurchaseDate.timeIntervalSince1970,
+                    "bundleID": appTransaction.bundleID,
+                    "environment": appTransaction.environment.rawValue
+                ]
+                
+                // Convert dictionary to JSON data
+                let jsonData = try JSONSerialization.data(withJSONObject: receiptDict, options: [])
+                
+                return jsonData.base64EncodedString()
+                
+            case .unverified(_, let error):
+                print("❌ Receipt is unverified: \(error)")
+                return nil
+            }
+        } catch {
+            print("❌ Failed to fetch receipt data: \(error)")
+            return nil
+        }
+    }
+    
 }
-
-
