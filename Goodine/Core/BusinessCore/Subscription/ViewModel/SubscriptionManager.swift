@@ -7,7 +7,8 @@ import FirebaseAuth
 class SubscriptionManager: ObservableObject {
     @Published var products: [Product] = []
     @Published var isProcessing = false
-    @Published var isSubscribed = false  // Tracks active subscription status
+    @Published var isSubscribed = false
+    @Published var subscribedProductID: String? = nil
     static let shared = SubscriptionManager()
     
     let productIDs = ["com.goodine.subscription.1month", "com.goodine.subscription.12month"]
@@ -56,6 +57,12 @@ class SubscriptionManager: ObservableObject {
                     to: transaction.purchaseDate
                 )!
                 
+                DispatchQueue.main.async {
+                    self.isSubscribed = true
+                    self.subscribedProductID = transaction.productID
+                }
+
+                
                 await storeSubscriptionDetails(userID: userID, businessUserID: businessUserID, productID: transaction.productID, expirationDate: expirationDate)
                 
                 await transaction.finish()
@@ -87,6 +94,7 @@ class SubscriptionManager: ObservableObject {
                     
                     DispatchQueue.main.async {
                         self.isSubscribed = true
+                        self.subscribedProductID = product.id
                     }
                     
                     await storeSubscriptionDetails(userID: userID, businessUserID: businessUserID, productID: product.id, expirationDate: expirationDate)
@@ -173,19 +181,22 @@ class SubscriptionManager: ObservableObject {
         do {
             let document = try await docRef.getDocument()
             if let data = document.data(),
-               let expirationTimestamp = data["expirationDate"] as? Timestamp {
+               let expirationTimestamp = data["expirationDate"] as? Timestamp,
+               let productID = data["productID"] as? String {
                 
                 let expirationDate = expirationTimestamp.dateValue()
                 let isActive = expirationDate > Date()
                 
                 DispatchQueue.main.async {
                     self.isSubscribed = isActive
+                    self.subscribedProductID = isActive ? productID : nil
                 }
                 
                 if !isActive {
                     await updateSubscriptionStatus(userID: userID, businessUserID: businessUserID, isActive: false)
                 }
             }
+
         } catch {
             print("❌ Error checking subscription: \(error)")
         }
@@ -219,6 +230,7 @@ class SubscriptionManager: ObservableObject {
                     if productIDs.contains(transaction.productID) {
                         DispatchQueue.main.async {
                             self.isSubscribed = true
+                            self.subscribedProductID = transaction.productID
                         }
                         return
                     }

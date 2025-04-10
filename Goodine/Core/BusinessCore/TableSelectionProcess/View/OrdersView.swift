@@ -200,6 +200,7 @@ extension OrdersView {
                                 showFoodMenu.toggle()
                             }label: {
                                 Text("Add Food")
+                                    .foregroundStyle(.mainInvert)
                             }
                             .font(.headline)
                             .foregroundColor(.white)

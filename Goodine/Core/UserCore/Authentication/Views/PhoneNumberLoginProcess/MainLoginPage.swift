@@ -47,6 +47,7 @@ struct MainLoginPage: View {
                                 .bold()
                         }
                         .goodineButtonStyle(.mainbw)
+                        .padding(.horizontal)
                     }
                     
                 }
@@ -89,7 +90,9 @@ struct MainLoginPage: View {
             .onTapGesture {
                 hideKeyboard()
             }
+            
         }
+        
       
         
     }

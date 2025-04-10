@@ -23,8 +23,11 @@
     "_storefront" : "IND",
     "_storeKitErrors" : [
       {
-        "current" : null,
-        "enabled" : false,
+        "current" : {
+          "index" : 2,
+          "type" : "generic"
+        },
+        "enabled" : true,
         "name" : "Load Products"
       },
       {
@@ -38,17 +41,26 @@
         "name" : "Verification"
       },
       {
-        "current" : null,
-        "enabled" : false,
+        "current" : {
+          "index" : 2,
+          "type" : "generic"
+        },
+        "enabled" : true,
         "name" : "App Store Sync"
       },
       {
-        "current" : null,
-        "enabled" : false,
+        "current" : {
+          "index" : 2,
+          "type" : "generic"
+        },
+        "enabled" : true,
         "name" : "Subscription Status"
       },
       {
-        "current" : null,
+        "current" : {
+          "index" : 3,
+          "type" : "generic"
+        },
         "enabled" : false,
         "name" : "App Transaction"
       },

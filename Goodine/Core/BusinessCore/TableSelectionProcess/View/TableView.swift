@@ -11,7 +11,7 @@ import Firebase
 import FirebaseFirestore
 
 struct TableView: View {
-    
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
     @StateObject var tableVM = TableViewModel()
     @State var currentTime = Date()
     @State private var showTableEditor = false
@@ -66,11 +66,16 @@ struct TableView: View {
                             .foregroundColor(.mainInvert)
                             .frame(maxWidth: 700)
                             .frame(height: 60)
-                            .background(.mainbw)
+                            .background(
+                                        subscriptionManager.isSubscribed ? Color.mainbw : Color.gray
+                                    )
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding()
-                    .disabled(!tableVM.selectedButtons.values.contains(where: { $0.contains(true) }))
+                    .disabled(
+                        !(tableVM.selectedButtons.values.contains(where: { $0.contains(true) }) && subscriptionManager.isSubscribed)
+                    )
+
                 }
             }
             .sheet(isPresented: $showFoodMenu, content: { FoodMenuView() })

@@ -2,7 +2,7 @@ import SwiftUI
 import StoreKit
 
 struct SubscriptionView: View {
-    
+    @Environment(\.dismiss) var dismiss
     @EnvironmentObject var subscriptionManager: SubscriptionManager
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @State private var currentIndex = 0
@@ -50,26 +50,22 @@ struct SubscriptionView: View {
                 
                 if subscriptionManager.products.isEmpty {
                     ProgressView("Loading subscriptions...")
+                        .font(.footnote)
                 } else {
                     ForEach(subscriptionManager.products, id: \.id) { product in
                         SubscriptionRow(product: product)
                     }
                 }
-                
-                if subscriptionManager.isSubscribed {
-                    Text("✅ You are subscribed")
-                        .foregroundColor(.green)
-                        .bold()
-                }
-                
+                                
                 Button(action: {
                     Task { await subscriptionManager.restorePurchases() }
                 }) {
                     Text("Restore Purchases")
                         .foregroundColor(.orange)
-                        .padding()
+                        .font(.caption)
+                        .padding(10)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.orange, lineWidth: 2)
                         )
                 }
@@ -93,7 +89,7 @@ struct SubscriptionView: View {
             .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button{
-                        businessAuthVM.signOut()
+                        dismiss()
                     }label:{
                         Image(systemName:"xmark")
                             .foregroundColor(.mainbw)
@@ -144,14 +140,16 @@ struct SubscriptionRow: View {
                     }
                 }
             }) {
-                Text("Subscribe")
+                Text(subscriptionManager.subscribedProductID == product.id ? "Subscribed" : "Subscribe")
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.orange)
+                    .background(subscriptionManager.subscribedProductID == product.id ? .gray : Color.orange)
                     .cornerRadius(10)
             }
+            .disabled(subscriptionManager.subscribedProductID == product.id)
+
         }
         .padding()
         .background(RoundedRectangle(cornerRadius: 20).stroke(Color.gray, lineWidth: 2))

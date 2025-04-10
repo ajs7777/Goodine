@@ -16,11 +16,7 @@ struct ContentView: View {
             if businessAuthVM.isLoading {
                 ProgressView()
             } else if businessAuthVM.restaurant != nil {
-                if subscriptionManager.isSubscribed {
                     RestaurantTabView()
-                } else {
-                    SubscriptionView()
-                }
             } else {
                 MainLoginPage()
             }

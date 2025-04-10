@@ -13,7 +13,9 @@ struct RestaurantProfile: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @State var showEditProfile : Bool = false
+    @State var showSubscription : Bool = false
     @ObservedObject var viewModel = RestaurantMenuViewModel()
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
     
     var isOpen: Bool {
         guard let openingTime = businessAuthVM.restaurant?.openingTime,
@@ -122,10 +124,17 @@ struct RestaurantProfile: View {
                                     .buttonStyle(BorderedButtonStyle())
                                 }
                                 
-                                Text(restaurant.name)
-                                    .foregroundStyle(.mainbw)
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
+                                HStack {
+                                    Text(restaurant.name)
+                                        .foregroundStyle(.mainbw)
+                                        .font(.largeTitle)
+                                        .fontWeight(.bold)
+                                    if subscriptionManager.isSubscribed{
+                                        Image(systemName: "crown.fill")
+                                            .foregroundStyle(.orange)
+                                    }
+                                    
+                                }
                                 
                                 HStack {
                                     VStack(alignment: .leading) {
@@ -242,14 +251,42 @@ struct RestaurantProfile: View {
                 
                 menuIcon
             }
+            .toolbar(content: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSubscription = true
+                    } label: {
+                        HStack{
+                            Image(systemName: "crown.fill")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 17, height: 17)
+                                .foregroundStyle(.white)
+                            Text("Pro")
+                                .font(.footnote)
+                                .foregroundStyle(.white)
+                                .fontWeight(.bold)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+
+                }
+            })
             .sheet(isPresented: $showEditProfile) {
                 RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
+            }
+            .fullScreenCover(isPresented: $showSubscription) {
+                SubscriptionView()
             }
         }
         .onAppear(
             perform: viewModel.fetchMenuItems
         )
-        
+                
     }
 }
 

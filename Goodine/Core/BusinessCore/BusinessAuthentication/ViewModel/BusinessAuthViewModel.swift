@@ -70,6 +70,20 @@ class BusinessAuthViewModel: ObservableObject {
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
+        
+        let subscriptionData: [String: Any] = [
+            "userID": userId,
+            "productID": "com.goodine.subscription.1month",
+            "purchaseDate": Timestamp(date: Date()),
+            "expirationDate": Timestamp(date: Calendar.current.date(byAdding: .day, value: 30, to: Date())!),
+            "isActive": true
+        ]
+        
+        try await db.collection("business_users")
+                .document(userId)
+                .collection("subscriptions")
+                .document(userId)
+                .setData(subscriptionData)
     }
     
     func signIn(email: String, password: String) async {

@@ -15,4 +15,3 @@ struct MenuItem : Identifiable, Codable {
     var foodImage: String?
     var veg : Bool = false
 }
-
