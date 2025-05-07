@@ -151,7 +151,7 @@ struct RestaurantProfile: View {
                                             Image(systemName: "star.fill")
                                                 .foregroundStyle(.yellow)
                                                 .font(.caption)
-                                            Text("4.5(3k Ratings)")
+                                            Text("No Ratings")
                                                 .foregroundStyle(.mainbw)
                                         }
                                         .font(.footnote)
@@ -211,25 +211,20 @@ struct RestaurantProfile: View {
                                     .font(.title)
                                     .fontWeight(.bold)
                                 
-                                VStack(alignment: .leading) {
-                                    Text("Reservation Available")
-                                        .foregroundStyle(.mainbw)
-                                        .fontWeight(.medium)
-                                        .padding(10)
-                                        .background(Color(.systemGray5))
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    Text("Dine in Available")
-                                        .foregroundStyle(.mainbw)
-                                        .fontWeight(.medium)
-                                        .padding(10)
-                                        .background(Color(.systemGray5))
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    
-                                    
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(businessAuthVM.restaurant?.features ?? [], id: \.self) { feature in
+                                        Text(feature)
+                                            .foregroundStyle(.mainbw)
+                                            .fontWeight(.medium)
+                                            .padding(10)
+                                            .background(Color(.systemGray5))
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    }
                                 }
                             }
                             .padding(.horizontal)
                             .padding(.bottom, 30)
+
                         }
                     } else {
                         ProgressView()
@@ -277,7 +272,7 @@ struct RestaurantProfile: View {
                 }
             })
             .sheet(isPresented: $showEditProfile) {
-                RestaurantsDetailsForm(businessAuthVM: businessAuthVM)
+                RestaurantsDetailsForm(businessAuthVM: businessAuthVM, onLocationAllowed: {})
             }
             .fullScreenCover(isPresented: $showSubscription) {
                 SubscriptionView()
@@ -286,7 +281,7 @@ struct RestaurantProfile: View {
         .onAppear(
             perform: viewModel.fetchMenuItems
         )
-                
+                        
     }
 }
 

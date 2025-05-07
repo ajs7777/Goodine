@@ -13,5 +13,5 @@ struct MenuItem : Identifiable, Codable {
     let foodDescription: String?
     let foodPrice: Int
     var foodImage: String?
-    var veg : Bool = false
+    var isVeg : Bool = false
 }

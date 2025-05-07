@@ -72,5 +72,3 @@ struct MustTryPlaces: View {
         currencySymbol: "₹"
     ))
 }
-
-

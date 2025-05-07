@@ -28,7 +28,7 @@ struct AddItemView: View {
         _foodname = State(initialValue: menuItem?.foodname ?? "")
         _foodDescription = State(initialValue: menuItem?.foodDescription ?? "")
         _foodPrice = State(initialValue: menuItem?.foodPrice != nil ? "\(menuItem!.foodPrice)" : "")
-        _isVeg = State(initialValue: menuItem?.veg ?? false)
+        _isVeg = State(initialValue: menuItem?.isVeg ?? false)
     }
     
     var body: some View {
@@ -78,7 +78,7 @@ struct AddItemView: View {
                                 foodDescription: foodDescription,
                                 foodPrice: price,
                                 foodImage: menuItem?.foodImage, // 🔥 Keeps old image if not changed
-                                veg: isVeg
+                                isVeg: isVeg
                             )
                             onSave(updatedItem, selectedImage)
                             dismiss()

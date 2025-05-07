@@ -66,7 +66,8 @@ class BusinessAuthViewModel: ObservableObject {
             closingTime: Date(),
             imageUrls: [],
             currency: "INR",
-            currencySymbol: "₹"
+            currencySymbol: "₹",
+            features: ["Reservation Available", "Dine in Available"]
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -219,7 +220,8 @@ class BusinessAuthViewModel: ObservableObject {
                         closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                         imageUrls: data["imageUrls"] as? [String] ?? [],
                         currency: data["currency"] as? String ?? "INR",
-                        currencySymbol: data["currencySymbol"] as? String ?? "₹"
+                        currencySymbol: data["currencySymbol"] as? String ?? "₹",
+                        features: data["features"] as? [String] ?? []
                     )
                     self.isLoading = false
                 }
@@ -269,7 +271,8 @@ class BusinessAuthViewModel: ObservableObject {
             "closingTime": Timestamp(date: updatedRestaurant.closingTime),
             "imageUrls": updatedRestaurant.imageUrls,
             "currency": updatedRestaurant.currency,
-            "currencySymbol": updatedRestaurant.currencySymbol
+            "currencySymbol": updatedRestaurant.currencySymbol,
+            "features": updatedRestaurant.features
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -319,7 +322,8 @@ class BusinessAuthViewModel: ObservableObject {
                     closingTime: (data["closingTime"] as? Timestamp)?.dateValue() ?? Date(),
                     imageUrls: data["imageUrls"] as? [String] ?? [],
                     currency: data["currency"] as? String ?? "INR",
-                    currencySymbol: data["currencySymbol"] as? String ?? "₹"
+                    currencySymbol: data["currencySymbol"] as? String ?? "₹",
+                    features: data["features"] as? [String] ?? []
                 )
             }
             
@@ -334,5 +338,8 @@ class BusinessAuthViewModel: ObservableObject {
             }
         }
     }
+    
+
+
     
 }

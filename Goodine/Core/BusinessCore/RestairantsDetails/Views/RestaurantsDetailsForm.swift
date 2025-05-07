@@ -18,10 +18,18 @@ struct RestaurantsDetailsForm: View {
     @State private var selectedCurrency: String = "INR"
     @State private var searchQuery: String = ""
     
+    @StateObject private var locationManager = LocationManager()
+    private let firestoreService = FirestoreService()
+    
+    var onLocationAllowed: () -> Void
+    
+    @State private var showAlert = false
+    
     let currencySymbols: [String: String] = ["USD": "$", "EUR": "€", "INR": "₹", "GBP": "£", "JPY": "¥", "AUD": "A$", "CAD": "C$", "CNY": "¥", "SGD": "S$", "AED": "د.إ"]
-    let currencies = ["USD", "EUR", "INR", "GBP", "JPY", "AUD", "CAD", "CNY", "SGD", "AED"] // Add more as needed
+    let currencies = ["USD", "EUR", "INR", "GBP", "JPY", "AUD", "CAD", "CNY", "SGD", "AED"]
     
-    
+    @State private var selectedFeatures: [String] = ["Reservation Available", "Dine in Available"]
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -110,7 +118,17 @@ struct RestaurantsDetailsForm: View {
                         )
                         
                         Button{
-                            
+                            let status = locationManager.authorizationStatus
+                            switch status {
+                            case .notDetermined:
+                                locationManager.requestPermission()
+                            case .authorizedWhenInUse, .authorizedAlways:
+                                locationManager.requestLocation()
+                            case .denied, .restricted:
+                                showAlert = true
+                            default:
+                                break
+                            }
                         } label: {
                             HStack{
                                 Image(systemName: "dot.scope")
@@ -265,7 +283,19 @@ struct RestaurantsDetailsForm: View {
                             }
                         }
                     }
+                    
+                    // Custom feature input
+                    FeatureSelectionView(selectedFeatures: $selectedFeatures)
+                        .onAppear {
+                            if let savedFeatures = businessAuthVM.restaurant?.features {
+                                selectedFeatures = savedFeatures
+                            } else {
+                                selectedFeatures = ["Reservation Available", "Dine in Available"]
+                            }
+                        }
+                    
                     .padding(.bottom, 50)
+
                     
                 }
                 .scrollIndicators(.hidden)
@@ -277,6 +307,7 @@ struct RestaurantsDetailsForm: View {
                 Button{
                     Task {
                         do {
+                            businessAuthVM.restaurant?.features = selectedFeatures
                             if let restaurant = businessAuthVM.restaurant {
                                 try await businessAuthVM.saveRestaurantDetails(restaurant, images: selectedImages)
                                 selectedImages.removeAll()
@@ -299,8 +330,32 @@ struct RestaurantsDetailsForm: View {
                 RestaurantImagePicker(images: $selectedImages)
             }
             .onTapGesture { self.hideKeyboard()}
+            .alert("Location Access Denied", isPresented: $showAlert) {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Please enable location access in Settings to use this feature.")
+            }
+            .onReceive(locationManager.$userLocation) { location in
+                if let location = location {
+                    let lat = location.coordinate.latitude
+                    let lon = location.coordinate.longitude
+                    
+                    firestoreService.saveRestaurantLocation(latitude: lat, longitude: lon) { error in
+                        if error == nil {
+                            UserDefaults.standard.set(true, forKey: "locationPermissionGranted")
+                            onLocationAllowed()
+                        } else {
+                            print("Failed to save location: \(error!.localizedDescription)")
+                        }
+                    }
+                }
+            }
         }
-        
         
     }
     
@@ -319,10 +374,6 @@ struct RestaurantsDetailsForm: View {
     }
 
     
-}
-
-#Preview {
-    RestaurantsDetailsForm(businessAuthVM: BusinessAuthViewModel())
 }
 
 

@@ -7,9 +7,8 @@
 
 import Foundation
 
-
 struct GoodineUser : Identifiable, Codable {
     let id: String
     let fullName: String
-    
+    let profileImageURL : String?
 }

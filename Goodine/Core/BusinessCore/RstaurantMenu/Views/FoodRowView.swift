@@ -25,7 +25,7 @@ struct FoodRowView: View {
                                .frame(width: 80, height: 80)
                                .clipShape(RoundedRectangle(cornerRadius: 12))
                                .overlay(alignment: .bottomLeading) {
-                                   VegNonVegIcon(size: 15, color: menuItem.veg ? .green : .red)
+                                   VegNonVegIcon(size: 15, color: menuItem.isVeg ? .green : .red)
                                        .padding(8)
                                }
                                
@@ -39,7 +39,7 @@ struct FoodRowView: View {
                                .background(.mainbw.opacity(0.2))
                                .clipShape(RoundedRectangle(cornerRadius: 12))
                                .overlay(alignment: .bottomLeading) {
-                                   VegNonVegIcon(size: 15, color: menuItem.veg ? .green : .red)
+                                   VegNonVegIcon(size: 15, color: menuItem.isVeg ? .green : .red)
                                        .padding(8)
                                }
                        }

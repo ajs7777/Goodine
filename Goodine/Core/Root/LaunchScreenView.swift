@@ -74,6 +74,7 @@ struct LaunchScreenView: View {
 
 #Preview {
     LaunchScreenView()
+        .environmentObject(BusinessAuthViewModel())
 }
 
 

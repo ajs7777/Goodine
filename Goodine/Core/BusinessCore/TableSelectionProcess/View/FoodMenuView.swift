@@ -19,7 +19,7 @@ struct FoodMenuView: View {
     
     var body: some View {
         NavigationStack {
-                   VStack(alignment: .leading) {
+            VStack(alignment: .center) {
                        ScrollView {
                            LazyVStack(alignment: .leading) {
                                ForEach(viewModel.items) { item in
@@ -62,7 +62,7 @@ struct FoodMenuItemView: View {
                     .frame(width: 80, height: 80)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(alignment: .bottomLeading) {
-                        VegNonVegIcon(size: 15, color: item.veg ? .green : .red)
+                        VegNonVegIcon(size: 15, color: item.isVeg ? .green : .red)
                             .padding(8)
                     }
             } else {
@@ -75,7 +75,7 @@ struct FoodMenuItemView: View {
                     .background(.mainbw.opacity(0.2))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(alignment: .bottomLeading) {
-                        VegNonVegIcon(size: 15, color: item.veg ? .green : .red)
+                        VegNonVegIcon(size: 15, color: item.isVeg ? .green : .red)
                             .padding(8)
                     }
             }

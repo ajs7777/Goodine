@@ -1,9 +1,3 @@
-//
-//  RestaurantsFeedView.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 22/01/25.
-//
 
 import SwiftUI
 
@@ -14,6 +8,7 @@ struct RestaurantsFeedView: View {
     @State private var selectedPage = 0
     @State private var searchText = ""
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    @StateObject private var locationVM = LocationViewModel()
     
     var body: some View {
         VStack {
@@ -23,7 +18,7 @@ struct RestaurantsFeedView: View {
                     searchBar
                     categoriesSection
                     discountSection
-                    imageSection
+                    //imageSection
                     restaurantsSection
                 }
                 
@@ -48,11 +43,11 @@ extension RestaurantsFeedView {
     private var userSection: some View {
         HStack {
             VStack(alignment: .leading){
-                Text("Dine In Now")
+                Text(locationVM.cityName)
                     .foregroundStyle(.gray)
                     .font(.caption)
                 HStack{
-                    Text("Hsr Layout")
+                    Text(locationVM.areaName)
                         .font(.title2)
                         .fontWeight(.bold)
                     Image(systemName: "chevron.down")
@@ -66,7 +61,7 @@ extension RestaurantsFeedView {
                 ProfileView()
                     .navigationBarBackButtonHidden()
             } label: {
-                UserCircleImage(size: .small)
+                UserCircleImage(size: .large)
                 
             }
         } .padding(.horizontal)
@@ -110,20 +105,41 @@ extension RestaurantsFeedView {
         .padding(.bottom)
     }
     
-    private var categoriesSection : some View {
-        Grid(horizontalSpacing: 20, verticalSpacing: 18) {
+    private var categoriesSection: some View {
+        let categories = [
+            ("biriyani", "Biriyani"),
+            ("pizza", "Pizza"),
+            ("burger", "Burger"),
+            ("momo", "Momo"),
+            ("veg", "Veg"),
+            ("nonveg", "Non Veg"),
+            ("rolls", "Rolls"),
+            ("noodles", "Noodles")
+        ]
+        
+        return Grid(horizontalSpacing: 20, verticalSpacing: 18) {
             ForEach(0..<2) { row in
                 GridRow {
                     ForEach(0..<4) { column in
-                        VStack(spacing: 5.0){
-                            Image("nonveg")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 75, height: 75)
-                                .clipShape(Circle())
-                            Text("Non Veg")
-                                .font(.footnote)
-                                .fontWeight(.medium)
+                        let index = row * 4 + column
+                        if index < categories.count {
+                            let category = categories[index]
+                            NavigationLink {
+                                CategoryRestaurantsView(categoryName: category.1)
+                                    .navigationBarBackButtonHidden()
+                            } label: {
+                                VStack(spacing: 5.0) {
+                                    Image(category.0)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 75, height: 75)
+                                        .clipShape(Circle())
+                                    Text(category.1)
+                                        .font(.footnote)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                 }
@@ -131,8 +147,8 @@ extension RestaurantsFeedView {
         }
         .padding(.horizontal)
         .padding(.bottom, 10)
-        
     }
+
     
     private var discountSection: some View {
         VStack {

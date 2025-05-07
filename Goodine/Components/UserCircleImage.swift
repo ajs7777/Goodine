@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 enum Sizeoptions {
     case small
@@ -19,7 +20,7 @@ enum Sizeoptions {
         case .medium:
             return 30
         case .large:
-            return 50
+            return 40
         }
     }
 }
@@ -27,18 +28,24 @@ enum Sizeoptions {
 struct UserCircleImage: View {
     
     @State var size: Sizeoptions
+    @EnvironmentObject var userAuthVM : AuthViewModel
     
     var body: some View {
-        Image(systemName: "person")
-            .resizable()
-            .scaledToFill()
-            .fontWeight(.semibold)
-            .foregroundStyle(.mainbw)
-            .frame(width: size.dimension, height: size.dimension)
-            .padding(10)
-            .background(Color(.systemGray5))
-            .clipShape(Circle())
-            .padding()
+        if let imageUrl = userAuthVM.userdata?.profileImageURL, let url = URL(string: imageUrl) {
+            // Profile image from Firebase using Kingfisher
+            KFImage(url)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size.dimension, height: size.dimension)
+                .clipShape(Circle())
+        } else {
+            // Placeholder
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: size.dimension, height: size.dimension)
+                .foregroundColor(Color(.systemGray3))
+        }
     }
 }
 

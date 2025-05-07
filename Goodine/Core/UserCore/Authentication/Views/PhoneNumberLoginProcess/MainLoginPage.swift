@@ -9,7 +9,6 @@ import SwiftUI
 import Combine
 
 struct MainLoginPage: View {
-
     
     var body: some View {
         NavigationStack {
@@ -29,9 +28,10 @@ struct MainLoginPage: View {
                         .font(.callout)
                         .foregroundStyle(.gray)
                 }
-                    .padding(.bottom, 50)
+                    .padding(.bottom, 30)
 
                 VStack{
+                    
                     NavigationLink {
                         BusinessLoginView()
                             .navigationBarBackButtonHidden()
@@ -50,6 +50,19 @@ struct MainLoginPage: View {
                         .padding(.horizontal)
                     }
                     
+                    NavigationLink {
+                        LoginWithEmail()
+                            .navigationBarBackButtonHidden()
+                    } label: {
+                        HStack {
+                            Text("Login as User")
+                                .font(.caption)
+                                .bold()
+                        }
+                        .goodineButtonStyle(.orange)
+                        .padding(.horizontal)
+                    }
+                    
                 }
                 .padding(.bottom, 15)
                 
@@ -57,14 +70,6 @@ struct MainLoginPage: View {
                 
                 Spacer()
                 VStack {
-//                    NavigationLink {
-//                        VerifyDetailsView()
-//                            .navigationBarBackButtonHidden()
-//                    } label: {
-//                        Text("Continue")
-//                            .goodineButtonStyle(!isACtive ? .gray : .mainbw)
-//                    }
-//                    .disabled(!isACtive)
                     
                         Image(.goodinetext)
                             .resizable()

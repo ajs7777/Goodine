@@ -13,8 +13,8 @@ import FirebaseStorage
 @MainActor
 class AuthViewModel: ObservableObject {
     
-    @Published var goodineUser : User?
-    @Published var userdata : GoodineUser?
+    @Published var goodineUser: User?
+    @Published var userdata: GoodineUser?
     @Published var isLoading = true
     
     private var db = Firestore.firestore()
@@ -24,7 +24,6 @@ class AuthViewModel: ObservableObject {
         Task {
             await fetchUserData()
         }
-        
     }
     
     func createUser(email: String, password: String, fullName: String) async throws {
@@ -33,11 +32,16 @@ class AuthViewModel: ObservableObject {
             self.goodineUser = result.user
             
             let userId = result.user.uid
-            let newUser = GoodineUser(id: userId, fullName: fullName)
+            let newUser = GoodineUser(
+                id: userId,
+                fullName: fullName,
+                profileImageURL: nil // New user doesn't have profile picture yet
+            )
             
             try db.collection("users").document(userId).setData(from: newUser)
+            await fetchUserData()
         } catch {
-            print("error creating user: \(error.localizedDescription)")
+            print("Error creating user: \(error.localizedDescription)")
             throw error
         }
     }
@@ -47,8 +51,8 @@ class AuthViewModel: ObservableObject {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             self.goodineUser = result.user
             await fetchUserData()
-        } catch  {
-            print("error signing in: \(error.localizedDescription)")
+        } catch {
+            print("Error signing in: \(error.localizedDescription)")
             throw error
         }
     }
@@ -69,8 +73,9 @@ class AuthViewModel: ObservableObject {
             let document = try await db.collection("users").document(userId).getDocument()
             if let data = document.data() {
                 self.userdata = GoodineUser(
-                    id: data["id"] as? String ?? "",
-                    fullName: data["fullName"] as? String ?? ""
+                    id: document.documentID, // ✅ Use Firestore document ID as id
+                    fullName: data["fullName"] as? String ?? "",
+                    profileImageURL: data["profileImageURL"] as? String
                 )
                 self.isLoading = false
             } else {
@@ -80,27 +85,32 @@ class AuthViewModel: ObservableObject {
             }
         } catch {
             print("Failed to fetch user data: \(error.localizedDescription)")
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
         }
     }
     
-    //    func fetchUserData() {
-    //        guard let userId = Auth.auth().currentUser?.uid else { return }
-    //
-    //        db.collection("users").document(userId).addSnapshotListener { documentSnapshot, error in
-    //            if let error = error {
-    //                print("Failed to fetch user data: \(error.localizedDescription)")
-    //                return
-    //            }
-    //            guard let document = documentSnapshot, document.exists else { return }
-    //
-    //            let data = document.data()
-    //            DispatchQueue.main.async {
-    //                self.userdata = GoodineUser(
-    //                    id: data?["id"] as? String ?? "",
-    //                    fullName: data?["fullName"] as? String ?? ""
-    //                )
-    //            }
-    //        }
-    //    }
+    // Upload profile image
+    func uploadProfileImage(_ image: UIImage) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let imageData = image.jpegData(compressionQuality: 0.5) else { return }
+        
+        let storageRef = storage.reference().child("profile_images/\(uid).jpg")
+        
+        do {
+            _ = try await storageRef.putDataAsync(imageData)
+            let downloadURL = try await storageRef.downloadURL()
+            
+            try await db.collection("users").document(uid).updateData([
+                "profileImageURL": downloadURL.absoluteString
+            ])
+            
+            // Update local user data
+            await fetchUserData()
+            
+        } catch {
+            print("Failed to upload profile image: \(error.localizedDescription)")
+        }
+    }
 }
-
