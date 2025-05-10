@@ -24,5 +24,5 @@ struct Restaurant: Identifiable, Codable {
     var currency: String
     var currencySymbol: String
     var features: [String] = []
-
+    
 }

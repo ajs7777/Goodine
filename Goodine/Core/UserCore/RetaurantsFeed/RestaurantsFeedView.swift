@@ -1,5 +1,7 @@
 
 import SwiftUI
+import CoreLocation
+import FirebaseFirestore
 
 struct RestaurantsFeedView: View {
     
@@ -7,8 +9,19 @@ struct RestaurantsFeedView: View {
     
     @State private var selectedPage = 0
     @State private var searchText = ""
+    
+    @State private var nearbyRestaurants: [NearbyRestaurant] = []
+    
+    @State private var isLoading = true
+    @State private var fetchError: String?
+    private let db = Firestore.firestore()
+    private let maxDistanceKm: Double = 15.0
+    
+    
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     @StateObject private var locationVM = LocationViewModel()
+    @ObservedObject var userLocationManager = UserLocationManager()
+    
     
     var body: some View {
         VStack {
@@ -24,18 +37,68 @@ struct RestaurantsFeedView: View {
                 
             }
         }
-        .onAppear {
-            Task{
-                await businessAuthVM.fetchAllRestaurants()
-            }
+        .onReceive(userLocationManager.$userLocation
+            .debounce(for: .seconds(1), scheduler: RunLoop.main)) { location in
+            guard let location = location else { return }
+            fetchNearbyRestaurants(userLocation: location)
         }
         
+    }
+    
+    func fetchNearbyRestaurants(userLocation: CLLocation) {
+        nearbyRestaurants = []
+        isLoading = true
+        fetchError = nil
+
+        let group = DispatchGroup()
+
+        for restaurant in businessAuthVM.allRestaurants {
+            group.enter()
+
+            db.collection("business_users")
+                .document(restaurant.id)
+                .collection("restaurantLocations")
+                .document("main")
+                .getDocument { snapshot, error in
+                    defer { group.leave() }
+
+                    guard error == nil else {
+                        print("❌ Error fetching location for \(restaurant.name): \(error!.localizedDescription)")
+                        return
+                    }
+
+                    guard let data = snapshot?.data(),
+                          let lat = data["latitude"] as? Double,
+                          let lon = data["longitude"] as? Double else {
+                        print("⚠️ Skipping \(restaurant.name): Missing or invalid location data.")
+                        return
+                    }
+
+                    let restaurantLocation = CLLocation(latitude: lat, longitude: lon)
+                    let distance = userLocation.distance(from: restaurantLocation) / 1000.0
+                    print("📍 \(restaurant.name): \(distance) km away")
+
+                    if distance <= maxDistanceKm {
+                        DispatchQueue.main.async {
+                            if !nearbyRestaurants.contains(where: { $0.id == restaurant.id }) {
+                                nearbyRestaurants.append(NearbyRestaurant(restaurant: restaurant, distanceInKm: distance))
+                            }
+                        }
+                    }
+
+                }
+        }
+
+        group.notify(queue: .main) {
+            isLoading = false
+        }
     }
 }
 
 #Preview {
     RestaurantsFeedView()
         .environmentObject(BusinessAuthViewModel())
+        .environmentObject(UserLocationManager())
 }
 
 extension RestaurantsFeedView {
@@ -48,7 +111,7 @@ extension RestaurantsFeedView {
                     .font(.caption)
                 HStack{
                     Text(locationVM.areaName)
-                        .font(.title2)
+                        .font(.title3)
                         .fontWeight(.bold)
                     Image(systemName: "chevron.down")
                         .font(.footnote)
@@ -148,7 +211,6 @@ extension RestaurantsFeedView {
         .padding(.horizontal)
         .padding(.bottom, 10)
     }
-
     
     private var discountSection: some View {
         VStack {
@@ -205,20 +267,44 @@ extension RestaurantsFeedView {
                 .fontWeight(.bold)
                 .padding(.leading)
             
-            ForEach(businessAuthVM.allRestaurants) { restaurant in
-                NavigationLink(
-                    destination: RestaurantDetailView(restaurant: restaurant)
-                        .navigationBarBackButtonHidden()
+            VStack(alignment: .leading) {
+                if isLoading {
+                    ProgressView("Fetching nearby places...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let error = fetchError {
+                    Text("Error: \(error)")
+                        .foregroundColor(.red)
+                        .padding()
+                } else if nearbyRestaurants.isEmpty {
+                    Text("No nearby restaurants found.")
+                        .foregroundColor(.gray)
+                        .padding()
+                } else {
+                        ForEach(nearbyRestaurants) { item in
+                            NavigationLink(
+                                destination: RestaurantDetailView(restaurant: item.restaurant)
+                                    .navigationBarBackButtonHidden()
+                            ) {
+                                RestaurantsView(restaurant: [item.restaurant], distanceInKm: item.distanceInKm)
+                                    .tint(.primary)
+                            }
+                        }
                     
-                ) {
-                    RestaurantsView(restaurant: [restaurant])
-                        .tint(.primary)
                 }
-                
             }
+            
+
         }
         .padding(.top, 20)
         
+       
+        
     }
     
+}
+
+struct NearbyRestaurant: Identifiable {
+    var id: String { restaurant.id }
+    let restaurant: Restaurant
+    let distanceInKm: Double
 }

@@ -18,7 +18,7 @@ struct RestaurantsDetailsForm: View {
     @State private var selectedCurrency: String = "INR"
     @State private var searchQuery: String = ""
     
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var restaurantLocationManager = RestaurantLocationManager()
     private let firestoreService = FirestoreService()
     
     var onLocationAllowed: () -> Void
@@ -118,12 +118,12 @@ struct RestaurantsDetailsForm: View {
                         )
                         
                         Button{
-                            let status = locationManager.authorizationStatus
+                            let status = restaurantLocationManager.authorizationStatus
                             switch status {
                             case .notDetermined:
-                                locationManager.requestPermission()
+                                restaurantLocationManager.requestPermission()
                             case .authorizedWhenInUse, .authorizedAlways:
-                                locationManager.requestLocation()
+                                restaurantLocationManager.requestLocation()
                             case .denied, .restricted:
                                 showAlert = true
                             default:
@@ -340,7 +340,7 @@ struct RestaurantsDetailsForm: View {
             } message: {
                 Text("Please enable location access in Settings to use this feature.")
             }
-            .onReceive(locationManager.$userLocation) { location in
+            .onReceive(restaurantLocationManager.$restaurantLocation) { location in
                 if let location = location {
                     let lat = location.coordinate.latitude
                     let lon = location.coordinate.longitude

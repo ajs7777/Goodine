@@ -12,7 +12,44 @@ import Firebase
 import FirebaseFirestore
 import FirebaseAuth
 
+// MARK: - Location Manager
 
+class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let locationManager = CLLocationManager()
+    @Published var userLocation: CLLocation?
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    
+    override init() {
+        self.authorizationStatus = locationManager.authorizationStatus
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+    
+    func requestPermission() {
+        locationManager.requestWhenInUseAuthorization()
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        authorizationStatus = manager.authorizationStatus
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            locationManager.requestLocation()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        userLocation = locations.first
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Failed to get location: \(error.localizedDescription)")
+    }
+    
+    func requestLocation() {
+        locationManager.requestLocation()
+    }
+    
+}
 
 // MARK: - Data Model
 
@@ -28,7 +65,7 @@ struct UserLocationData: Codable {
 class UserLocationService {
     private let db = Firestore.firestore()
     
-    func saveRestaurantLocation(latitude: Double, longitude: Double, completion: @escaping (Error?) -> Void) {
+    func saveUserLocation(latitude: Double, longitude: Double, completion: @escaping (Error?) -> Void) {
         guard let userId = Auth.auth().currentUser?.uid else {
             completion(NSError(domain: "UserLocationService", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"]))
             return
@@ -52,7 +89,7 @@ class UserLocationService {
 // MARK: - Main View
 
 struct UserLocation: View {
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var userLocationManager = UserLocationManager()
     private let userLocationService = UserLocationService()
     
     var onLocationAllowed: () -> Void
@@ -93,12 +130,12 @@ struct UserLocation: View {
             Spacer()
                 
                 Button(action: {
-                    let status = locationManager.authorizationStatus
+                    let status = userLocationManager.authorizationStatus
                     switch status {
                     case .notDetermined:
-                        locationManager.requestPermission()
+                        userLocationManager.requestPermission()
                     case .authorizedWhenInUse, .authorizedAlways:
-                        locationManager.requestLocation()
+                        userLocationManager.requestLocation()
                     case .denied, .restricted:
                         showAlert = true
                     default:
@@ -121,12 +158,12 @@ struct UserLocation: View {
                 } message: {
                     Text("Please enable location access in Settings to use this feature.")
                 }
-                .onReceive(locationManager.$userLocation) { location in
+                .onReceive(userLocationManager.$userLocation) { location in
                     if let location = location {
                         let lat = location.coordinate.latitude
                         let lon = location.coordinate.longitude
                         
-                        userLocationService.saveRestaurantLocation(latitude: lat, longitude: lon) { error in
+                        userLocationService.saveUserLocation(latitude: lat, longitude: lon) { error in
                             if error == nil {
                                 UserDefaults.standard.set(true, forKey: "locationPermissionAllowed")
                                 onLocationAllowed()

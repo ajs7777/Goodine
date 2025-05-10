@@ -13,9 +13,9 @@ import FirebaseAuth
 
 // MARK: - Location Manager
 
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+class RestaurantLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
-    @Published var userLocation: CLLocation?
+    @Published var restaurantLocation: CLLocation?
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     
     override init() {
@@ -37,7 +37,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        userLocation = locations.first
+        restaurantLocation = locations.first
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -49,7 +49,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
 }
-
 
 // MARK: - Data Model
 
@@ -83,11 +82,10 @@ class FirestoreService {
     }
 }
 
-
 // MARK: - Main View
 
 struct RestaurantLocation: View {
-    @StateObject private var locationManager = LocationManager()
+    @StateObject private var restaurantLocationManager = RestaurantLocationManager()
     private let firestoreService = FirestoreService()
     
     var onLocationAllowed: () -> Void
@@ -128,12 +126,12 @@ struct RestaurantLocation: View {
             Spacer()
                 
                 Button(action: {
-                    let status = locationManager.authorizationStatus
+                    let status = restaurantLocationManager.authorizationStatus
                     switch status {
                     case .notDetermined:
-                        locationManager.requestPermission()
+                        restaurantLocationManager.requestPermission()
                     case .authorizedWhenInUse, .authorizedAlways:
-                        locationManager.requestLocation()
+                        restaurantLocationManager.requestLocation()
                     case .denied, .restricted:
                         showAlert = true
                     default:
@@ -156,7 +154,7 @@ struct RestaurantLocation: View {
                 } message: {
                     Text("Please enable location access in Settings to use this feature.")
                 }
-                .onReceive(locationManager.$userLocation) { location in
+                .onReceive(restaurantLocationManager.$restaurantLocation) { location in
                     if let location = location {
                         let lat = location.coordinate.latitude
                         let lon = location.coordinate.longitude

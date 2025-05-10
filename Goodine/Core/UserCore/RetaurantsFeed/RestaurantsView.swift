@@ -7,11 +7,15 @@
 
 import SwiftUI
 import Kingfisher
+import Firebase
+import FirebaseFirestore
+import FirebaseAuth
 
 struct RestaurantsView: View {
     
-    @State var isFavorite: Bool = false
+    @State private var isFavorite: Bool = false
     let restaurant: [Restaurant]
+    let distanceInKm: Double?
     
     var body: some View {
         VStack(spacing: 15.0){
@@ -19,7 +23,7 @@ struct RestaurantsView: View {
             KFImage(URL(string: restaurant.first?.imageUrls.first ?? ""))
                 .resizable()
                 .placeholder {
-                    ProgressView() // Show loading indicator
+                    ProgressView()
                 }
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
@@ -48,12 +52,12 @@ struct RestaurantsView: View {
                         Image(systemName: "star.fill")
                             .font(.caption)
                             .foregroundStyle(.yellow)
-                        Text("4.5")
+                        Text("No Ratings")
                             .foregroundStyle(.primary)
                             .font(.callout)
                             .bold()
                     }
-                    Text("0.9 Km")
+                    Text(String(format: "%.1f Km", distanceInKm ?? 0.0))
                         .foregroundStyle(.gray)
                         .font(.footnote)
                     Text("₹\(restaurant.first?.averageCost ?? "") for two")
@@ -66,7 +70,7 @@ struct RestaurantsView: View {
         .padding(.bottom)
         .overlay(alignment: .topTrailing) {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
-                .foregroundStyle(.red)
+                .foregroundStyle(.orange)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(10)
@@ -77,16 +81,74 @@ struct RestaurantsView: View {
                 .padding(.trailing, 26)
                 .padding(.top, 10)
                 .onTapGesture {
-                    isFavorite.toggle()
+                    toggleFavorite()
                 }
-            
         }
-        
+        .onAppear {
+            fetchFavoriteStatus()
+        }
+    }
+    
+    private func toggleFavorite() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            return
+        }
+
+        guard let restaurantID = restaurant.first?.id else {
+            print("Invalid restaurant")
+            return
+        }
+
+        let db = Firestore.firestore()
+        let favRef = db.collection("users").document(userID).collection("Favourites").document(restaurantID)
+
+        if isFavorite {
+            favRef.delete { error in
+                if let error = error {
+                    print("Error removing favourite: \(error.localizedDescription)")
+                } else {
+                    isFavorite = false
+                }
+            }
+        } else {
+            favRef.setData(["timestamp": Timestamp()]) { error in
+                if let error = error {
+                    print("Error saving favourite: \(error.localizedDescription)")
+                } else {
+                    isFavorite = true
+                }
+            }
+        }
+    }
+
+    private func fetchFavoriteStatus() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            return
+        }
+
+        guard let restaurantID = restaurant.first?.id else {
+            print("Invalid restaurant")
+            return
+        }
+
+        let db = Firestore.firestore()
+        let favRef = db.collection("users").document(userID).collection("Favourites").document(restaurantID)
+
+        favRef.getDocument { document, error in
+            if let document = document, document.exists {
+                isFavorite = true
+            } else {
+                isFavorite = false
+            }
+        }
     }
 }
 
+
 #Preview {
     RestaurantsView( restaurant:
-                        [ Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [], currency: "INR", currencySymbol: "₹")]
+                        [ Restaurant(id: "", ownerName: "", name: "", type: "", city: "", state: "", address: "", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [], currency: "INR", currencySymbol: "₹")], distanceInKm: 1.2
     )
 }
