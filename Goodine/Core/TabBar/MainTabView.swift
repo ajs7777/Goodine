@@ -32,7 +32,7 @@ struct MainTabView: View {
                         Image(systemName: selectedTab == 1 ? "fork.knife.circle.fill" : "fork.knife.circle")
                             .environment(\.symbolVariants, selectedTab == 1 ? .fill : .none)
                         
-                        Text("Dine IN")
+                        Text("Dine In")
                     }
                 }
                 .tag(1)
@@ -49,7 +49,7 @@ struct MainTabView: View {
                // .onAppear { selectedTab = 2 }
                 .toolbarBackground(.mainInvert, for: .tabBar)
             
-            Text("Favourites")
+            FavouriteRestaurantsView()
                 .tabItem {
                     VStack{
                         Image(systemName:  selectedTab == 3 ? "heart.fill" :  "heart")

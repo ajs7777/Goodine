@@ -11,7 +11,7 @@ import SwiftUI
 struct FeatureSelectionView: View {
     @State private var customFeature = ""
     @Binding var selectedFeatures: [String]
-    let premadeFeatures = ["Reservation Available", "Dine in Available", "Family Restaurant", "Couple Friendly", "Takeway Available"]
+    let premadeFeatures = ["Reservation Available", "Dine in Available", "Family Friendly", "Couple Friendly", "Takeway Available"]
     
     let columns = [GridItem(.adaptive(minimum: 100), spacing: 10)]
 

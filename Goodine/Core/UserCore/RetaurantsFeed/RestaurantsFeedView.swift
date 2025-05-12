@@ -12,6 +12,29 @@ struct RestaurantsFeedView: View {
     
     @State private var nearbyRestaurants: [NearbyRestaurant] = []
     
+    private var filteredRestaurants: [NearbyRestaurant] {
+        if searchText.isEmpty {
+            return nearbyRestaurants
+        } else {
+            return nearbyRestaurants.filter {
+                $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+
+    @State private var selectedRestaurant: Restaurant?
+    @State private var showDetailView = false
+    
+    private var suggestedRestaurants: [NearbyRestaurant] {
+        if searchText.isEmpty {
+            return []
+        } else {
+            return nearbyRestaurants.filter {
+                $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+
     @State private var isLoading = true
     @State private var fetchError: String?
     private let db = Firestore.firestore()
@@ -34,7 +57,14 @@ struct RestaurantsFeedView: View {
                     //imageSection
                     restaurantsSection
                 }
-                
+                .navigationDestination(isPresented: $showDetailView) {
+                    if let restaurant = selectedRestaurant {
+                        RestaurantDetailView(restaurant: restaurant)
+                            .navigationBarBackButtonHidden()
+                    }
+                }
+
+
             }
         }
         .onReceive(userLocationManager.$userLocation
@@ -131,38 +161,64 @@ extension RestaurantsFeedView {
     }
     
     private var searchBar: some View {
-        HStack {
-            TextField("Search for restaurants", text: $searchText)
-                .font(.body)
-                .padding(.leading, 40)
-                .padding(.trailing, 80)
-                .frame(maxWidth : .infinity)
-                .frame(height: 50)
-                .background(.mainbw.opacity(0.1))
-                .clipShape(Capsule())
-                .overlay {
-                    Image(systemName: "magnifyingglass")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 15)
-                    Spacer()
-                    Button {
-                        
-                    } label: {
-                        Image(systemName: "mic.fill")
+        VStack(spacing: 0) {
+            HStack {
+                TextField("Search for restaurants", text: $searchText)
+                    .font(.body)
+                    .padding(.leading, 40)
+                    .padding(.trailing, 80)
+                    .frame(height: 50)
+                    .background(.mainbw.opacity(0.1))
+                    .clipShape(Capsule())
+                    .overlay {
+                        Image(systemName: "magnifyingglass")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 15)
+//                        Spacer()
+//                        Button {
+//                            // Mic action
+//                        } label: {
+//                            Image(systemName: "mic.fill")
+//                        }
+//                        .tint(.mainbw)
+//                        .frame(maxWidth: .infinity, alignment: .trailing)
+//                        .padding(.trailing, 50)
+//
+//                        Button {
+//                            // Filter action
+//                        } label: {
+//                            Image(systemName: "slider.vertical.3")
+//                        }
+//                        .tint(.mainbw)
+//                        .frame(maxWidth: .infinity, alignment: .trailing)
+//                        .padding(.trailing, 18)
                     }
-                    .tint(.mainbw)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 50)
-                    Button {
-                        
-                    } label: {
-                        Image(systemName: "slider.vertical.3")
+            }
+
+            // Suggestions dropdown
+            if !suggestedRestaurants.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(suggestedRestaurants.prefix(5)) { item in
+                        Button(action: {
+                            selectedRestaurant = item.restaurant
+                            searchText = ""
+                            showDetailView = true
+                        }) {
+                            Text(item.restaurant.name)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.white)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .tint(.black)
                     }
-                    .tint(.mainbw)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 18)
-                    
                 }
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(radius: 2)
+                .padding(.top, 4)
+            }
         }
         .padding(.horizontal)
         .padding(.bottom)
@@ -213,20 +269,34 @@ extension RestaurantsFeedView {
     }
     
     private var discountSection: some View {
-        VStack {
+        let cards: [(String, String, String, Color)] = [
+            ("Discount-1", "Family Friendly", "Restaurants", Color("darkblue")),
+            ("Discount-2", "Couple Friendly", "Restaurants", .red),
+            ("Discount-3", "Dine in Available", "Near You", .orange)
+        ]
+
+        return VStack {
             TabView(selection: $selectedPage) {
-                ForEach(0..<3) { index in
-                    DiscountCardView()
-                        .tag(index)
+                ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
+                    NavigationLink(
+                        destination: FeatureRestaurantsView(featureTag: card.1)
+                            .environmentObject(businessAuthVM)
+                    ) {
+                        DiscountCardView(
+                            imageName: card.0,
+                            subtitle: card.1,
+                            description: card.2,
+                            gradient: card.3
+                        )
+                    }
+                    .tag(index)
                 }
-                
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: 170)
-            
-            
+
             HStack(spacing: 6) {
-                ForEach(0..<3) { index in
+                ForEach(0..<cards.count, id: \.self) { index in
                     Capsule()
                         .fill(selectedPage == index ? Color.mainbw : Color.gray.opacity(0.3))
                         .frame(width: selectedPage == index ? 25 : 10, height: 5)
@@ -235,10 +305,9 @@ extension RestaurantsFeedView {
         }
         .onReceive(timer) { _ in
             withAnimation(.easeInOut) {
-                selectedPage = (selectedPage + 1) % 3
+                selectedPage = (selectedPage + 1) % cards.count
             }
         }
-        
     }
     
     private var imageSection: some View {
@@ -280,15 +349,16 @@ extension RestaurantsFeedView {
                         .foregroundColor(.gray)
                         .padding()
                 } else {
-                        ForEach(nearbyRestaurants) { item in
-                            NavigationLink(
-                                destination: RestaurantDetailView(restaurant: item.restaurant)
-                                    .navigationBarBackButtonHidden()
-                            ) {
-                                RestaurantsView(restaurant: [item.restaurant], distanceInKm: item.distanceInKm)
-                                    .tint(.primary)
-                            }
+                    ForEach(filteredRestaurants) { item in
+                        NavigationLink(
+                            destination: RestaurantDetailView(restaurant: item.restaurant)
+                                .navigationBarBackButtonHidden()
+                        ) {
+                            RestaurantsView(restaurant: [item.restaurant], distanceInKm: item.distanceInKm)
+                                .tint(.primary)
                         }
+                    }
+
                     
                 }
             }
