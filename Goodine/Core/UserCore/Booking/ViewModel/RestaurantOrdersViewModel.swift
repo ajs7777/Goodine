@@ -1,23 +1,27 @@
 
 
+
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 
-class OrdersViewModel: ObservableObject {
+class RestaurantOrdersViewModel: ObservableObject {
     @Published var orders: [Order] = []
 
     private let db = Firestore.firestore()
+    private var restaurantID: String
+    
+    init(restaurantID: String){
+        self.restaurantID = restaurantID
+    }
 
     func saveOrderToFirestore(
         reservationId: String,
         selectedItems: [String: Int],
         menuItems: [MenuItem]
     ) {
-        guard let userId = Auth.auth().currentUser?.uid else { return } // Ensure user is authenticated
-
         let ordersRef = db.collection("business_users")
-                          .document(userId)
+                          .document(restaurantID)
                           .collection("reservations")
                           .document(reservationId)
                           .collection("orders")
@@ -33,7 +37,7 @@ class OrdersViewModel: ObservableObject {
 
         let orderDetails = Order(
             id: ordersRef.documentID,
-            userId: userId,
+            userId: restaurantID,
             items: orderData,
             timestamp: Timestamp(date: Date()),
             status: "pending"
@@ -53,10 +57,8 @@ class OrdersViewModel: ObservableObject {
     }
 
     func fetchOrders(reservationId: String) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-
         db.collection("business_users")
-            .document(userId)
+            .document(restaurantID)
             .collection("reservations")
             .document(reservationId)
             .collection("orders")
@@ -76,10 +78,9 @@ class OrdersViewModel: ObservableObject {
     
     
     func deleteOrder(orderId: String, reservationId: String) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
 
         let orderRef = db.collection("business_users")
-                         .document(userId)
+                         .document(restaurantID)
                          .collection("reservations")
                          .document(reservationId)
                          .collection("orders")

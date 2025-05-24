@@ -2,6 +2,14 @@
 //  TableViewModel.swift
 //  Goodine
 //
+//  Created by Abhijit Saha on 24/05/25.
+//
+
+
+//
+//  TableViewModel.swift
+//  Goodine
+//
 //  Created by Abhijit Saha on 15/02/25.
 //
 
@@ -11,7 +19,7 @@ import FirebaseFirestore
 import Firebase
 
 @MainActor
-class TableViewModel: ObservableObject {
+class RestaurantTableViewModel: ObservableObject {
     
     // MARK: - Published Properties
     
@@ -54,9 +62,12 @@ class TableViewModel: ObservableObject {
     private var historyListener: ListenerRegistration?
     private var layoutListener: ListenerRegistration?
     
+    private var restaurantID: String
+
     // MARK: - Initializer
     
-    init() {
+    init(restaurantID: String) {
+        self.restaurantID = restaurantID
         updateSelectedButtons()
         // Setup real‑time listeners
         fetchReservationsListener()
@@ -106,19 +117,16 @@ class TableViewModel: ObservableObject {
     
     /// Save the current table layout to Firestore.
     func saveTableLayout() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            errorMessage = "No logged-in user found."
-            return
-        }
+        
         isLoading = true
         let db = Firestore.firestore()
         let tableData: [String: Any] = [
             "rows": rows,
             "columns": columns,
-            "userID": userID
+            "userID": restaurantID
         ]
         db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("tables")
             .document("layout")
             .setData(tableData) { error in
@@ -128,17 +136,16 @@ class TableViewModel: ObservableObject {
                 if let error = error {
                     self.logError(error)
                 } else {
-                    print("Table layout saved successfully for user \(userID)")
+                    print("Table layout saved successfully for user \(self.restaurantID)")
                 }
             }
     }
     
     /// Set up a real‑time listener for table layout.
     private func fetchTableLayoutListener() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         let layoutRef = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("tables")
             .document("layout")
         layoutListener = layoutRef.addSnapshotListener { documentSnapshot, error in
@@ -157,7 +164,6 @@ class TableViewModel: ObservableObject {
                 self.columns = data["columns"] as? Int ?? 2
                 self.updateSelectedButtons()
             }
-            print("Table layout fetched successfully for user \(userID)")
         }
     }
     
@@ -165,11 +171,7 @@ class TableViewModel: ObservableObject {
     
     /// Save all seat selections as a new reservation.
     func saveAllSeatSelections() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            errorMessage = "No logged-in user found."
-            return
-        }
-        
+               
         // Merge conflict checking and data preparation in one loop.
         var reservationData: [String: Any] = [
             "reservationID": UUID().uuidString,
@@ -200,7 +202,7 @@ class TableViewModel: ObservableObject {
         let db = Firestore.firestore()
         let reservationID = reservationData["reservationID"] as! String
         let reservationRef = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("reservations")
             .document(reservationID)
         reservationRef.setData(reservationData) { error in
@@ -219,14 +221,10 @@ class TableViewModel: ObservableObject {
     
     /// Fetch all seat selections from reservations.
     func fetchAllSeatSelections(completion: (() -> Void)? = nil) {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            errorMessage = "No logged-in user found."
-            completion?()
-            return
-        }
+        
         let db = Firestore.firestore()
         let reservationCollection = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("reservations")
         isLoading = true
         
@@ -282,10 +280,9 @@ class TableViewModel: ObservableObject {
     
     /// Set up a real‑time listener for reservations.
     private func fetchReservationsListener() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         let reservationCollection = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("reservations")
         reservationListener = reservationCollection.addSnapshotListener { snapshot, error in
             if let error = error {
@@ -342,17 +339,14 @@ class TableViewModel: ObservableObject {
     
     /// Delete a reservation and save it to history.
     func deleteReservationAndSaveToHistory(reservationID: String) {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            errorMessage = "No logged-in user found."
-            return
-        }
+       
         let db = Firestore.firestore()
         let reservationRef = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("reservations")
             .document(reservationID)
         let historyRef = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("history")
             .document(reservationID)
         
@@ -433,14 +427,10 @@ class TableViewModel: ObservableObject {
     }
     
     func deleteReservation(reservationID: String, completion: @escaping (Bool, String?) -> Void) {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            completion(false, "No logged-in user found.")
-            return
-        }
-        
+              
         let db = Firestore.firestore()
         let reservationRef = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("reservations")
             .document(reservationID)
         
@@ -542,13 +532,9 @@ class TableViewModel: ObservableObject {
     
     /// Fetch order history once.
     func fetchOrderHistory() {
-        guard let userID = Auth.auth().currentUser?.uid else {
-            errorMessage = "No logged-in user found."
-            return
-        }
         let db = Firestore.firestore()
         let historyCollection = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("history")
         isLoading = true
         
@@ -612,10 +598,9 @@ class TableViewModel: ObservableObject {
     
     /// Set up a real‑time listener for history.
     private func fetchHistoryListener() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         let historyCollection = db.collection("business_users")
-            .document(userID)
+            .document(restaurantID)
             .collection("history")
         historyListener = historyCollection.addSnapshotListener { snapshot, error in
             if let error = error {

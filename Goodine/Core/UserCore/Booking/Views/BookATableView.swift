@@ -8,152 +8,151 @@
 import SwiftUI
 
 struct BookATableView: View {
+    let restaurantID: String
+    @StateObject private var tableVM: RestaurantTableViewModel
+    @State var currentTime = Date()
+    @State private var showFoodMenu = false
     
-    @Environment(\.dismiss) var dismiss
-    @State var selectedPerson: Int? = nil
-    @State var selectedDate: Int? = nil
-    @State var selectedTime: Int? = nil
+    init(restaurantID: String) {
+           self.restaurantID = restaurantID
+           _tableVM = StateObject(wrappedValue: RestaurantTableViewModel(restaurantID: restaurantID))
+       }
+    
+    // Timer for updating the current time every second.
+    let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
+    
+    // Date & Time Formatters
+    var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .medium
+        return formatter
+    }
+    var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }
     
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 25.0) {
+            VStack(spacing: 15) {
                 
-                // title and dismiss button
-                HStack {
-                    Text("Book a table")
-                        .foregroundStyle(.mainbw)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.mainbw)
-                            .fontWeight(.bold)
-                            .padding(.trailing)
-                    }
+                // Display error if any.
+                if let errorMessage = tableVM.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .padding(.top)
                 
-                //Tables
-                VStack(alignment: .leading, spacing: 15.0){
-                    Text("Table for")
-                        .foregroundStyle(.mainbw)
-                        .font(.headline)
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 15){
-                            ForEach(1...20, id: \.self){ people in
-                                Text("\(people)")
-                                    .foregroundStyle(selectedPerson == people  ? .mainbw : .secondary)
-                                    .frame(width: 55, height: 40)
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .inset(by: 3)
-                                            .stroke(
-                                                selectedPerson == people ? .mainbw : .secondary,
-                                                lineWidth: selectedPerson == people ? 2 : 1)
-                                        
-                                    }
-                                    .onTapGesture {
-                                        selectedPerson = people
-                                    }
-                                
-                            }
-                        }
-                    }
-                    .scrollIndicators(.hidden)
-                }
-                .padding(.leading)
-                
-                
-                VStack(alignment: .leading, spacing: 15.0){
-                    Text("Date")
-                        .foregroundStyle(.mainbw)
-                        .font(.headline)
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 12){
-                            ForEach(1...31, id: \.self){ date in
-                                VStack{
-                                    Text("Today")
-                                    
-                                        .font(.footnote)
-                                    Text("\(date) Jan")
-                                }
-                                .foregroundStyle(selectedDate == date  ? .mainbw : .secondary)
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 25)
-                                .padding(.vertical, 10)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .inset(by: 3)
-                                        .stroke(
-                                            selectedDate == date ? .mainbw : .secondary,
-                                            lineWidth: selectedDate == date ? 2 : 1)
-                                    
-                                }
-                                .onTapGesture {
-                                    selectedDate = date
-                                }
-                            }
-                        }
-                    } .scrollIndicators(.hidden)
-                }
-                .padding(.leading)
-                
-                VStack(alignment: .leading, spacing: 15.0){
-                    Text("Time")
-                        .foregroundStyle(.mainbw)
-                        .font(.headline)
-                    VStack(spacing: 20.0){
-                        ForEach(1..<5) { row in
-                            HStack(spacing: 20.0){
-                                ForEach(1...3, id: \.self){ time in
-                                    Text("07 : 00 PM")
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(selectedTime == row ? .mainbw : .secondary)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 40)
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(
-                                                    selectedTime == row ? .mainbw : .secondary,
-                                                    lineWidth: selectedTime == row ? 2 : 1)
-                                            
-                                        }
-                                        .onTapGesture {
-                                            selectedTime = row
-                                        }
-                                }
-                            }
-                        }
-                    }
-                    
-                    
-                }
-                .padding()
-                
-                
-                Spacer()
-                
-                NavigationLink {
-                    ReservationView()
-                        .navigationBarBackButtonHidden()
-                        .toolbarVisibility(.hidden)
-                } label: {
-                    Text("Next")
-                        .font(.title3)
-                        .goodineButtonStyle(.mainbw)
+                if tableVM.isLoading {
+                    ProgressView("Loading tables...")
                         .padding()
+                } else {
+                    
+                    datePickerView
+                    
+                    Divider()
+                    
+                    tablesGridView
+                    
+                    Button {
+                        tableVM.saveAllSeatSelections()
+                        showFoodMenu.toggle()
+                    } label: {
+                        Text("Done")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.mainInvert)
+                            .frame(maxWidth: 700)
+                            .frame(height: 60)
+                            .background(Color.mainbw)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .padding()
+                    .disabled(
+                        !(tableVM.selectedButtons.values.contains(where: { $0.contains(true) }))
+                    )
+
                 }
+            }
+            .sheet(isPresented: $showFoodMenu, content: { RestaurantFoodMenuView(restaurantID: restaurantID) })
+            .navigationTitle("Table Selection")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                tableVM.fetchAllSeatSelections()
             }
         }
     }
 }
 
-#Preview {
-    BookATableView()
+
+
+extension BookATableView {
+        
+    // MARK: Date & Time Picker View
+    private var datePickerView: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(dateFormatter.string(from: currentTime))
+                    .foregroundColor(.orange)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                
+                Text(timeFormatter.string(from: currentTime))
+                    .font(.headline)
+                    .fontWeight(.bold)
+            }
+            
+            Spacer()
+            
+        }
+        .padding(.horizontal)
+        .onReceive(timer) { value in
+            currentTime = value
+        }
+    }
+    
+    // MARK: Tables Grid View
+    private var tablesGridView: some View {
+        GeometryReader { geometry in
+            // Ensure we have valid numbers of rows and columns.
+            let safeColumns = max(1, tableVM.columns)
+            let safeRows = max(1, tableVM.rows)
+            
+            // Calculate each cell's available width and height.
+            let cellWidth = geometry.size.width / CGFloat(safeColumns)
+            let cellHeight = geometry.size.height / CGFloat(safeRows)
+            
+            // Subtract a fixed padding (20) and ensure the value doesn't drop below a minimum size.
+            let squareSize = max(30, min(cellWidth, cellHeight) - 20)
+            
+            // Debug: Uncomment the next line to see the sizes.
+            // print("geometry: \(geometry.size), cellWidth: \(cellWidth), cellHeight: \(cellHeight), squareSize: \(squareSize)")
+            
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 15), count: safeColumns), spacing: 15) {
+                    ForEach(1...(safeRows * safeColumns), id: \.self) { tableIndex in
+                        // Create a binding for the table's seat states.
+                        let seatBinding = Binding<[Bool]>(
+                            get: { tableVM.selectedButtons[tableIndex] ?? Array(repeating: false, count: 4) },
+                            set: { tableVM.selectedButtons[tableIndex] = $0 }
+                        )
+                        
+                        TableCellView(
+                            tableIndex: tableIndex,
+                            seatStates: seatBinding,
+                            tablePeopleCount: $tableVM.tablePeopleCount,
+                            reservedSeats: tableVM.reservedSeats[tableIndex] ?? Array(repeating: false, count: 4),
+                            selectedTable: $tableVM.selectedTable,
+                            cellSize: squareSize
+                        )
+                    }
+                }
+                .padding()
+            }
+        }
+        .frame(minHeight: 300)
+        // Ensure GeometryReader gets a non-zero size.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
 }

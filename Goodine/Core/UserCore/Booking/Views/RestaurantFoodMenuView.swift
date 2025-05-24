@@ -2,55 +2,65 @@
 //  FoodMenuView.swift
 //  Goodine
 //
-//  Created by Abhijit Saha on 15/02/25.
+//  Created by Abhijit Saha on 24/05/25.
 //
+
 
 import SwiftUI
 import Kingfisher
 
-struct FoodMenuView: View {
+struct RestaurantFoodMenuView: View {
     
-    @StateObject var orderVM = OrdersViewModel()
-    @ObservedObject var tableVM = TableViewModel()
-    @ObservedObject var viewModel = RestaurantMenuViewModel()
+    let restaurantID: String
+    
+    @StateObject var orderVM : RestaurantOrdersViewModel
+    @StateObject private var tableVM: RestaurantTableViewModel
+    @StateObject var viewModel : MenuViewModel
+    
+    @StateObject var businessAuthVM : RestroDetailsViewModel
     @Environment(\.dismiss) var dismiss
     @State private var selectedItems: [String: Int] = [:]
     
+    init(restaurantID: String) {
+        self.restaurantID = restaurantID
+        _viewModel = StateObject(wrappedValue: MenuViewModel(restaurantID: restaurantID))
+        _orderVM = StateObject(wrappedValue: RestaurantOrdersViewModel(restaurantID: restaurantID))
+        _tableVM = StateObject(wrappedValue: RestaurantTableViewModel(restaurantID: restaurantID))
+        _businessAuthVM = StateObject(wrappedValue: RestroDetailsViewModel(restaurantID: restaurantID))
+    }
     
     var body: some View {
         NavigationStack {
             VStack(alignment: .center) {
-                       ScrollView {
-                           LazyVStack(alignment: .leading) {
-                               ForEach(viewModel.items) { item in
-                                   FoodMenuItemView(item: item, selectedItems: $selectedItems)
-                               }
-                           }
-                           
-                       }
-                       Button("Place Order") {
-                           orderVM.saveOrderToFirestore(reservationId: tableVM.reservations.first?.id ?? "", selectedItems: selectedItems, menuItems: viewModel.items)
-                           dismiss()
-                       }
-                       .goodineButtonStyle(.mainbw)
-                   }
-                   .padding()
-                   .navigationTitle("Order Food")
-               }
-       
+                ScrollView {
+                    LazyVStack(alignment: .leading) {
+                        ForEach(viewModel.items) { item in
+                            RestaurantFoodMenuItemView(item: item, selectedItems: $selectedItems, restaurant: businessAuthVM.restaurant)
+                        }
+                    }
+                    
+                }
+                Button("Place Order") {
+                    orderVM.saveOrderToFirestore(reservationId: tableVM.reservations.first?.id ?? "", selectedItems: selectedItems, menuItems: viewModel.items)
+                    dismiss()
+                }
+                .goodineButtonStyle(.mainbw)
+            }
+            .padding()
+            .navigationTitle("Order Food")
+        }
+        
     }
 }
 
-#Preview {
-    FoodMenuView()
-}
-
-struct FoodMenuItemView: View {
+struct RestaurantFoodMenuItemView: View {
     var item: MenuItem
     
     @Binding var selectedItems: [String: Int]
     @State private var quantity: Int = 0
-    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
+    
+    let restaurant : Restaurant?
+    
     
     var body: some View {
         HStack(spacing: 10) {
@@ -86,7 +96,6 @@ struct FoodMenuItemView: View {
                 Text(item.foodDescription ?? "Food Description")
                     .font(.caption)
                     .foregroundStyle(.mainbw.opacity(0.5))
-                let restaurant = businessAuthVM.restaurant
                 
                 Text("\(restaurant?.currencySymbol ?? "")\(item.foodPrice)")
                     .foregroundStyle(.mainbw.opacity(0.5))
@@ -140,3 +149,4 @@ struct FoodMenuItemView: View {
         }
     }
 }
+

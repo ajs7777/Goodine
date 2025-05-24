@@ -1,3 +1,11 @@
+//
+//  RestaurantMenuViewModel.swift
+//  Goodine
+//
+//  Created by Abhijit Saha on 24/05/25.
+//
+
+
 
 
 import SwiftUI
@@ -5,22 +13,20 @@ import FirebaseFirestore
 import FirebaseStorage
 import FirebaseAuth
 
-class RestaurantMenuViewModel: ObservableObject {
+class MenuViewModel: ObservableObject {
     @Published var items = [MenuItem]()
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
+    private var restaurantID: String
     
-    init() {
+    init(restaurantID: String) {
+        self.restaurantID = restaurantID
         self.fetchMenuItems()
     }
     
     func fetchMenuItems() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("No logged-in user")
-            return
-        }
-        
-        db.collection("business_users").document(userId).collection("menu")
+                
+        db.collection("business_users").document(restaurantID).collection("menu")
             .addSnapshotListener { snapshot, error in
                 if let error = error {
                     print("❌ Error fetching menu items: \(error)")
@@ -40,12 +46,7 @@ class RestaurantMenuViewModel: ObservableObject {
     }
     
     func saveItemToFirestore(_ item: MenuItem, image: UIImage?) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("No logged-in user")
-            return
-        }
-        
-        let menuRef = db.collection("business_users").document(userId).collection("menu").document(item.id) // 🔥 Keeps the same ID
+        let menuRef = db.collection("business_users").document(restaurantID).collection("menu").document(item.id) // 🔥 Keeps the same ID
 
         if let image = image {
             uploadImage(image, itemId: item.id) { imageUrl in
@@ -69,12 +70,8 @@ class RestaurantMenuViewModel: ObservableObject {
     }
     
     func deleteItem(_ item: MenuItem) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("No logged-in user")
-            return
-        }
-        
-        db.collection("business_users").document(userId).collection("menu").document(item.id).delete { error in
+              
+        db.collection("business_users").document(restaurantID).collection("menu").document(item.id).delete { error in
             if let error = error {
                 print("Error deleting document: \(error)")
             } else {
@@ -120,12 +117,8 @@ class RestaurantMenuViewModel: ObservableObject {
     }
 
     func updateItemInFirestore(_ item: MenuItem, image: UIImage?) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("No logged-in user")
-            return
-        }
         
-        let menuRef = db.collection("business_users").document(userId).collection("menu").document(item.id)
+        let menuRef = db.collection("business_users").document(restaurantID).collection("menu").document(item.id)
         
         if let image = image {
             uploadImage(image, itemId: item.id) { imageUrl in

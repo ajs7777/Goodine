@@ -96,7 +96,7 @@ struct RestaurantDetailView: View {
         }
         // book a table button works as sheet
         .sheet(isPresented: $showBookingSheet, content: {
-            BookATableView()
+            BookATableView(restaurantID: restaurant.id)
         })
         .overlay(alignment: .bottom) {
             ZStack {
