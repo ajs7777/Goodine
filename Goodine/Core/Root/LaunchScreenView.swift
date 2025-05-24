@@ -21,7 +21,7 @@ struct LaunchScreenView: View {
                 .transition(.opacity)
         } else {
             ZStack {
-                Color.mainInvert.edgesIgnoringSafeArea(.all) // Background color
+                Color.mainInvert.edgesIgnoringSafeArea(.all)
                 
                 // Location Icon (appears first)
                 Image("locationIcon")
@@ -76,5 +76,3 @@ struct LaunchScreenView: View {
     LaunchScreenView()
         .environmentObject(BusinessAuthViewModel())
 }
-
-

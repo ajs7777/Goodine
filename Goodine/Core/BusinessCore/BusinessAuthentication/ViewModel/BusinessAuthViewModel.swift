@@ -246,7 +246,7 @@ class BusinessAuthViewModel: ObservableObject {
         // Upload new images and update Firestore
         if let images = images {
             for image in images {
-                if let imageData = image.jpegData(compressionQuality: 0.8) {
+                if let imageData = image.jpegData(compressionQuality: 0.3) {
                     let storageRef = storage.reference().child("business_users/\(UUID().uuidString).jpg")
                     let _ = try await storageRef.putDataAsync(imageData, metadata: nil)
                     let url = try await storageRef.downloadURL()

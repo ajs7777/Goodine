@@ -2,6 +2,7 @@
 import SwiftUI
 import CoreLocation
 import FirebaseFirestore
+import Shimmer
 
 struct RestaurantsFeedView: View {
     
@@ -10,18 +11,10 @@ struct RestaurantsFeedView: View {
     @State private var selectedPage = 0
     @State private var searchText = ""
     
-    @State private var nearbyRestaurants: [NearbyRestaurant] = []
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
-    private var filteredRestaurants: [NearbyRestaurant] {
-        if searchText.isEmpty {
-            return nearbyRestaurants
-        } else {
-            return nearbyRestaurants.filter {
-                $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
-
+    @EnvironmentObject var nearbyVM: NearbyRestaurantsViewModel
+        
     @State private var selectedRestaurant: Restaurant?
     @State private var showDetailView = false
     
@@ -29,22 +22,21 @@ struct RestaurantsFeedView: View {
         if searchText.isEmpty {
             return []
         } else {
-            return nearbyRestaurants.filter {
+            return nearbyVM.nearbyRestaurants.filter {
                 $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
-
-    @State private var isLoading = true
-    @State private var fetchError: String?
+    
+    @StateObject private var speechRecognizer = SpeechRecognizer()
+    @State private var isRecording = false
+    
+    
     private let db = Firestore.firestore()
     private let maxDistanceKm: Double = 15.0
-    
-    
-    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
-    @StateObject private var locationVM = LocationViewModel()
-    @ObservedObject var userLocationManager = UserLocationManager()
-    
+        
+    @EnvironmentObject var userLocationManager: UserLocationManager
+    @EnvironmentObject var locationVM: LocationViewModel
     
     var body: some View {
         VStack {
@@ -57,72 +49,21 @@ struct RestaurantsFeedView: View {
                     //imageSection
                     restaurantsSection
                 }
-                .navigationDestination(isPresented: $showDetailView) {
-                    if let restaurant = selectedRestaurant {
-                        RestaurantDetailView(restaurant: restaurant)
-                            .navigationBarBackButtonHidden()
-                    }
-                }
-
-
+                              
+                
             }
         }
         .onReceive(userLocationManager.$userLocation
             .debounce(for: .seconds(1), scheduler: RunLoop.main)) { location in
-            guard let location = location else { return }
-            fetchNearbyRestaurants(userLocation: location)
-        }
+                guard let location = location else { return }
+                nearbyVM.fetchNearbyRestaurants(
+                    userLocation: location,
+                    allRestaurants: businessAuthVM.allRestaurants
+                )
+            }
         
     }
     
-    func fetchNearbyRestaurants(userLocation: CLLocation) {
-        nearbyRestaurants = []
-        isLoading = true
-        fetchError = nil
-
-        let group = DispatchGroup()
-
-        for restaurant in businessAuthVM.allRestaurants {
-            group.enter()
-
-            db.collection("business_users")
-                .document(restaurant.id)
-                .collection("restaurantLocations")
-                .document("main")
-                .getDocument { snapshot, error in
-                    defer { group.leave() }
-
-                    guard error == nil else {
-                        print("❌ Error fetching location for \(restaurant.name): \(error!.localizedDescription)")
-                        return
-                    }
-
-                    guard let data = snapshot?.data(),
-                          let lat = data["latitude"] as? Double,
-                          let lon = data["longitude"] as? Double else {
-                        print("⚠️ Skipping \(restaurant.name): Missing or invalid location data.")
-                        return
-                    }
-
-                    let restaurantLocation = CLLocation(latitude: lat, longitude: lon)
-                    let distance = userLocation.distance(from: restaurantLocation) / 1000.0
-                    print("📍 \(restaurant.name): \(distance) km away")
-
-                    if distance <= maxDistanceKm {
-                        DispatchQueue.main.async {
-                            if !nearbyRestaurants.contains(where: { $0.id == restaurant.id }) {
-                                nearbyRestaurants.append(NearbyRestaurant(restaurant: restaurant, distanceInKm: distance))
-                            }
-                        }
-                    }
-
-                }
-        }
-
-        group.notify(queue: .main) {
-            isLoading = false
-        }
-    }
 }
 
 #Preview {
@@ -174,54 +115,68 @@ extension RestaurantsFeedView {
                         Image(systemName: "magnifyingglass")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.leading, 15)
-//                        Spacer()
-//                        Button {
-//                            // Mic action
-//                        } label: {
-//                            Image(systemName: "mic.fill")
-//                        }
-//                        .tint(.mainbw)
-//                        .frame(maxWidth: .infinity, alignment: .trailing)
-//                        .padding(.trailing, 50)
-//
-//                        Button {
-//                            // Filter action
-//                        } label: {
-//                            Image(systemName: "slider.vertical.3")
-//                        }
-//                        .tint(.mainbw)
-//                        .frame(maxWidth: .infinity, alignment: .trailing)
-//                        .padding(.trailing, 18)
+                        Spacer()
+                        Button {
+                            if isRecording {
+                                speechRecognizer.stopRecording()
+                            } else {
+                                try? speechRecognizer.startRecording()
+                            }
+                            isRecording.toggle()
+                        } label: {
+                            Image(systemName: "mic.fill")
+                                .foregroundColor(isRecording ? .red : .mainbw.opacity(0.5))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 22)
+                        //.padding(.trailing, 50)
+                        //
+                        //                        Button {
+                        //                            // Filter action
+                        //                        } label: {
+                        //                            Image(systemName: "slider.vertical.3")
+                        //                        }
+                        //                        .tint(.mainbw)
+                        //                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        //                        .padding(.trailing, 18)
                     }
             }
-
+            
             // Suggestions dropdown
             if !suggestedRestaurants.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 5) {
                     ForEach(suggestedRestaurants.prefix(5)) { item in
                         Button(action: {
                             selectedRestaurant = item.restaurant
                             searchText = ""
                             showDetailView = true
                         }) {
-                            Text(item.restaurant.name)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.white)
+                            HStack {
+                                Image("businessicon")
+                                    .resizable()
+                                    .frame(width: 24, height: 37)
+                                    .padding(.leading)
+                                
+                                Text(item.restaurant.name)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.mainbw.opacity(0.8))
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .tint(.black)
                     }
                 }
-                .background(Color.white)
-                .cornerRadius(8)
-                .shadow(radius: 2)
                 .padding(.top, 4)
             }
         }
         .padding(.horizontal)
         .padding(.bottom)
+        .onReceive(speechRecognizer.$recognizedText) { newText in
+            searchText = newText
+        }
+        
     }
     
     private var categoriesSection: some View {
@@ -244,8 +199,18 @@ extension RestaurantsFeedView {
                         if index < categories.count {
                             let category = categories[index]
                             NavigationLink {
-                                CategoryRestaurantsView(categoryName: category.1)
-                                    .navigationBarBackButtonHidden()
+                                let isVeg: Bool? = {
+                                    switch category.0.lowercased() {
+                                    case "veg": return true
+                                    case "nonveg": return false
+                                    default: return nil
+                                    }
+                                }()
+                                
+                                CategoryRestaurantsView(
+                                    categoryName: category.1,
+                                    isVeg: isVeg
+                                )
                             } label: {
                                 VStack(spacing: 5.0) {
                                     Image(category.0)
@@ -259,6 +224,8 @@ extension RestaurantsFeedView {
                                 }
                             }
                             .buttonStyle(PlainButtonStyle())
+
+                            
                         }
                     }
                 }
@@ -274,7 +241,7 @@ extension RestaurantsFeedView {
             ("Discount-2", "Couple Friendly", "Restaurants", .red),
             ("Discount-3", "Dine in Available", "Near You", .orange)
         ]
-
+        
         return VStack {
             TabView(selection: $selectedPage) {
                 ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
@@ -294,7 +261,7 @@ extension RestaurantsFeedView {
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: 170)
-
+            
             HStack(spacing: 6) {
                 ForEach(0..<cards.count, id: \.self) { index in
                     Capsule()
@@ -330,46 +297,46 @@ extension RestaurantsFeedView {
     }
     
     private var restaurantsSection: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Restaurants To Explore")
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.leading)
             
-            VStack(alignment: .leading) {
-                if isLoading {
-                    ProgressView("Fetching nearby places...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = fetchError {
-                    Text("Error: \(error)")
-                        .foregroundColor(.red)
-                        .padding()
-                } else if nearbyRestaurants.isEmpty {
-                    Text("No nearby restaurants found.")
-                        .foregroundColor(.gray)
-                        .padding()
-                } else {
-                    ForEach(filteredRestaurants) { item in
-                        NavigationLink(
-                            destination: RestaurantDetailView(restaurant: item.restaurant)
-                                .navigationBarBackButtonHidden()
-                        ) {
-                            RestaurantsView(restaurant: [item.restaurant], distanceInKm: item.distanceInKm)
-                                .tint(.primary)
-                        }
+            if nearbyVM.isLoading || !nearbyVM.hasLoaded {
+                // Skeleton View
+                ForEach(0..<3) { _ in
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 150)
+                        .padding(.horizontal)
+                        .shimmering()
+                }
+            } else if let error = nearbyVM.fetchError {
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
+            } else if nearbyVM.nearbyRestaurants.isEmpty {
+                Text("No nearby restaurants found.")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundColor(.gray)
+            } else {
+                ForEach(nearbyVM.nearbyRestaurants) { item in
+                    NavigationLink(
+                        destination: RestaurantDetailView(restaurant: item.restaurant, distanceInKm: item.distanceInKm)
+                           
+                    ) {
+                        RestaurantsView(
+                            restaurant: [item.restaurant],
+                            distanceInKm: item.distanceInKm
+                        )
+                        .tint(.primary)
                     }
-
-                    
                 }
             }
-            
-
         }
         .padding(.top, 20)
-        
-       
-        
     }
+    
     
 }
 

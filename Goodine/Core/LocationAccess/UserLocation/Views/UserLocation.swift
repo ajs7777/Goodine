@@ -24,7 +24,13 @@ class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        
+        // Automatically fetch location if already authorized
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            locationManager.requestLocation()
+        }
     }
+
     
     func requestPermission() {
         locationManager.requestWhenInUseAuthorization()
@@ -38,15 +44,25 @@ class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        userLocation = locations.first
+        guard let best = locations.last else { return }
+
+        if let current = userLocation, current.distance(from: best) < 5 {
+            return
+        }
+
+        userLocation = best
     }
+
+
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to get location: \(error.localizedDescription)")
     }
     
     func requestLocation() {
-        locationManager.requestLocation()
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            locationManager.requestLocation()
+        }
     }
     
 }
@@ -89,7 +105,7 @@ class UserLocationService {
 // MARK: - Main View
 
 struct UserLocation: View {
-    @StateObject private var userLocationManager = UserLocationManager()
+    @EnvironmentObject var userLocationManager: UserLocationManager
     private let userLocationService = UserLocationService()
     
     var onLocationAllowed: () -> Void

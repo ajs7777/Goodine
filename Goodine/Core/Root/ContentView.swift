@@ -8,25 +8,41 @@
 import SwiftUI
 
 struct ContentView: View {
+
     @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
-    @EnvironmentObject var userAuthVM : AuthViewModel
+    @EnvironmentObject var userAuthVM: AuthViewModel
     @EnvironmentObject var subscriptionManager: SubscriptionManager
+    @StateObject var userLocationManager = UserLocationManager()
+
+    @State private var isCheckingAuth = true
+    @State private var isUserAuthenticated = false
+    @State private var isBusinessAuthenticated = false
 
     var body: some View {
         Group {
-           if businessAuthVM.restaurant != nil {
-               LaunchRouterView()
-            } else if userAuthVM.userdata != nil {
+            if isCheckingAuth {
+                ProgressView("Loading...")
+            } else if isUserAuthenticated {
                 UserLaunchRouterView()
-            }
-            else {
+                    .environmentObject(userLocationManager)
+            } else if isBusinessAuthenticated {
+                LaunchRouterView()
+            } else {
                 MainLoginPage()
             }
         }
         .onAppear {
             Task {
-                await businessAuthVM.checkUserAuthentication()
-                await subscriptionManager.checkSubscriptionStatus()
+                async let userTask: () = userAuthVM.fetchUserData()
+                async let businessTask: () = businessAuthVM.checkUserAuthentication()
+                async let subTask: () = subscriptionManager.checkSubscriptionStatus()
+
+                let (user: (), business: (), _) = await (userTask, businessTask, subTask)
+
+                // After the data loads, set flags
+                isUserAuthenticated = userAuthVM.userdata != nil
+                isBusinessAuthenticated = businessAuthVM.restaurant != nil
+                isCheckingAuth = false
             }
         }
     }

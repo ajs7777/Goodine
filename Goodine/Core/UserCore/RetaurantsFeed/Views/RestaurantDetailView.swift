@@ -17,26 +17,53 @@ struct RestaurantDetailView: View {
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     let restaurant: Restaurant
+    let distanceInKm: Double?
     
     var isOpen: Bool {
-        guard let openingTime = businessAuthVM.restaurant?.openingTime,
-              let closingTime = businessAuthVM.restaurant?.closingTime else { return false }
-
+        let openingTime = restaurant.openingTime
+        let closingTime = restaurant.closingTime
+        
         let now = Date()
-        return now >= openingTime && now <= closingTime
+        let calendar = Calendar.current
+        
+        // Extract hours and minutes from stored opening and closing times
+        let openingComponents = calendar.dateComponents([.hour, .minute], from: openingTime)
+        let closingComponents = calendar.dateComponents([.hour, .minute], from: closingTime)
+        
+        // Create opening and closing Date objects for today
+        let todayOpening = calendar.date(bySettingHour: openingComponents.hour ?? 0,
+                                         minute: openingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        let todayClosing = calendar.date(bySettingHour: closingComponents.hour ?? 0,
+                                         minute: closingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        
+        return now >= todayOpening && now <= todayClosing
     }
-
+    
     var statusText: String {
-        guard let openingTime = businessAuthVM.restaurant?.openingTime,
-              let closingTime = businessAuthVM.restaurant?.closingTime else { return "Closed" }
-
+        let openingTime = restaurant.openingTime
+        let closingTime = restaurant.closingTime
+        
         let now = Date()
-        let halfHourBeforeOpening = Calendar.current.date(byAdding: .minute, value: -30, to: openingTime) ?? openingTime
-        let halfHourBeforeClosing = Calendar.current.date(byAdding: .minute, value: -30, to: closingTime) ?? closingTime
-
-        if now >= halfHourBeforeOpening && now < openingTime {
+        let calendar = Calendar.current
+        
+        let openingComponents = calendar.dateComponents([.hour, .minute], from: openingTime)
+        let closingComponents = calendar.dateComponents([.hour, .minute], from: closingTime)
+        
+        let todayOpening = calendar.date(bySettingHour: openingComponents.hour ?? 0,
+                                         minute: openingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        let todayClosing = calendar.date(bySettingHour: closingComponents.hour ?? 0,
+                                         minute: closingComponents.minute ?? 0,
+                                         second: 0, of: now) ?? now
+        
+        let halfHourBeforeOpening = calendar.date(byAdding: .minute, value: -30, to: todayOpening) ?? todayOpening
+        let halfHourBeforeClosing = calendar.date(byAdding: .minute, value: -30, to: todayClosing) ?? todayClosing
+        
+        if now >= halfHourBeforeOpening && now < todayOpening {
             return "Opens Soon"
-        } else if now >= halfHourBeforeClosing && now < closingTime {
+        } else if now >= halfHourBeforeClosing && now < todayClosing {
             return "Closes Soon"
         } else if isOpen {
             return "Open Now"
@@ -44,9 +71,6 @@ struct RestaurantDetailView: View {
             return "Closed"
         }
     }
-
-    
-    
     
     var body: some View {
         ScrollView {
@@ -60,10 +84,15 @@ struct RestaurantDetailView: View {
                 topBarIcons
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBackGesture()
         .onAppear {
             Task{
                 await businessAuthVM.fetchAllRestaurants()
             }
+            FavoritesManager.fetchFavoriteStatus(for: restaurant.id) { status in
+                    isFavorite = status
+                }
         }
         // book a table button works as sheet
         .sheet(isPresented: $showBookingSheet, content: {
@@ -82,13 +111,15 @@ struct RestaurantDetailView: View {
                 }
                 .padding(.horizontal)
             }
-
+            
         }
     }
+    
+    
 }
 
 #Preview {
-    RestaurantDetailView( restaurant: Restaurant(id: "", ownerName: "", name: "Limelight - Orchid Heritage", type: "Indian, Chinese", city: "Agartala", state: "", address: "VN lane 1 - Agartala, Tripura 799009", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [], currency: "INR", currencySymbol: "₹"))
+    RestaurantDetailView( restaurant: Restaurant(id: "", ownerName: "", name: "Limelight - Orchid Heritage", type: "Indian, Chinese", city: "Agartala", state: "", address: "VN lane 1 - Agartala, Tripura 799009", zipcode: "", averageCost: "", openingTime: Date(), closingTime: Date(), imageUrls: [], currency: "INR", currencySymbol: "₹"), distanceInKm: 0.00)
         .environmentObject(BusinessAuthViewModel())
 }
 
@@ -110,7 +141,7 @@ extension RestaurantDetailView {
                     )
                     .shadow(radius: 10)
             }
-
+            
             Spacer()
             
             Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -123,19 +154,11 @@ extension RestaurantDetailView {
                         .fill(.white)
                 )
                 .onTapGesture {
-                    isFavorite.toggle()
+                    FavoritesManager.toggleFavorite(for: restaurant.id) { newStatus in
+                                isFavorite = newStatus
+                            }
                 }
-                .shadow(radius: 10)
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.black)
-                .font(.title3)
-                .fontWeight(.semibold)
-                .padding(10)
-                .background(
-                    Circle()
-                        .fill(.white)
-                )
-                .shadow(radius: 10)
+            
         }
         .padding(.horizontal)
         .padding(.top)
@@ -174,10 +197,9 @@ extension RestaurantDetailView {
                         statusText == "Closes Soon" ? .orange : .red
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8))
-
                 
                 Spacer()
-
+                
             }
             
             //Hotel name
@@ -190,9 +212,9 @@ extension RestaurantDetailView {
                 VStack(alignment: .leading){
                     Text(restaurant.type)
                         .foregroundStyle(.mainbw)
-                    Text("\(restaurant.city) | 2 Km")
+                    Text("\(restaurant.city) | \(String(format: "%.1f Km", distanceInKm ?? 0.0))")
                         .foregroundStyle(.secondary)
-                 }
+                }
                 
                 Spacer()
                 
@@ -201,17 +223,17 @@ extension RestaurantDetailView {
                         Image(systemName: "star.fill")
                             .foregroundStyle(.yellow)
                             .font(.footnote)
-                        Text("4.5(3k Ratings)")
+                        Text("No Ratings")
                             .foregroundStyle(.mainbw)
                     }
                     .font(.callout)
-                                     
+                    
                     if restaurant.averageCost != "" {
                         Text("₹\(restaurant.averageCost ?? "") for two")
                             .foregroundStyle(.mainbw)
                             .font(.callout)
                     }
-                 }
+                }
             }
             .padding(.bottom)
             
@@ -257,32 +279,27 @@ extension RestaurantDetailView {
     }
     
     private var featuresSection: some View {
-        VStack(alignment: .leading, spacing: 20.0){
+        VStack(alignment: .leading, spacing: 20.0) {
             Text("Features")
                 .foregroundStyle(.mainbw)
                 .font(.title)
                 .fontWeight(.bold)
             
-            //Features
-            HStack{
-                Text("Reservation Available")
-                    .foregroundStyle(.mainbw)
-                    .fontWeight(.medium)
-                    .padding(10)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                Text("Parking Available")
-                    .foregroundStyle(.mainbw)
-                    .fontWeight(.medium)
-                    .padding(10)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                
-                Spacer()
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(restaurant.features, id: \.self) { feature in
+                    Text(feature)
+                        .foregroundStyle(.mainbw)
+                        .fontWeight(.medium)
+                        .padding(10)
+                        .background(Color(.systemGray5))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
         .padding(.bottom, 150)
+
     }
 }
 

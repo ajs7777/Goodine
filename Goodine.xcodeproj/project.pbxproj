@@ -14,6 +14,7 @@
 		0CBEF7AB2D524CA100311306 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 0CBEF7AA2D524CA100311306 /* FirebaseDatabase */; };
 		0CBEF7AD2D524CA100311306 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0CBEF7AC2D524CA100311306 /* FirebaseFirestore */; };
 		0CBEF7AF2D524CA100311306 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0CBEF7AE2D524CA100311306 /* FirebaseStorage */; };
+		0CE7611D2DD6F1B500B19830 /* Shimmer in Frameworks */ = {isa = PBXBuildFile; productRef = 0CE7611C2DD6F1B500B19830 /* Shimmer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -64,6 +65,7 @@
 				0C50C5D32D85429F00F52E93 /* StoreKit.framework in Frameworks */,
 				0CBEF7AB2D524CA100311306 /* FirebaseDatabase in Frameworks */,
 				0CBEF7AD2D524CA100311306 /* FirebaseFirestore in Frameworks */,
+				0CE7611D2DD6F1B500B19830 /* Shimmer in Frameworks */,
 				0CBEF7A92D524CA100311306 /* FirebaseCore in Frameworks */,
 				0CBEF7AF2D524CA100311306 /* FirebaseStorage in Frameworks */,
 				0CBEF7A72D524CA100311306 /* FirebaseAuth in Frameworks */,
@@ -125,6 +127,7 @@
 				0CBEF7AC2D524CA100311306 /* FirebaseFirestore */,
 				0CBEF7AE2D524CA100311306 /* FirebaseStorage */,
 				0C87A7112D53D73600080324 /* Kingfisher */,
+				0CE7611C2DD6F1B500B19830 /* Shimmer */,
 			);
 			productName = Goodine;
 			productReference = 0C2F31B72D3EC69700A9AA5A /* Goodine.app */;
@@ -157,6 +160,7 @@
 			packageReferences = (
 				0CBEF7A52D524CA100311306 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				0C87A7102D53D73600080324 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				0CE7611B2DD6F1B500B19830 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0C2F31B82D3EC69700A9AA5A /* Products */;
@@ -325,6 +329,8 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "We need your location to show nearby restaurants";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show nearby restaurants";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access for voice search.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need speech recognition to allow you to search by voice.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -363,6 +369,8 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "We need your location to show nearby restaurants";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show nearby restaurants";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access for voice search.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need speech recognition to allow you to search by voice.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -426,6 +434,14 @@
 				minimumVersion = 11.8.0;
 			};
 		};
+		0CE7611B2DD6F1B500B19830 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/markiv/SwiftUI-Shimmer.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -458,6 +474,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0CBEF7A52D524CA100311306 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		0CE7611C2DD6F1B500B19830 /* Shimmer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0CE7611B2DD6F1B500B19830 /* XCRemoteSwiftPackageReference "SwiftUI-Shimmer" */;
+			productName = Shimmer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

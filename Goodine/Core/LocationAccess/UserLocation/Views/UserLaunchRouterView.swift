@@ -10,27 +10,32 @@ import SwiftUI
 import CoreLocation
 
 struct UserLaunchRouterView: View {
-    @State private var showLocationScreen: Bool = false
-    
+    @EnvironmentObject var userLocationManager: UserLocationManager
+    @State private var showLocationScreen: Bool? = nil
+
     var body: some View {
         Group {
-            if showLocationScreen {
-                UserLocation(onLocationAllowed: {
+            if showLocationScreen == nil {
+                ProgressView("Preparing...")
+            } else if showLocationScreen == true {
+                UserLocation {
+                    UserDefaults.standard.set(true, forKey: "locationPermissionAllowed")
                     showLocationScreen = false
-                })
+                }
             } else {
-                MainTabView()
+                MainTabView() // Always navigate to `MainTabView()` if location permission is granted.
             }
         }
         .onAppear {
-            // Check if location permission has been granted
             if UserDefaults.standard.bool(forKey: "locationPermissionAllowed") {
-                // If location is allowed, skip the location screen
+                // If location permission is allowed, fetch the user's location
+                userLocationManager.requestLocation()
                 showLocationScreen = false
             } else {
-                // Show location screen if the user hasn't allowed location permission
+                // Show the location permission screen
                 showLocationScreen = true
             }
         }
     }
 }
+

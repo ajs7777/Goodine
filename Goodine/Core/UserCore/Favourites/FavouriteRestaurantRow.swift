@@ -32,7 +32,7 @@ struct FavouriteRestaurantRow: View {
                 Text(restaurant.first?.name ?? "")
                     .foregroundStyle(.mainbw)
                     .lineLimit(1)
-                    .font(.title2)
+                    .font(.headline)
                     .bold()
                 HStack{
                     Text(restaurant.first?.city ?? "")
@@ -50,7 +50,7 @@ struct FavouriteRestaurantRow: View {
              Spacer()
                 
                 VStack(alignment: .trailing, spacing: 5) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    Image(systemName: "heart.fill")
                         .foregroundStyle(.orange)
                         .font(.title3)
                         .fontWeight(.semibold)

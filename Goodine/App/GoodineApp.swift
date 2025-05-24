@@ -25,13 +25,17 @@ struct GoodineApp: App {
     @StateObject var businessAuthVM = BusinessAuthViewModel()
     @StateObject var userAuthVM = AuthViewModel()
     @StateObject private var subscriptionManager = SubscriptionManager.shared    
-    
+    @StateObject private var nearbyVM = NearbyRestaurantsViewModel()
+    @StateObject var locationVM = LocationViewModel()
+
     var body: some Scene {
         WindowGroup {
             LaunchScreenView()
                 .environmentObject(BusinessAuthViewModel())
                 .environmentObject(AuthViewModel())
                 .environmentObject(subscriptionManager)
+                .environmentObject(nearbyVM)
+                .environmentObject(locationVM)
         }
     }
 }
