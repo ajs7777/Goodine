@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Restaurant: Identifiable, Codable {
+struct Restaurant: Identifiable, Codable, Equatable {
     var id: String
     var ownerName: String
     var name: String

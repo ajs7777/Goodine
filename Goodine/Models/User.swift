@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct GoodineUser : Identifiable, Codable {
+struct GoodineUser : Identifiable, Codable, Equatable {
     let id: String
     let fullName: String
     let profileImageURL : String?

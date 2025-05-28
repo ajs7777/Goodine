@@ -11,46 +11,43 @@ struct RestaurantsFeedView: View {
     @State private var selectedPage = 0
     @State private var searchText = ""
     
-    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
-    
+    @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
     @EnvironmentObject var nearbyVM: NearbyRestaurantsViewModel
-        
+    @EnvironmentObject var userAuthVM: AuthViewModel
+    @EnvironmentObject var userLocationManager: UserLocationManager
+    @EnvironmentObject var locationVM: LocationViewModel
+    
     @State private var selectedRestaurant: Restaurant?
     @State private var showDetailView = false
-    
-    private var suggestedRestaurants: [NearbyRestaurant] {
-        if searchText.isEmpty {
-            return []
-        } else {
-            return nearbyVM.nearbyRestaurants.filter {
-                $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-    }
     
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
     
-    
-    private let db = Firestore.firestore()
-    private let maxDistanceKm: Double = 15.0
-        
-    @EnvironmentObject var userLocationManager: UserLocationManager
-    @EnvironmentObject var locationVM: LocationViewModel
+    private var suggestedRestaurants: [NearbyRestaurant] {
+        searchText.isEmpty ? [] : nearbyVM.nearbyRestaurants.filter {
+            $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         VStack {
             NavigationStack {
-                ScrollView {
-                    userSection
-                    searchBar
-                    categoriesSection
-                    discountSection
-                    //imageSection
-                    restaurantsSection
+                if nearbyVM.isLoading || !nearbyVM.hasLoaded {
+                    RestaurantsFeedSkeletonView()
+                } else {
+                    ScrollView {
+                        userSection
+                        searchBar
+                        categoriesSection
+                        discountSection
+                        restaurantsSection
+                    }
+                    .navigationDestination(isPresented: $showDetailView) {
+                        if let restaurant = selectedRestaurant {
+                            RestaurantDetailView(restaurant: restaurant, distanceInKm: nil)
+                        }
+                    }
                 }
-                              
-                
             }
         }
         .onReceive(userLocationManager.$userLocation
@@ -61,8 +58,8 @@ struct RestaurantsFeedView: View {
                     allRestaurants: businessAuthVM.allRestaurants
                 )
             }
-        
     }
+
     
 }
 
@@ -70,6 +67,10 @@ struct RestaurantsFeedView: View {
     RestaurantsFeedView()
         .environmentObject(BusinessAuthViewModel())
         .environmentObject(UserLocationManager())
+        .environmentObject(AuthViewModel())
+        .environmentObject(NearbyRestaurantsViewModel())
+        .environmentObject(LocationViewModel())
+
 }
 
 extension RestaurantsFeedView {
@@ -224,7 +225,7 @@ extension RestaurantsFeedView {
                                 }
                             }
                             .buttonStyle(PlainButtonStyle())
-
+                            
                             
                         }
                     }
@@ -323,7 +324,7 @@ extension RestaurantsFeedView {
                 ForEach(nearbyVM.nearbyRestaurants) { item in
                     NavigationLink(
                         destination: RestaurantDetailView(restaurant: item.restaurant, distanceInKm: item.distanceInKm)
-                           
+                        
                     ) {
                         RestaurantsView(
                             restaurant: [item.restaurant],

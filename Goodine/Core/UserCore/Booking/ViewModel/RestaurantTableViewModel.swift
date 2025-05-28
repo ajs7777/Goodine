@@ -1,17 +1,3 @@
-//
-//  TableViewModel.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 24/05/25.
-//
-
-
-//
-//  TableViewModel.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 15/02/25.
-//
 
 import SwiftUI
 import FirebaseAuth
@@ -114,32 +100,6 @@ class RestaurantTableViewModel: ObservableObject {
     }
     
     // MARK: - Table Layout Methods
-    
-    /// Save the current table layout to Firestore.
-    func saveTableLayout() {
-        
-        isLoading = true
-        let db = Firestore.firestore()
-        let tableData: [String: Any] = [
-            "rows": rows,
-            "columns": columns,
-            "userID": restaurantID
-        ]
-        db.collection("business_users")
-            .document(restaurantID)
-            .collection("tables")
-            .document("layout")
-            .setData(tableData) { error in
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-                if let error = error {
-                    self.logError(error)
-                } else {
-                    print("Table layout saved successfully for user \(self.restaurantID)")
-                }
-            }
-    }
     
     /// Set up a real‑time listener for table layout.
     private func fetchTableLayoutListener() {

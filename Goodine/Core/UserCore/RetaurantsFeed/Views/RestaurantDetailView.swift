@@ -73,16 +73,20 @@ struct RestaurantDetailView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack{
-                restaurantsImages
-                restaurantInfo
-                locationTime
-                featuresSection
+        
+        ZStack{
+            ScrollView {
+                VStack{
+                    restaurantsImages
+                    restaurantInfo
+                    locationTime
+                    featuresSection
+                }
+                .overlay(alignment: .top) {
+                    topBarIcons
+                }
             }
-            .overlay(alignment: .top) {
-                topBarIcons
-            }
+            menuIcon
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBackGesture()
@@ -300,6 +304,37 @@ extension RestaurantDetailView {
         .padding(.horizontal)
         .padding(.bottom, 150)
 
+    }
+    
+    private var menuIcon : some View {
+        VStack(){
+            Spacer()
+            HStack{
+                Spacer()
+                NavigationLink {
+                    MenuView(restaurantID: restaurant.id)
+                        .navigationBarBackButtonHidden()
+                } label: {
+                    HStack {
+                        Image(.businessicon)
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 20, height: 20)
+                        
+                        Text("Menu")
+                        
+                    }
+                    .foregroundStyle(.mainInvert)
+                    .padding()
+                    .background(.mainbw)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(radius: 7)
+                    .padding()
+                    .padding(.bottom, 70)
+                }
+            }
+        }
     }
 }
 

@@ -31,6 +31,12 @@ struct ContentView: View {
                 MainLoginPage()
             }
         }
+        .onChange(of: userAuthVM.userdata) {
+            isUserAuthenticated = userAuthVM.userdata != nil
+        }
+        .onChange(of: businessAuthVM.restaurant) {
+            isBusinessAuthenticated = businessAuthVM.restaurant != nil
+        }
         .onAppear {
             Task {
                 async let userTask: () = userAuthVM.fetchUserData()
@@ -45,12 +51,17 @@ struct ContentView: View {
                 isCheckingAuth = false
             }
         }
+        
     }
 }
 
 #Preview {
-    ContentView()
-        .environmentObject(BusinessAuthViewModel())
-        .environmentObject(AuthViewModel())
-        .environmentObject(SubscriptionManager())
+    let businessAuthVM = BusinessAuthViewModel()
+    let userAuthVM = AuthViewModel()
+    let subscriptionManager = SubscriptionManager.shared
+
+    return ContentView()
+        .environmentObject(businessAuthVM)
+        .environmentObject(userAuthVM)
+        .environmentObject(subscriptionManager)
 }

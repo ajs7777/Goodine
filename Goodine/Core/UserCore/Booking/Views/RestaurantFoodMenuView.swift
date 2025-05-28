@@ -149,4 +149,3 @@ struct RestaurantFoodMenuItemView: View {
         }
     }
 }
-

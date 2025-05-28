@@ -140,7 +140,7 @@ struct RestaurantProfile: View {
                                     VStack(alignment: .leading) {
                                         Text(restaurant.type)
                                             .foregroundStyle(.mainbw)
-                                        Text("\(restaurant.city) | 2 Km")
+                                        Text("\(restaurant.city)")
                                             .foregroundStyle(.secondary)
                                     }
                                     

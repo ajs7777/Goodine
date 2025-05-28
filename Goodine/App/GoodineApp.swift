@@ -31,8 +31,8 @@ struct GoodineApp: App {
     var body: some Scene {
         WindowGroup {
             LaunchScreenView()
-                .environmentObject(BusinessAuthViewModel())
-                .environmentObject(AuthViewModel())
+                .environmentObject(businessAuthVM)
+                .environmentObject(userAuthVM)
                 .environmentObject(subscriptionManager)
                 .environmentObject(nearbyVM)
                 .environmentObject(locationVM)

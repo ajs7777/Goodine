@@ -9,6 +9,13 @@
 import SwiftUI
 
 struct LaunchScreenView: View {
+    
+    @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
+    @EnvironmentObject var userAuthVM: AuthViewModel
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
+    @EnvironmentObject var nearbyVM: NearbyRestaurantsViewModel
+    @EnvironmentObject var locationVM: LocationViewModel
+    
     @State private var isActive = false
     
     @State private var isAnimating = false
@@ -19,6 +26,11 @@ struct LaunchScreenView: View {
         if isActive {
             ContentView()
                 .transition(.opacity)
+                .environmentObject(businessAuthVM)
+                .environmentObject(userAuthVM)
+                .environmentObject(subscriptionManager)
+                .environmentObject(nearbyVM)
+                .environmentObject(locationVM)
         } else {
             ZStack {
                 Color.mainInvert.edgesIgnoringSafeArea(.all)
@@ -74,5 +86,4 @@ struct LaunchScreenView: View {
 
 #Preview {
     LaunchScreenView()
-        .environmentObject(BusinessAuthViewModel())
 }

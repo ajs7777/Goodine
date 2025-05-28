@@ -14,7 +14,7 @@ import FirebaseStorage
 class BusinessAuthViewModel: ObservableObject {
     
     @Published var businessUser: User?
-    @Published var restaurant: Restaurant?
+    @Published var restaurant: Restaurant? = nil
     @Published var allRestaurants: [Restaurant] = []
     @Published var isLoading = true
     @Published var errorMessage: String?
@@ -26,13 +26,9 @@ class BusinessAuthViewModel: ObservableObject {
     
     init(){
         Task{
+            await checkUserAuthentication()
             fetchBusinessDetails()
-        }
-        Task{
-            await fetchAllRestaurants()
-        }
-        Task{
-            checkUserAuthentication
+            await fetchAllRestaurants()            
         }
     }
     

@@ -14,17 +14,27 @@ import FirebaseStorage
 class AuthViewModel: ObservableObject {
     
     @Published var goodineUser: User?
-    @Published var userdata: GoodineUser?
+    @Published var userdata: GoodineUser? = nil
     @Published var isLoading = true
     
     private var db = Firestore.firestore()
     private let storage = Storage.storage()
     
     init() {
-        Task {
-            await fetchUserData()
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            guard let self = self else { return }
+            self.goodineUser = user
+            if user != nil {
+                Task {
+                    await self.fetchUserData()
+                }
+            } else {
+                self.userdata = nil
+                self.isLoading = false
+            }
         }
     }
+
     
     func createUser(email: String, password: String, fullName: String) async throws {
         do {
