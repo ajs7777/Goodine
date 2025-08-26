@@ -1,18 +1,11 @@
-//
-//  ReservationDetailedView.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 27/02/25.
-//
-
 import SwiftUI
 import PDFKit
 
 struct ReservationDetailedView: View {
     
-    @ObservedObject var orderVM = OrdersViewModel()
-    @ObservedObject var tableVM = TableViewModel()
-    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel    
+    @EnvironmentObject var orderVM : OrdersViewModel
+    @EnvironmentObject var tableVM : TableViewModel
+    @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     let reservationId: String
     
@@ -206,8 +199,9 @@ struct ReservationDetailedView: View {
             }
             
             // Header
-            drawCenteredText("RESTAURANT ORDER SLIP", font: titleFont, bold: true)
-            drawCenteredText("Reservation ID: \(String(reservation.id.suffix(12)))", font: bodyFont)
+            let restaurant = businessAuthVM.restaurant
+            drawCenteredText(restaurant?.name ?? "RESTAURANT ORDER SLIP", font: titleFont, bold: true)
+            drawCenteredText("Order ID: \(String(reservation.id.suffix(12)))", font: bodyFont)
             drawCenteredText("Date: \(dateFormatter.string(from: reservation.timestamp))", font: bodyFont)
             drawCenteredText("Time: \(timeFormatter.string(from: reservation.timestamp))", font: bodyFont)
             
@@ -246,7 +240,6 @@ struct ReservationDetailedView: View {
             drawCenteredText("--------------------------------", font: monospaceFont)
             
             yOffset += 10
-            let restaurant = businessAuthVM.restaurant
             drawCenteredText(String(format: "TOTAL: \(restaurant?.currencySymbol ?? "")%.2f", totalPrice), font: titleFont, bold: true)
         }
         

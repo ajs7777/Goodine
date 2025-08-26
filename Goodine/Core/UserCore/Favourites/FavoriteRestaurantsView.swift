@@ -4,9 +4,12 @@ import FirebaseAuth
 import CoreLocation
 
 struct FavouriteRestaurantsView: View {
+    
     @EnvironmentObject var businessAuthVM: BusinessAuthViewModel
     @ObservedObject var userLocationManager = UserLocationManager()
     @StateObject private var viewModel = FavouriteRestaurantsViewModel()
+    
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationStack {
@@ -40,6 +43,17 @@ struct FavouriteRestaurantsView: View {
                             }
                         }
                     }
+                }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "arrow.left")
+                        .bold()
+                        .foregroundStyle(.mainbw)
                 }
             }
         }

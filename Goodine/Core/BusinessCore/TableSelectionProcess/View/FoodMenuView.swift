@@ -10,8 +10,8 @@ import Kingfisher
 
 struct FoodMenuView: View {
     
-    @StateObject var orderVM = OrdersViewModel()
-    @ObservedObject var tableVM = TableViewModel()
+    @EnvironmentObject var orderVM : OrdersViewModel
+    @EnvironmentObject var tableVM: TableViewModel
     @ObservedObject var viewModel = RestaurantMenuViewModel()
     @Environment(\.dismiss) var dismiss
     @State private var selectedItems: [String: Int] = [:]
@@ -28,11 +28,21 @@ struct FoodMenuView: View {
                            }
                            
                        }
-                       Button("Place Order") {
-                           orderVM.saveOrderToFirestore(reservationId: tableVM.reservations.first?.id ?? "", selectedItems: selectedItems, menuItems: viewModel.items)
-                           dismiss()
-                       }
-                       .goodineButtonStyle(.mainbw)
+                Button("Place Order") {
+                    if let reservationId = tableVM.reservations.first?.id {
+                        orderVM.saveOrderToFirestore(
+                            reservationId: reservationId,
+                            selectedItems: selectedItems,
+                            menuItems: viewModel.items
+                        )
+                        dismiss()
+                    } else {
+                        print("No reservation available.")
+                        // Optionally show an alert to the user
+                    }
+                }
+                .goodineButtonStyle(.mainbw)
+                
                    }
                    .padding()
                    .navigationTitle("Order Food")
@@ -41,9 +51,7 @@ struct FoodMenuView: View {
     }
 }
 
-#Preview {
-    FoodMenuView()
-}
+
 
 struct FoodMenuItemView: View {
     var item: MenuItem

@@ -1,15 +1,9 @@
-//
-//  HistoryDetailedView.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 01/03/25.
-//
 
 import SwiftUI
 
 struct HistoryDetailedView: View {
-    @ObservedObject var orderVM = OrdersViewModel()
-    @ObservedObject var tableVM = TableViewModel()
+    @EnvironmentObject var orderVM : OrdersViewModel
+    @EnvironmentObject var tableVM : TableViewModel
     @EnvironmentObject var businessAuthVM : BusinessAuthViewModel
     
     let reservationId: String
@@ -203,8 +197,9 @@ struct HistoryDetailedView: View {
             }
             
             // Header
-            drawCenteredText("RESTAURANT ORDER SLIP", font: titleFont, bold: true)
-            drawCenteredText("Reservation ID: \(String(historyItem.id.suffix(12)))", font: bodyFont)
+            let restaurant = businessAuthVM.restaurant
+            drawCenteredText(restaurant?.name ?? "RESTAURANT ORDER SLIP", font: titleFont, bold: true)
+            drawCenteredText("Order ID: \(String(historyItem.id.suffix(12)))", font: bodyFont)
             drawCenteredText("Date: \(dateFormatter.string(from: historyItem.timestamp))", font: bodyFont)
             drawCenteredText("Time: \(timeFormatter.string(from: historyItem.timestamp))", font: bodyFont)
             
@@ -243,7 +238,6 @@ struct HistoryDetailedView: View {
             drawCenteredText("--------------------------------", font: monospaceFont)
             
             yOffset += 10
-            let restaurant = businessAuthVM.restaurant
             drawCenteredText(String(format: "TOTAL: \(restaurant?.currencySymbol ?? "")%.2f", totalPrice), font: titleFont, bold: true)
         }
         

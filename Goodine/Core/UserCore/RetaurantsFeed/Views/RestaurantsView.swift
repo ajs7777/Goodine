@@ -58,7 +58,7 @@ struct RestaurantsView: View {
                         Text(String(format: "%.1f Km", distanceInKm ?? 0.0))
                             .foregroundStyle(.gray)
                             .font(.footnote)
-                        Text("₹\(restaurant.first?.averageCost ?? "") for two")
+                        Text("\(restaurant.first?.currencySymbol ?? "")\(restaurant.first?.averageCost ?? "") for two")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                     }

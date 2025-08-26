@@ -63,7 +63,8 @@ class BusinessAuthViewModel: ObservableObject {
             imageUrls: [],
             currency: "INR",
             currencySymbol: "₹",
-            features: ["Reservation Available", "Dine in Available"]
+            features: ["Reservation Available", "Dine in Available"],
+            upiID: ""
         )
         
         try db.collection("business_users").document(userId).setData(from: newRestaurant)
@@ -217,7 +218,8 @@ class BusinessAuthViewModel: ObservableObject {
                         imageUrls: data["imageUrls"] as? [String] ?? [],
                         currency: data["currency"] as? String ?? "INR",
                         currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                        features: data["features"] as? [String] ?? []
+                        features: data["features"] as? [String] ?? [],
+                        upiID: data["upiID"] as? String ?? ""
                     )
                     self.isLoading = false
                 }
@@ -268,7 +270,8 @@ class BusinessAuthViewModel: ObservableObject {
             "imageUrls": updatedRestaurant.imageUrls,
             "currency": updatedRestaurant.currency,
             "currencySymbol": updatedRestaurant.currencySymbol,
-            "features": updatedRestaurant.features
+            "features": updatedRestaurant.features,
+            "upiID": updatedRestaurant.upiID ?? ""
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -319,7 +322,8 @@ class BusinessAuthViewModel: ObservableObject {
                     imageUrls: data["imageUrls"] as? [String] ?? [],
                     currency: data["currency"] as? String ?? "INR",
                     currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                    features: data["features"] as? [String] ?? []
+                    features: data["features"] as? [String] ?? [],
+                    upiID: data["upiID"] as? String ?? ""
                 )
             }
             

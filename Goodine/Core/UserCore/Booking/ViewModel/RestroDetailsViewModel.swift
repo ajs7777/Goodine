@@ -55,7 +55,8 @@ class RestroDetailsViewModel: ObservableObject {
                         imageUrls: data["imageUrls"] as? [String] ?? [],
                         currency: data["currency"] as? String ?? "INR",
                         currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                        features: data["features"] as? [String] ?? []
+                        features: data["features"] as? [String] ?? [],
+                        upiID: data["upiID"] as? String ?? ""
                     )
                     self.isLoading = false
                 }
@@ -105,7 +106,8 @@ class RestroDetailsViewModel: ObservableObject {
             "imageUrls": updatedRestaurant.imageUrls,
             "currency": updatedRestaurant.currency,
             "currencySymbol": updatedRestaurant.currencySymbol,
-            "features": updatedRestaurant.features
+            "features": updatedRestaurant.features,
+            "upiID": updatedRestaurant.upiID ?? ""
         ])
         
         // **Update @Published restaurant to trigger UI refresh**
@@ -156,7 +158,8 @@ class RestroDetailsViewModel: ObservableObject {
                     imageUrls: data["imageUrls"] as? [String] ?? [],
                     currency: data["currency"] as? String ?? "INR",
                     currencySymbol: data["currencySymbol"] as? String ?? "₹",
-                    features: data["features"] as? [String] ?? []
+                    features: data["features"] as? [String] ?? [],
+                    upiID: data["upiID"] as? String ?? ""
                 )
             }
             

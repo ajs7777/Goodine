@@ -57,7 +57,6 @@ class RestaurantTableViewModel: ObservableObject {
         updateSelectedButtons()
         // Setup real‑time listeners
         fetchReservationsListener()
-        fetchHistoryListener()
         fetchTableLayoutListener()
     }
     
@@ -131,14 +130,21 @@ class RestaurantTableViewModel: ObservableObject {
     
     /// Save all seat selections as a new reservation.
     func saveAllSeatSelections() {
-               
+        guard let userID = Auth.auth().currentUser?.uid else {
+            self.errorMessage = "User not authenticated"
+            print("User not authenticated")
+            return
+        }
+
         // Merge conflict checking and data preparation in one loop.
         var reservationData: [String: Any] = [
             "reservationID": UUID().uuidString,
             "timestamp": Timestamp(date: Date()),
-            "isPaid": false
+            "isPaid": false,
+            "userID": userID,
+            "restaurantID": restaurantID
         ]
-        
+
         for (tableNumber, seatStates) in selectedButtons {
             // Check if there is a conflict with reserved seats.
             if let reserved = reservedSeats[tableNumber] {
@@ -156,28 +162,41 @@ class RestaurantTableViewModel: ObservableObject {
                 reservationData["table_\(tableNumber)"] = count
             }
         }
-        
+
         print("Saving seat selections: \(reservationData)")
         isLoading = true
+
         let db = Firestore.firestore()
         let reservationID = reservationData["reservationID"] as! String
-        let reservationRef = db.collection("business_users")
+
+        let businessRef = db.collection("business_users")
             .document(restaurantID)
             .collection("reservations")
             .document(reservationID)
-        reservationRef.setData(reservationData) { error in
+
+        let userRef = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+            .document(reservationID)
+
+        let batch = db.batch()
+        batch.setData(reservationData, forDocument: businessRef)
+        batch.setData(reservationData, forDocument: userRef)
+
+        batch.commit { error in
             DispatchQueue.main.async {
                 self.isLoading = false
             }
             if let error = error {
                 self.logError(error)
             } else {
-                print("Seat selections saved successfully with ID: \(reservationID)")
+                print("Seat selections saved to both business and user path with ID: \(reservationID)")
                 self.resetSeatSelections()
                 self.fetchAllSeatSelections()
             }
         }
     }
+
     
     /// Fetch all seat selections from reservations.
     func fetchAllSeatSelections(completion: (() -> Void)? = nil) {
@@ -244,23 +263,29 @@ class RestaurantTableViewModel: ObservableObject {
         let reservationCollection = db.collection("business_users")
             .document(restaurantID)
             .collection("reservations")
+        
         reservationListener = reservationCollection.addSnapshotListener { snapshot, error in
             if let error = error {
                 self.logError(error)
                 return
             }
             guard let documents = snapshot?.documents else { return }
+
             var newReservations: [Reservation] = []
+
             for document in documents {
                 let data = document.data()
                 let reservationID = document.documentID
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
                 let billingTime = (data["billingTime"] as? Timestamp)?.dateValue()
                 let isPaid = data["isPaid"] as? Bool ?? false
+                let userID = data["userID"] as? String
+                let restaurantID = data["restaurantID"] as? String
+
                 var tables: [Int] = []
                 var seats: [Int: [Bool]] = [:]
                 var peopleCount: [Int: Int] = [:]
-                
+
                 for (key, value) in data {
                     if key.hasPrefix("table_") {
                         let components = key.components(separatedBy: "_")
@@ -276,115 +301,34 @@ class RestaurantTableViewModel: ObservableObject {
                         }
                     }
                 }
-                let reservation = Reservation(id: reservationID,
-                                              tables: tables,
-                                              seats: seats,
-                                              peopleCount: peopleCount,
-                                              timestamp: timestamp,
-                                              billingTime: billingTime,
-                                              isPaid: isPaid)
+
+                let reservation = Reservation(
+                    id: reservationID,
+                    tables: tables,
+                    seats: seats,
+                    peopleCount: peopleCount,
+                    timestamp: timestamp,
+                    billingTime: billingTime,
+                    isPaid: isPaid,
+                    userID: userID,
+                    restaurantID: restaurantID
+                )
+
                 newReservations.append(reservation)
             }
-            
+
             let sortedReservations = newReservations.sorted { $0.timestamp > $1.timestamp }
-            
+
             DispatchQueue.main.async {
                 self.reservations = sortedReservations
             }
             print("Reservations Updated: \(newReservations.count)")
         }
     }
+
     
     // MARK: - History Methods
     
-    /// Delete a reservation and save it to history.
-    func deleteReservationAndSaveToHistory(reservationID: String) {
-       
-        let db = Firestore.firestore()
-        let reservationRef = db.collection("business_users")
-            .document(restaurantID)
-            .collection("reservations")
-            .document(reservationID)
-        let historyRef = db.collection("business_users")
-            .document(restaurantID)
-            .collection("history")
-            .document(reservationID)
-        
-        isLoading = true
-        reservationRef.getDocument { documentSnapshot, error in
-            if let error = error {
-                self.logError(error)
-                DispatchQueue.main.async { self.isLoading = false }
-                return
-            }
-            guard let document = documentSnapshot, document.exists,
-                  var data = document.data() else {
-                DispatchQueue.main.async { self.isLoading = false }
-                return
-            }
-            let currentBillingTime = Date()
-            data["billingTime"] = Timestamp(date: currentBillingTime)
-            data["isPaid"] = true
-            
-            // Prepare local history record.
-            var tables: [Int] = []
-            var seats: [Int: [Bool]] = [:]
-            var peopleCount: [Int: Int] = [:]
-            for (key, value) in data {
-                if key.hasPrefix("table_") {
-                    let components = key.components(separatedBy: "_")
-                    if components.count >= 2, let tableNumber = Int(components[1]) {
-                        if key.contains("seats"), let seatData = value as? [Bool] {
-                            seats[tableNumber] = seatData
-                        } else if let count = value as? Int {
-                            if !tables.contains(tableNumber) {
-                                tables.append(tableNumber)
-                            }
-                            peopleCount[tableNumber] = count
-                        }
-                    }
-                }
-            }
-            let historyRecord = HistoryRecord(id: reservationID,
-                                              tables: tables,
-                                              seats: seats,
-                                              peopleCount: peopleCount,
-                                              timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                                              billingTime: currentBillingTime)
-            DispatchQueue.main.async {
-                self.history.append(historyRecord)
-            }
-            
-            // Update reserved seats locally.
-            if let tables = data["tables"] as? [Int] {
-                for table in tables {
-                    self.reservedSeats[table] = Array(repeating: false, count: 4)
-                }
-            }
-            
-            // Use a batch write for atomicity.
-            let batch = db.batch()
-            batch.setData(data, forDocument: historyRef)
-            batch.deleteDocument(reservationRef)
-            
-            batch.commit { error in
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
-                if let error = error {
-                    self.logError(error)
-                } else {
-                    print("Reservation moved to history and deleted successfully")
-                    DispatchQueue.main.async {
-                        self.reservations.removeAll { $0.id == reservationID }
-                    }
-                    self.fetchAllSeatSelections {
-                        self.fetchOrderHistory()
-                    }
-                }
-            }
-        }
-    }
     
     func deleteReservation(reservationID: String, completion: @escaping (Bool, String?) -> Void) {
               
@@ -487,127 +431,6 @@ class RestaurantTableViewModel: ObservableObject {
                     print("Reservation and all associated orders deleted successfully")
                 }
             }
-        }
-    }
-    
-    /// Fetch order history once.
-    func fetchOrderHistory() {
-        let db = Firestore.firestore()
-        let historyCollection = db.collection("business_users")
-            .document(restaurantID)
-            .collection("history")
-        isLoading = true
-        
-        historyCollection.getDocuments { snapshot, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
-            if let error = error {
-                self.logError(error)
-                return
-            }
-            guard let documents = snapshot?.documents, !documents.isEmpty else {
-                print("No order history found.")
-                DispatchQueue.main.async {
-                    self.history.removeAll()
-                }
-                return
-            }
-            var fetchedHistory: [HistoryRecord] = []
-            for document in documents {
-                let data = document.data()
-                let reservationID = document.documentID
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
-                var tables: [Int] = []
-                var seats: [Int: [Bool]] = [:]
-                var peopleCount: [Int: Int] = [:]
-                
-                for (key, value) in data {
-                    if key.hasPrefix("table_") {
-                        let components = key.components(separatedBy: "_")
-                        if components.count >= 2, let tableNumber = Int(components[1]) {
-                            if key.contains("seats"), let seatData = value as? [Bool] {
-                                seats[tableNumber] = seatData
-                            } else if let count = value as? Int {
-                                if !tables.contains(tableNumber) {
-                                    tables.append(tableNumber)
-                                }
-                                peopleCount[tableNumber] = count
-                            }
-                        }
-                    }
-                }
-                let record = HistoryRecord(id: reservationID,
-                                           tables: tables,
-                                           seats: seats,
-                                           peopleCount: peopleCount,
-                                           timestamp: timestamp,
-                                           billingTime: billingTime)
-                fetchedHistory.append(record)
-            }
-            
-            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
-            
-            DispatchQueue.main.async {
-                self.history = sortedHistory
-            }
-            print("Fetched Order History: \(fetchedHistory.count)")
-        }
-    }
-    
-    /// Set up a real‑time listener for history.
-    private func fetchHistoryListener() {
-        let db = Firestore.firestore()
-        let historyCollection = db.collection("business_users")
-            .document(restaurantID)
-            .collection("history")
-        historyListener = historyCollection.addSnapshotListener { snapshot, error in
-            if let error = error {
-                self.logError(error)
-                return
-            }
-            guard let documents = snapshot?.documents else { return }
-            var fetchedHistory: [HistoryRecord] = []
-            for document in documents {
-                let data = document.data()
-                let reservationID = document.documentID
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
-                var tables: [Int] = []
-                var seats: [Int: [Bool]] = [:]
-                var peopleCount: [Int: Int] = [:]
-                
-                for (key, value) in data {
-                    if key.hasPrefix("table_") {
-                        let components = key.components(separatedBy: "_")
-                        if components.count >= 2, let tableNumber = Int(components[1]) {
-                            if key.contains("seats"), let seatData = value as? [Bool] {
-                                seats[tableNumber] = seatData
-                            } else if let count = value as? Int {
-                                if !tables.contains(tableNumber) {
-                                    tables.append(tableNumber)
-                                }
-                                peopleCount[tableNumber] = count
-                            }
-                        }
-                    }
-                }
-                let record = HistoryRecord(id: reservationID,
-                                           tables: tables,
-                                           seats: seats,
-                                           peopleCount: peopleCount,
-                                           timestamp: timestamp,
-                                           billingTime: billingTime)
-                fetchedHistory.append(record)
-            }
-            
-            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
-            
-            DispatchQueue.main.async {
-                self.history = sortedHistory
-            }
-            print("Real-time Order History Updated: \(fetchedHistory.count)")
         }
     }
 }

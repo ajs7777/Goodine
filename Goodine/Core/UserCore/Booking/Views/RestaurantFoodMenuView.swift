@@ -1,10 +1,3 @@
-//
-//  FoodMenuView.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 24/05/25.
-//
-
 
 import SwiftUI
 import Kingfisher
@@ -20,6 +13,11 @@ struct RestaurantFoodMenuView: View {
     @StateObject var businessAuthVM : RestroDetailsViewModel
     @Environment(\.dismiss) var dismiss
     @State private var selectedItems: [String: Int] = [:]
+    
+    @State private var showOrderSummary = false
+    
+    @State private var selectedReservation: Reservation?
+
     
     init(restaurantID: String) {
         self.restaurantID = restaurantID
@@ -41,10 +39,32 @@ struct RestaurantFoodMenuView: View {
                     
                 }
                 Button("Place Order") {
-                    orderVM.saveOrderToFirestore(reservationId: tableVM.reservations.first?.id ?? "", selectedItems: selectedItems, menuItems: viewModel.items)
-                    dismiss()
+                    selectedReservation = tableVM.reservations.first
+                    showOrderSummary = true
                 }
                 .goodineButtonStyle(.mainbw)
+                .sheet(isPresented: $showOrderSummary) {
+                    if let reservation = selectedReservation {
+                        OrderSummaryView(
+                            selectedItems: $selectedItems,
+                            menuItems: viewModel.items,
+                            restaurant: businessAuthVM.restaurant!,
+                            currencySymbol: businessAuthVM.restaurant?.currencySymbol ?? "", reservation: reservation,
+                            onConfirm: {
+                                orderVM.saveOrderToFirestore(
+                                    reservationId: reservation.id,
+                                    selectedItems: selectedItems,
+                                    menuItems: viewModel.items
+                                )
+                                dismiss()
+                            }
+                        )
+                    } else {
+                        // Optional fallback
+                        Text("No reservation found.")
+                    }
+                }
+
             }
             .padding()
             .navigationTitle("Order Food")

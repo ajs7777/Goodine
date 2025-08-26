@@ -10,39 +10,96 @@ struct ProfileView: View {
     @State private var selectedImage: UIImage?
     
     var body: some View {
+        NavigationStack {
         ScrollView {
-            VStack(spacing: 20.0) {
+            VStack(spacing: 17) {
                 userDetails
                 
-                // Membership Section
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(.orange.opacity(0.2))
+                // Affiliate Program
+                Image(.apBanner)
+                    .resizable()
+                    .scaledToFill()
                     .frame(maxWidth: .infinity)
-                    .frame(height: 120)
+                    .frame(height: 150)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 15)
+                    )
                     .onTapGesture {
                         // future tap action
                     }
             }
             .padding(.horizontal)
-            .padding(.top)
             
-            // Settings and other options
-            NavigationLink {
-                Text("Title")
-            } label: {
-                VStack {
+            VStack {
+                
+                NavigationLink {
+                    MyAccountView()
+                        .navigationBarBackButtonHidden()
+                        .enableSwipeBackGesture()
+                } label: {
                     options(title: "My Account", image: "person")
+                }
+                
+                NavigationLink {
+                    RestaurantOrdersView()
+                        .navigationBarBackButtonHidden()
+                        .enableSwipeBackGesture()
+                } label: {
                     options(title: "My Orders", image: "bag")
+                }
+                
+                NavigationLink {
+                    PaymentsView()
+                    .navigationBarBackButtonHidden()
+                    .enableSwipeBackGesture()
+                } label: {
                     options(title: "Payments", image: "creditcard")
+                }
+                
+                NavigationLink {
+                    AddressView(onLocationAllowed: {})
+                    .navigationBarBackButtonHidden()
+                    .enableSwipeBackGesture()
+                } label: {
                     options(title: "Address", image: "location")
+                }
+                
+                NavigationLink {
+                    FavouriteRestaurantsView()
+                    .navigationBarBackButtonHidden()
+                    .enableSwipeBackGesture()
+                } label: {
                     options(title: "Favourites", image: "heart")
+                }
+                
+                NavigationLink {
+                    PromoCodeView()
+                    .navigationBarBackButtonHidden()
+                    .enableSwipeBackGesture()
+                } label: {
                     options(title: "Promocodes", image: "tag")
+                }
+                
+                NavigationLink {
+                    SettingsView()
+                    .navigationBarBackButtonHidden()
+                    .enableSwipeBackGesture()
+                } label: {
                     options(title: "Settings", image: "gearshape")
+                }
+                
+                Button {
+                    if let url = URL(string: "https://forms.gle/bCWju4Mp5YEvcHKV8") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
                     options(title: "Help", image: "questionmark.circle")
                 }
-                .foregroundStyle(.mainbw)
-                .padding()
+
             }
+            .foregroundStyle(.mainbw)
+            .padding()
+            
             
             Button {
                 Task {
@@ -58,7 +115,7 @@ struct ProfileView: View {
                 .bold()
             }
             .padding(.bottom, 30)
-        }
+        } }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -84,10 +141,10 @@ struct ProfileView: View {
 }
 
 #Preview {
-    ProfileView()
-        .environmentObject(AuthViewModel())
+        ProfileView()
+            .environmentObject(AuthViewModel())
+    
 }
-
 
 extension ProfileView {
     private var userDetails: some View {
@@ -98,7 +155,7 @@ extension ProfileView {
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundStyle(.mainbw)
-                    Text("+91 9876543210")
+                    Text(user.phoneNumber)
                         .foregroundStyle(.gray)
                 }
             }
@@ -138,9 +195,7 @@ extension ProfileView {
     }
 }
 
-
 //options
-
 struct options : View {
     
     let title : String

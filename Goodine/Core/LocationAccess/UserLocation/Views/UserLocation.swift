@@ -120,7 +120,8 @@ struct UserLocation: View {
             
             Image(.locationAccess)
                 .resizable()
-                .frame(width: 450, height: 450)
+                .scaledToFill()
+                .frame(width: 350, height: 350)
                 .foregroundColor(.blue)
                 .padding()
             
@@ -141,9 +142,7 @@ struct UserLocation: View {
                     .font(.footnote)
                     .foregroundStyle(.mainbw.opacity(0.5))
                     .multilineTextAlignment(.center)
-                    .padding(.bottom)
-                
-            Spacer()
+                    .padding(.bottom, 5)
                 
                 Button(action: {
                     let status = userLocationManager.authorizationStatus
@@ -159,10 +158,9 @@ struct UserLocation: View {
                     }
                 }) {
                     Text("Use current location")
-                        .frame(maxWidth: .infinity)
                 }
-                .padding()
                 .goodineButtonStyle(.mainbw)
+                .padding()
                 .cornerRadius(10)
                 .alert("Location Access Denied", isPresented: $showAlert) {
                     Button("Open Settings") {
@@ -189,7 +187,6 @@ struct UserLocation: View {
                         }
                     }
                 }
-                .padding(.bottom)
                 
             Button(action: {
                 onLocationAllowed()
@@ -206,10 +203,12 @@ struct UserLocation: View {
                                 .foregroundColor(.mainbw)
                         }
                     )
-            }                
+            }
+            
+            Spacer()
             
         }
-        .padding()
+        .padding(.horizontal)
         
     }
 }

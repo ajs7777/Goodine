@@ -27,7 +27,7 @@
           "index" : 2,
           "type" : "generic"
         },
-        "enabled" : false,
+        "enabled" : true,
         "name" : "Load Products"
       },
       {
@@ -45,7 +45,7 @@
           "index" : 2,
           "type" : "generic"
         },
-        "enabled" : false,
+        "enabled" : true,
         "name" : "App Store Sync"
       },
       {
@@ -53,7 +53,7 @@
           "index" : 2,
           "type" : "generic"
         },
-        "enabled" : false,
+        "enabled" : true,
         "name" : "Subscription Status"
       },
       {
@@ -100,7 +100,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "1199",
+          "displayPrice" : "499",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "8B4B948E",
@@ -128,7 +128,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "11999",
+          "displayPrice" : "4999",
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "7BE93915",

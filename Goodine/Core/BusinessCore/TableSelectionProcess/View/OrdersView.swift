@@ -13,11 +13,12 @@ import FirebaseAuth
 
 struct OrdersView: View {
     
-    @ObservedObject var tableVM = TableViewModel()
+    @EnvironmentObject var tableVM : TableViewModel
     @State private var showFoodMenu = false
     @State private var showDeleteAlert = false
     @State private var showPayAlert = false
     @State private var selectedReservationID: String?
+    @State private var seletedUserID: String?
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -79,16 +80,16 @@ struct OrdersView: View {
                 }
             }
             .navigationTitle("Orders & History")
-            .onAppear {
-                tableVM.isLoading = true
-                tableVM.fetchOrderHistory()
-            }
             .alert("Cancel Reservation", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
-                    if let reservationID = selectedReservationID {
+                    guard let reservationID = selectedReservationID else { return }
+                    
+                        if let userID = seletedUserID {
+                            tableVM.deleteUserReservationWithID(reservationID: reservationID, userID: userID) { success, error in }
+                        }
                         tableVM.deleteReservation(reservationID: reservationID) { success, error in }
-                    }
+                    
                 }
             } message: {
                 Text("Are you sure you want to delete this reservation?")
@@ -96,12 +97,23 @@ struct OrdersView: View {
             .alert("Confirm Payment", isPresented: $showPayAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Done", role: .none) {
-                    if let reservationID = selectedReservationID {
-                        tableVM.deleteReservationAndSaveToHistory(reservationID: reservationID)
+                    guard let reservationID = selectedReservationID else { return }
+                    
+                    if let userID = seletedUserID {
+                        tableVM.deleteAndSaveToHistory(reservationID: reservationID, userID: userID)
                     }
+                    
+                    tableVM.deleteReservationAndSaveToHistory(reservationID: reservationID)
+
                 }
+
             } message: {
                 Text("Do you want to complete the payment?")
+            }
+            .onAppear {
+                tableVM.isLoading = true
+                tableVM.fetchReservationsListener()
+                tableVM.fetchOrderHistory()
             }
         }
     }
@@ -109,6 +121,7 @@ struct OrdersView: View {
 
 #Preview {
     OrdersView()
+        .environmentObject(TableViewModel())
 }
 
 extension OrdersView {
@@ -176,6 +189,7 @@ extension OrdersView {
                             if !reservation.isPaid {
                                 Button(action: {
                                     selectedReservationID = reservation.id
+                                    seletedUserID = reservation.userID ?? nil
                                     showPayAlert = true
                                 }) {
                                     HStack {

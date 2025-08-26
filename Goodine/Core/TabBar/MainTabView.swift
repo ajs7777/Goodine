@@ -26,7 +26,7 @@ struct MainTabView: View {
                 .toolbarBackground(.mainInvert, for: .tabBar)
                 
             
-            Text("Restaurants")
+            RestaurantOrdersView()
                 .tabItem {
                     VStack{
                         Image(systemName: selectedTab == 1 ? "fork.knife.circle.fill" : "fork.knife.circle")
@@ -39,7 +39,7 @@ struct MainTabView: View {
                // .onAppear { selectedTab = 1 }
                 .toolbarBackground(.mainInvert, for: .tabBar)
             
-            Text("Book a Table")
+            MainTableView()
                 .tabItem {
                     VStack{
                         Image(systemName: "table.furniture.fill")

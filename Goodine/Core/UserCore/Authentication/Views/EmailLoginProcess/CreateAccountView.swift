@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
+import FirebaseAuth
 
 struct CreateAccountView: View {
     
@@ -13,7 +15,16 @@ struct CreateAccountView: View {
     @State var fullName = ""
     @State var email = ""
     @State var password = ""
+    @State var phoneNumber = ""
+    @State var phoneNumberValid: Bool = true
+    @State private var showVerificationAlert = false
+    @State private var showVerifyEmailView = false
+    @State private var emailTakenError = ""
+
+    private let phoneNumberKit = PhoneNumberUtility()
+
     @EnvironmentObject var viewModel : AuthViewModel
+   
     
     var body: some View {
         NavigationStack {
@@ -47,7 +58,20 @@ struct CreateAccountView: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
                                 .inset(by: 3)
-                                .stroke(style: StrokeStyle(lineWidth: 1)))
+                                .stroke(style: StrokeStyle(lineWidth: 1))
+                        )
+                                            
+                    TextField("Phone Number", text: $phoneNumber)
+                        .padding(18)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15)
+                                .inset(by: 3)
+                                .stroke(phoneNumberValid ? Color.gray : Color.red, lineWidth: 1)
+                        )
+                        .keyboardType(.phonePad)
+                        .onChange(of: phoneNumber) {
+                            formatAndValidatePhoneNumber(phoneNumber)
+                        }
                     
                     TextField("Enter your email", text: $email)
                         .autocapitalization(.none)
@@ -57,23 +81,58 @@ struct CreateAccountView: View {
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
-                    SecureField("Enter your password", text: $password)
+                    SecureInputField(placeholder: "Enter your password", text: $password)
                         .padding(18)
                         .overlay(
                             RoundedRectangle(cornerRadius: 15)
                                 .inset(by: 3)
                                 .stroke(style: StrokeStyle(lineWidth: 1)))
                     
+                    if !emailTakenError.isEmpty {
+                        Text(emailTakenError)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .padding(.leading, 4)
+                    }
+                    
                     Button {
-                        Task{
-                            try await viewModel.createUser(email: email, password: password, fullName: fullName)
+                        Task {
+                            emailTakenError = ""
+                            do {
+                                try await viewModel.createUser(
+                                    email: email,
+                                    password: password,
+                                    fullName: fullName,
+                                    phoneNumber: phoneNumber
+                                )
+                                showVerifyEmailView = true
+                            } catch {
+                                if let err = error as NSError?,
+                                   err.code == AuthErrorCode.emailAlreadyInUse.rawValue {
+                                    emailTakenError = "This email is already registered."
+                                } else {
+                                    print("Unhandled error: \(error.localizedDescription)")
+                                }
+                            }
                         }
-                        dismiss()
                     } label: {
                         Text("Sign Up")
                             .goodineButtonStyle(.mainbw)
                     }
+
                     .padding(.vertical)
+                    .disabled(!phoneNumberValid)
+                    .fullScreenCover(isPresented: $showVerifyEmailView) {
+                        VerifyEmailView(email: email, password: password)
+                    }
+                    .alert("Verify Your Email", isPresented: $showVerificationAlert) {
+                        Button("OK") {
+                            dismiss()
+                        }
+                    } message: {
+                        Text("A verification email has been sent to \(email). Please verify before logging in.")
+                    }
+
                     
                 }
                 .padding(.top, 20)
@@ -120,9 +179,38 @@ struct CreateAccountView: View {
         }
     }
     
+    func formatAndValidatePhoneNumber(_ number: String) {
+        do {
+            let parsedNumber = try phoneNumberKit.parse(number)
+            // Format number to international format, which includes +countryCode
+            let formattedNumber = phoneNumberKit.format(parsedNumber, toType: .international)
+            
+            // Update the phone number with formatted value only if different to avoid infinite loop
+            if formattedNumber != phoneNumber {
+                phoneNumber = formattedNumber
+            }
+            
+            phoneNumberValid = true
+        } catch {
+            phoneNumberValid = false
+        }
+    }
+    
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
+    
+    func flagEmoji(for countryCode: String) -> String {
+        let base: UInt32 = 127397
+        var flagString = ""
+        for scalar in countryCode.uppercased().unicodeScalars {
+            if let scalarValue = UnicodeScalar(base + scalar.value) {
+                flagString.unicodeScalars.append(scalarValue)
+            }
+        }
+        return flagString
+    }
+
 }
 
 #Preview {

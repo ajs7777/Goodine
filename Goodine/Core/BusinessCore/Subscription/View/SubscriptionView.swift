@@ -99,13 +99,7 @@ struct SubscriptionView: View {
                 }
             })
             .padding()
-            //            .onAppear {
-            //                Task {
-            //                    if subscriptionManager.products.isEmpty {
-            //                        await subscriptionManager.fetchProducts()
-            //                    }
-            //                }
-            //            }
+         
             
         }
     }

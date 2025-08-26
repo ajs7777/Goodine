@@ -15,4 +15,6 @@ struct Reservation: Identifiable, Codable {
     var timestamp: Date
     var billingTime: Date?
     var isPaid: Bool
+    var userID: String?
+    var restaurantID: String?
 }

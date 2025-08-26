@@ -53,6 +53,7 @@ struct MainLoginPage: View {
                     NavigationLink {
                         LoginWithEmail()
                             .navigationBarBackButtonHidden()
+                            .enableSwipeBackGesture()
                     } label: {
                         HStack {
                             Text("Login as User")

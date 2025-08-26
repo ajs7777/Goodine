@@ -12,7 +12,7 @@ import FirebaseFirestore
 
 struct TableView: View {
     @EnvironmentObject var subscriptionManager: SubscriptionManager
-    @StateObject var tableVM = TableViewModel()
+    @EnvironmentObject var tableVM : TableViewModel
     @State var currentTime = Date()
     @State private var showTableEditor = false
     @State private var showFoodMenu = false

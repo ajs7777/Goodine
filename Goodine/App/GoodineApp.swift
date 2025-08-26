@@ -27,6 +27,9 @@ struct GoodineApp: App {
     @StateObject private var subscriptionManager = SubscriptionManager.shared    
     @StateObject private var nearbyVM = NearbyRestaurantsViewModel()
     @StateObject var locationVM = LocationViewModel()
+    @StateObject var tableVM = TableViewModel()
+    @StateObject var orderVM = OrdersViewModel()
+
 
     var body: some Scene {
         WindowGroup {
@@ -36,6 +39,8 @@ struct GoodineApp: App {
                 .environmentObject(subscriptionManager)
                 .environmentObject(nearbyVM)
                 .environmentObject(locationVM)
+                .environmentObject(tableVM)
+                .environmentObject(orderVM)
         }
     }
 }

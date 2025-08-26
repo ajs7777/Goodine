@@ -1,9 +1,3 @@
-//
-//  TableViewModel.swift
-//  Goodine
-//
-//  Created by Abhijit Saha on 15/02/25.
-//
 
 import SwiftUI
 import FirebaseAuth
@@ -60,7 +54,9 @@ class TableViewModel: ObservableObject {
         updateSelectedButtons()
         // Setup real‑time listeners
         fetchReservationsListener()
+        fetchUserReservationsListener()
         fetchHistoryListener()
+        fetchUserHistoryListener()
         fetchTableLayoutListener()
     }
     
@@ -280,12 +276,74 @@ class TableViewModel: ObservableObject {
         }
     }
     
+    func fetchSeatSelections(completion: (() -> Void)? = nil) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            errorMessage = "No logged-in user found."
+            completion?()
+            return
+        }
+        let db = Firestore.firestore()
+        let reservationCollection = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+        isLoading = true
+        
+        reservationCollection.getDocuments { snapshot, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            if let error = error {
+                self.logError(error)
+                completion?()
+                return
+            }
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                print("No reservations found.")
+                DispatchQueue.main.async {
+                    self.reservedSeats.removeAll()
+                }
+                completion?()
+                return
+            }
+            
+            var updatedReservedSeats = [Int: [Bool]]()
+            var updatedPeopleCount = [Int: Int]()
+            
+            // Loop through each reservation document.
+            for document in documents {
+                let data = document.data()
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                let defaultSeats = updatedReservedSeats[tableNumber] ?? Array(repeating: false, count: 4)
+                                // Combine current and new seat selections.
+                                let combinedSeats = zip(defaultSeats, seatData).map { $0 || $1 }
+                                updatedReservedSeats[tableNumber] = combinedSeats
+                            } else if let peopleCount = value as? Int {
+                                updatedPeopleCount[tableNumber, default: 0] += peopleCount
+                            }
+                        }
+                    }
+                }
+            }
+            // Update on the main thread.
+            DispatchQueue.main.async {
+                self.tablePeopleCount = updatedPeopleCount
+                self.reservedSeats = updatedReservedSeats
+            }
+            print("Reserved Seats Updated: \(updatedReservedSeats)")
+            completion?()
+        }
+    }
+    
     /// Set up a real‑time listener for reservations.
-    private func fetchReservationsListener() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
+    func fetchReservationsListener() {
+        guard let buserID = Auth.auth().currentUser?.uid else { return }
         let db = Firestore.firestore()
         let reservationCollection = db.collection("business_users")
-            .document(userID)
+            .document(buserID)
             .collection("reservations")
         reservationListener = reservationCollection.addSnapshotListener { snapshot, error in
             if let error = error {
@@ -300,6 +358,9 @@ class TableViewModel: ObservableObject {
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
                 let billingTime = (data["billingTime"] as? Timestamp)?.dateValue()
                 let isPaid = data["isPaid"] as? Bool ?? false
+                let userID = data["userID"] as? String
+                let restaurantID = data["restaurantID"] as? String
+                
                 var tables: [Int] = []
                 var seats: [Int: [Bool]] = [:]
                 var peopleCount: [Int: Int] = [:]
@@ -325,7 +386,72 @@ class TableViewModel: ObservableObject {
                                               peopleCount: peopleCount,
                                               timestamp: timestamp,
                                               billingTime: billingTime,
-                                              isPaid: isPaid)
+                                              isPaid: isPaid,
+                                              userID: userID,
+                                              restaurantID: restaurantID)
+                newReservations.append(reservation)
+            }
+            
+            let sortedReservations = newReservations.sorted { $0.timestamp > $1.timestamp }
+            
+            DispatchQueue.main.async {
+                self.reservations = sortedReservations
+            }
+            print("Reservations Updated: \(newReservations.count)")
+        }
+    }
+    
+    private func fetchUserReservationsListener() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let reservationCollection = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+        reservationListener = reservationCollection.addSnapshotListener { snapshot, error in
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let documents = snapshot?.documents else { return }
+            var newReservations: [Reservation] = []
+            for document in documents {
+                let data = document.data()
+                let reservationID = document.documentID
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue()
+                let isPaid = data["isPaid"] as? Bool ?? false
+                let userID = data["userID"] as? String
+                let restaurantID = data["restaurantID"] as? String
+                
+                var tables: [Int] = []
+                var seats: [Int: [Bool]] = [:]
+                var peopleCount: [Int: Int] = [:]
+                
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                seats[tableNumber] = seatData
+                            } else if let count = value as? Int {
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
+                                }
+                                peopleCount[tableNumber] = count
+                            }
+                        }
+                    }
+                }
+                let reservation = Reservation(id: reservationID,
+                                              tables: tables,
+                                              seats: seats,
+                                              peopleCount: peopleCount,
+                                              timestamp: timestamp,
+                                              billingTime: billingTime,
+                                              isPaid: isPaid,
+                                              userID: userID,
+                                              restaurantID: restaurantID
+                )
                 newReservations.append(reservation)
             }
             
@@ -430,6 +556,94 @@ class TableViewModel: ObservableObject {
                 }
             }
         }
+    }    
+    
+    func deleteAndSaveToHistory(reservationID: String, userID: String) {
+        
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+            .document(reservationID)
+        let historyRef = db.collection("users")
+            .document(userID)
+            .collection("history")
+            .document(reservationID)
+        
+        isLoading = true
+        reservationRef.getDocument { documentSnapshot, error in
+            if let error = error {
+                self.logError(error)
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            guard let document = documentSnapshot, document.exists,
+                  var data = document.data() else {
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            let currentBillingTime = Date()
+            data["billingTime"] = Timestamp(date: currentBillingTime)
+            data["isPaid"] = true
+            
+            // Prepare local history record.
+            var tables: [Int] = []
+            var seats: [Int: [Bool]] = [:]
+            var peopleCount: [Int: Int] = [:]
+            for (key, value) in data {
+                if key.hasPrefix("table_") {
+                    let components = key.components(separatedBy: "_")
+                    if components.count >= 2, let tableNumber = Int(components[1]) {
+                        if key.contains("seats"), let seatData = value as? [Bool] {
+                            seats[tableNumber] = seatData
+                        } else if let count = value as? Int {
+                            if !tables.contains(tableNumber) {
+                                tables.append(tableNumber)
+                            }
+                            peopleCount[tableNumber] = count
+                        }
+                    }
+                }
+            }
+            let historyRecord = HistoryRecord(id: reservationID,
+                                              tables: tables,
+                                              seats: seats,
+                                              peopleCount: peopleCount,
+                                              timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                                              billingTime: currentBillingTime)
+            DispatchQueue.main.async {
+                self.history.append(historyRecord)
+            }
+            
+            // Update reserved seats locally.
+            if let tables = data["tables"] as? [Int] {
+                for table in tables {
+                    self.reservedSeats[table] = Array(repeating: false, count: 4)
+                }
+            }
+            
+            // Use a batch write for atomicity.
+            let batch = db.batch()
+            batch.setData(data, forDocument: historyRef)
+            batch.deleteDocument(reservationRef)
+            
+            batch.commit { error in
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+                if let error = error {
+                    self.logError(error)
+                } else {
+                    print("Reservation moved to history and deleted successfully")
+                    DispatchQueue.main.async {
+                        self.reservations.removeAll { $0.id == reservationID }
+                    }
+                    self.fetchSeatSelections {
+                        self.fetchUserOrderHistory()
+                    }
+                }
+            }
+        }
     }
     
     func deleteReservation(reservationID: String, completion: @escaping (Bool, String?) -> Void) {
@@ -490,6 +704,175 @@ class TableViewModel: ObservableObject {
             }
         }
     }
+    
+    func deleteRestaurantReservation(reservationID: String, restaurantID: String, completion: @escaping (Bool, String?) -> Void) {
+                
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("business_users")
+            .document(restaurantID)
+            .collection("reservations")
+            .document(reservationID)
+        
+        // Reference to the orders subcollection
+        let ordersCollectionRef = reservationRef.collection("orders")
+        
+        isLoading = true
+        
+        // Step 1: Delete all documents in the orders subcollection
+        ordersCollectionRef.getDocuments { [weak self] (querySnapshot, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve orders: \(error.localizedDescription)")
+                return
+            }
+            
+            // If no orders or error retrieving them, proceed with reservation deletion
+            guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                // No orders to delete, proceed to delete the reservation document
+                self?.deleteReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                return
+            }
+            
+            // Create a batch to delete all order documents
+            let batch = db.batch()
+            
+            // Add each order document to the batch for deletion
+            for document in documents {
+                batch.deleteDocument(document.reference)
+            }
+            
+            // Commit the batch delete of all orders
+            batch.commit { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.isLoading = false
+                    }
+                    self?.logError(error)
+                    completion(false, "Failed to delete orders: \(error.localizedDescription)")
+                } else {
+                    // Orders deleted successfully, now delete the reservation document
+                    self?.deleteReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                }
+            }
+        }
+    }
+    
+    func deleteUserReservation(reservationID: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(false, "No logged-in user found.")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+            .document(reservationID)
+        
+        // Reference to the orders subcollection
+        let ordersCollectionRef = reservationRef.collection("orders")
+        
+        isLoading = true
+        
+        // Step 1: Delete all documents in the orders subcollection
+        ordersCollectionRef.getDocuments { [weak self] (querySnapshot, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve orders: \(error.localizedDescription)")
+                return
+            }
+            
+            // If no orders or error retrieving them, proceed with reservation deletion
+            guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                // No orders to delete, proceed to delete the reservation document
+                self?.deleteUserReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                return
+            }
+            
+            // Create a batch to delete all order documents
+            let batch = db.batch()
+            
+            // Add each order document to the batch for deletion
+            for document in documents {
+                batch.deleteDocument(document.reference)
+            }
+            
+            // Commit the batch delete of all orders
+            batch.commit { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.isLoading = false
+                    }
+                    self?.logError(error)
+                    completion(false, "Failed to delete orders: \(error.localizedDescription)")
+                } else {
+                    // Orders deleted successfully, now delete the reservation document
+                    self?.deleteUserReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                }
+            }
+        }
+    }
+    
+    func deleteUserReservationWithID(reservationID: String, userID: String, completion: @escaping (Bool, String?) -> Void) {
+        
+        let db = Firestore.firestore()
+        let reservationRef = db.collection("users")
+            .document(userID)
+            .collection("currentOrders")
+            .document(reservationID)
+        
+        // Reference to the orders subcollection
+        let ordersCollectionRef = reservationRef.collection("orders")
+        
+        isLoading = true
+        
+        // Step 1: Delete all documents in the orders subcollection
+        ordersCollectionRef.getDocuments { [weak self] (querySnapshot, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve orders: \(error.localizedDescription)")
+                return
+            }
+            
+            // If no orders or error retrieving them, proceed with reservation deletion
+            guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                // No orders to delete, proceed to delete the reservation document
+                self?.deleteUserReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                return
+            }
+            
+            // Create a batch to delete all order documents
+            let batch = db.batch()
+            
+            // Add each order document to the batch for deletion
+            for document in documents {
+                batch.deleteDocument(document.reference)
+            }
+            
+            // Commit the batch delete of all orders
+            batch.commit { [weak self] error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self?.isLoading = false
+                    }
+                    self?.logError(error)
+                    completion(false, "Failed to delete orders: \(error.localizedDescription)")
+                } else {
+                    // Orders deleted successfully, now delete the reservation document
+                    self?.deleteUserReservationDocument(reservationRef: reservationRef, reservationID: reservationID, completion: completion)
+                }
+            }
+        }
+    }
 
     // Helper function to delete the reservation document itself
     private func deleteReservationDocument(reservationRef: DocumentReference, reservationID: String, completion: @escaping (Bool, String?) -> Void) {
@@ -540,6 +923,54 @@ class TableViewModel: ObservableObject {
         }
     }
     
+    private func deleteUserReservationDocument(reservationRef: DocumentReference, reservationID: String, completion: @escaping (Bool, String?) -> Void) {
+        // First get the document to identify any fields we need for cleanup
+        reservationRef.getDocument { [weak self] (document, error) in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                self?.logError(error)
+                completion(false, "Failed to retrieve reservation: \(error.localizedDescription)")
+                return
+            }
+            
+            let data = document?.data() ?? [:]
+            
+            // Delete the reservation document
+            reservationRef.delete { [weak self] error in
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                }
+                
+                if let error = error {
+                    self?.logError(error)
+                    completion(false, "Failed to delete reservation: \(error.localizedDescription)")
+                } else {
+                    // Clean up local data
+                    DispatchQueue.main.async {
+                        // Remove from local array
+                        self?.reservations.removeAll { $0.id == reservationID }
+                        
+                        // Reset any reserved seats associated with this reservation
+                        if let tables = data["tables"] as? [Int] {
+                            for table in tables {
+                                self?.reservedSeats[table] = Array(repeating: false, count: 4)
+                            }
+                        }
+                    }
+                    
+                    // Refresh data
+                    self?.fetchSeatSelections {
+                        completion(true, nil)
+                    }
+                    
+                    print("Reservation and all associated orders deleted successfully")
+                }
+            }
+        }
+    }
+    
     /// Fetch order history once.
     func fetchOrderHistory() {
         guard let userID = Auth.auth().currentUser?.uid else {
@@ -548,6 +979,75 @@ class TableViewModel: ObservableObject {
         }
         let db = Firestore.firestore()
         let historyCollection = db.collection("business_users")
+            .document(userID)
+            .collection("history")
+        isLoading = true
+        
+        historyCollection.getDocuments { snapshot, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let documents = snapshot?.documents, !documents.isEmpty else {
+                print("No order history found.")
+                DispatchQueue.main.async {
+                    self.history.removeAll()
+                }
+                return
+            }
+            var fetchedHistory: [HistoryRecord] = []
+            for document in documents {
+                let data = document.data()
+                let reservationID = document.documentID
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
+                var tables: [Int] = []
+                var seats: [Int: [Bool]] = [:]
+                var peopleCount: [Int: Int] = [:]
+                
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                seats[tableNumber] = seatData
+                            } else if let count = value as? Int {
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
+                                }
+                                peopleCount[tableNumber] = count
+                            }
+                        }
+                    }
+                }
+                let record = HistoryRecord(id: reservationID,
+                                           tables: tables,
+                                           seats: seats,
+                                           peopleCount: peopleCount,
+                                           timestamp: timestamp,
+                                           billingTime: billingTime)
+                fetchedHistory.append(record)
+            }
+            
+            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
+            
+            DispatchQueue.main.async {
+                self.history = sortedHistory
+            }
+            print("Fetched Order History: \(fetchedHistory.count)")
+        }
+    }
+    
+    func fetchUserOrderHistory() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            errorMessage = "No logged-in user found."
+            return
+        }
+        let db = Firestore.firestore()
+        let historyCollection = db.collection("users")
             .document(userID)
             .collection("history")
         isLoading = true
@@ -665,4 +1165,60 @@ class TableViewModel: ObservableObject {
             print("Real-time Order History Updated: \(fetchedHistory.count)")
         }
     }
+    
+    private func fetchUserHistoryListener() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let historyCollection = db.collection("users")
+            .document(userID)
+            .collection("history")
+        historyListener = historyCollection.addSnapshotListener { snapshot, error in
+            if let error = error {
+                self.logError(error)
+                return
+            }
+            guard let documents = snapshot?.documents else { return }
+            var fetchedHistory: [HistoryRecord] = []
+            for document in documents {
+                let data = document.data()
+                let reservationID = document.documentID
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let billingTime = (data["billingTime"] as? Timestamp)?.dateValue() ?? Date()
+                var tables: [Int] = []
+                var seats: [Int: [Bool]] = [:]
+                var peopleCount: [Int: Int] = [:]
+                
+                for (key, value) in data {
+                    if key.hasPrefix("table_") {
+                        let components = key.components(separatedBy: "_")
+                        if components.count >= 2, let tableNumber = Int(components[1]) {
+                            if key.contains("seats"), let seatData = value as? [Bool] {
+                                seats[tableNumber] = seatData
+                            } else if let count = value as? Int {
+                                if !tables.contains(tableNumber) {
+                                    tables.append(tableNumber)
+                                }
+                                peopleCount[tableNumber] = count
+                            }
+                        }
+                    }
+                }
+                let record = HistoryRecord(id: reservationID,
+                                           tables: tables,
+                                           seats: seats,
+                                           peopleCount: peopleCount,
+                                           timestamp: timestamp,
+                                           billingTime: billingTime)
+                fetchedHistory.append(record)
+            }
+            
+            let sortedHistory = fetchedHistory.sorted { $0.billingTime > $1.billingTime }
+            
+            DispatchQueue.main.async {
+                self.history = sortedHistory
+            }
+            print("Real-time Order History Updated: \(fetchedHistory.count)")
+        }
+    }
+    
 }

@@ -146,6 +146,36 @@ struct RestaurantsDetailsForm: View {
                     }
                     
                     HStack{
+                        TextField("Upi Id", text: Binding(
+                            get: { businessAuthVM.restaurant?.upiID ?? "" },
+                            set: { businessAuthVM.restaurant?.upiID = $0 }
+                        ))
+                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .inset(by: 3)
+                                .stroke(.mainbw, lineWidth: 1)
+                        )
+                        
+                        Button{
+                            
+                        } label: {
+                            HStack{
+                                Text("Done")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
+                            .foregroundStyle(.mainInvert)
+                            .padding(15)
+                            .frame(width: 180)
+                            .background(.mainbw)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+                    
+                    HStack{
                         Text("Average Cost for two")
                             .font(.headline)
                         TextField("", text: Binding(

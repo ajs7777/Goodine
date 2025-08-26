@@ -20,41 +20,65 @@ class RestaurantOrdersViewModel: ObservableObject {
         selectedItems: [String: Int],
         menuItems: [MenuItem]
     ) {
-        let ordersRef = db.collection("business_users")
-                          .document(restaurantID)
-                          .collection("reservations")
-                          .document(reservationId)
-                          .collection("orders")
-                          .document()
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("User not authenticated")
+            return
+        }
+
+        let businessOrderRef = db.collection("business_users")
+                                 .document(restaurantID)
+                                 .collection("reservations")
+                                 .document(reservationId)
+                                 .collection("orders")
+                                 .document()
+
+        let userOrderRef = db.collection("users")
+                             .document(userID)
+                             .collection("currentOrders")
+                             .document(reservationId)
+                             .collection("orders")
+                             .document(businessOrderRef.documentID)
 
         var orderData: [String: OrderItem] = [:]
 
         for (itemId, quantity) in selectedItems {
             if let menuItem = menuItems.first(where: { $0.id == itemId }) {
-                orderData[itemId] = OrderItem(name: menuItem.foodname, price: Double(menuItem.foodPrice), quantity: quantity)
+                orderData[itemId] = OrderItem(
+                    name: menuItem.foodname,
+                    price: Double(menuItem.foodPrice),
+                    quantity: quantity
+                )
             }
         }
 
         let orderDetails = Order(
-            id: ordersRef.documentID,
-            userId: restaurantID,
+            id: businessOrderRef.documentID,
+            userId: userID,
             items: orderData,
             timestamp: Timestamp(date: Date()),
             status: "pending"
         )
 
         do {
-            try ordersRef.setData(from: orderDetails) { error in
+            let encodedData = try Firestore.Encoder().encode(orderDetails)
+
+            let batch = db.batch()
+            batch.setData(encodedData, forDocument: businessOrderRef)
+            batch.setData(encodedData, forDocument: userOrderRef)
+
+            batch.commit { error in
                 if let error = error {
-                    print("Error saving order: \(error.localizedDescription)")
+                    print("Error saving order to both paths: \(error.localizedDescription)")
                 } else {
-                    print("Order successfully saved!")
+                    print("Order saved to business and user paths.")
                 }
             }
+
         } catch {
-            print("Error encoding order: \(error.localizedDescription)")
+            print("Encoding error: \(error.localizedDescription)")
         }
     }
+
 
     func fetchOrders(reservationId: String) {
         db.collection("business_users")

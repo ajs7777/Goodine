@@ -6,6 +6,8 @@ import FirebaseAuth
 class LocationViewModel: ObservableObject {
     @Published var cityName: String = "City"
     @Published var areaName: String = "Select Location"
+    @Published var formattedAddress: String = "Loading Address..."
+
     @Published var latitude: Double = 0.0
     @Published var longitude: Double = 0.0
 
@@ -61,7 +63,8 @@ class LocationViewModel: ObservableObject {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let results = json["results"] as? [[String: Any]],
                    let address = results.first,
-                   let addressComponents = address["address_components"] as? [[String: Any]] {
+                   let addressComponents = address["address_components"] as? [[String: Any]],
+                   let formatted = address["formatted_address"] as? String {
 
                     var city: String = "Unknown City"
                     var area: String = "Unknown Area"
@@ -82,6 +85,7 @@ class LocationViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self?.cityName = city
                         self?.areaName = area
+                        self?.formattedAddress = formatted
                     }
                 } else {
                     print("Invalid JSON format")

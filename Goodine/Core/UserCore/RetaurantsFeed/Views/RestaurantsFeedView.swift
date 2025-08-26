@@ -23,6 +23,9 @@ struct RestaurantsFeedView: View {
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
     
+    @State private var showUserLocationView = false
+    
+    
     private var suggestedRestaurants: [NearbyRestaurant] {
         searchText.isEmpty ? [] : nearbyVM.nearbyRestaurants.filter {
             $0.restaurant.name.localizedCaseInsensitiveContains(searchText)
@@ -32,22 +35,19 @@ struct RestaurantsFeedView: View {
     var body: some View {
         VStack {
             NavigationStack {
-                if nearbyVM.isLoading || !nearbyVM.hasLoaded {
-                    RestaurantsFeedSkeletonView()
-                } else {
-                    ScrollView {
-                        userSection
-                        searchBar
-                        categoriesSection
-                        discountSection
-                        restaurantsSection
-                    }
-                    .navigationDestination(isPresented: $showDetailView) {
-                        if let restaurant = selectedRestaurant {
-                            RestaurantDetailView(restaurant: restaurant, distanceInKm: nil)
-                        }
+                ScrollView {
+                    userSection
+                    searchBar
+                    categoriesSection
+                    discountSection
+                    restaurantsSection
+                }
+                .navigationDestination(isPresented: $showDetailView) {
+                    if let restaurant = selectedRestaurant {
+                        RestaurantDetailView(restaurant: restaurant, distanceInKm: nil)
                     }
                 }
+                
             }
         }
         .onReceive(userLocationManager.$userLocation
@@ -59,7 +59,7 @@ struct RestaurantsFeedView: View {
                 )
             }
     }
-
+    
     
 }
 
@@ -70,7 +70,7 @@ struct RestaurantsFeedView: View {
         .environmentObject(AuthViewModel())
         .environmentObject(NearbyRestaurantsViewModel())
         .environmentObject(LocationViewModel())
-
+    
 }
 
 extension RestaurantsFeedView {
@@ -81,14 +81,27 @@ extension RestaurantsFeedView {
                 Text(locationVM.cityName)
                     .foregroundStyle(.gray)
                     .font(.caption)
-                HStack{
-                    Text(locationVM.areaName)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                    Image(systemName: "chevron.down")
-                        .font(.footnote)
-                        .fontWeight(.semibold)
-                    
+                HStack {
+                    Button(action: {
+                        showUserLocationView = true
+                    }) {
+                        HStack {
+                            Text(locationVM.areaName)
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            
+                            Image(systemName: "chevron.down")
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }.sheet(isPresented: $showUserLocationView) {
+                    UserLocation {
+                        showUserLocationView = false
+                    }
                 }
             }
             Spacer()
@@ -99,7 +112,9 @@ extension RestaurantsFeedView {
                 UserCircleImage(size: .large)
                 
             }
-        } .padding(.horizontal)
+        }
+        .padding(.horizontal)
+        
     }
     
     private var searchBar: some View {

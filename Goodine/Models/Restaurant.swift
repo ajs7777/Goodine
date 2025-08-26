@@ -24,5 +24,5 @@ struct Restaurant: Identifiable, Codable, Equatable {
     var currency: String
     var currencySymbol: String
     var features: [String] = []
-    
+    var upiID: String?
 }

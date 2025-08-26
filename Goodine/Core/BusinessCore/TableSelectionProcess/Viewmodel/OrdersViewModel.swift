@@ -74,6 +74,27 @@ class OrdersViewModel: ObservableObject {
             }
     }
     
+    func fetchUserOrders(reservationId: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users")
+            .document(userId)
+            .collection("currentOrders")
+            .document(reservationId)
+            .collection("orders")
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    print("Error fetching orders: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let documents = snapshot?.documents else { return }
+
+                self.orders = documents.compactMap { document in
+                    try? document.data(as: Order.self)
+                }
+            }
+    }
     
     func deleteOrder(orderId: String, reservationId: String) {
         guard let userId = Auth.auth().currentUser?.uid else { return }
